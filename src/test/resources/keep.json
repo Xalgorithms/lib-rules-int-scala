@@ -1,0 +1,7 @@
+{
+  "steps" : [
+    {
+      "name" : "keep", "table_name" : "table0"
+    }
+  ]
+}

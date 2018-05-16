@@ -1,0 +1,27 @@
+{
+  "steps" : [
+    {
+      "table_name": "table_final",
+      "columns": [
+        {
+          "table": {"section": "tables", "key": "table0", "type": "reference"},
+          "sources": [
+            {
+              "columns": ["c0", "c1", "c2"]
+            }
+          ]
+        },
+        {
+          "table": {"section": "tables", "key": "table1", "type": "reference"},
+          "sources": [
+            {
+              "name": "y",
+              "source": "x"
+            }
+          ]
+        }
+      ],
+      "name": "assemble"
+    }
+  ]
+}  

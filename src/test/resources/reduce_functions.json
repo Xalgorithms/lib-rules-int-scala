@@ -1,0 +1,37 @@
+{
+  "steps" : [
+    {
+      "name" : "reduce",
+      "table" : { "type" : "reference", "section" : "tables", "key" : "foo" },
+      "assignments" : [
+        {
+          "target" : "a",
+          "source" : {
+            "type": "function",
+            "name": "add",
+            "args": [
+              {
+                "type": "function",
+                "name": "multiply",
+                "args": [
+                  {"section": "_context", "key": "b", "type": "reference"},
+                  {"section": "_context", "key": "c", "type": "reference"}
+                ]
+              },
+              {
+                "section": "_context", "key": "d", "type": "reference"
+              }
+            ]
+          }
+        }
+      ],
+      "filters" : [
+        {
+          "left" : { "type" : "reference", "section" : "_context", "key" : "c" },
+          "right" : { "type" : "reference", "section" : "_context", "key" : "a" },
+          "op": "eq"
+        }
+      ]
+    }
+  ]
+}

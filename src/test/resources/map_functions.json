@@ -1,0 +1,28 @@
+{
+  "steps" : [
+    {
+      "name" : "map",
+      "table" : { "type" : "reference", "section" : "tables", "key" : "items" },
+      "assignments" : [
+        {
+          "target" : "a",
+          "source" : {
+            "type" : "function",
+            "name" : "multiply",
+            "args" : [
+              {
+                "type" : "function",
+                "name" : "add",
+                "args" : [
+                  { "type" : "reference", "section" : "_context", "key" : "b" },
+                  { "type" : "number", "value" : "2" }
+                ]
+              },
+              { "type" : "number", "value" : "4" }
+            ]
+          }
+        }
+      ]
+    }
+  ]
+}

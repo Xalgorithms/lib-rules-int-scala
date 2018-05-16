@@ -1,0 +1,13 @@
+{
+  "steps" : [
+    {
+      "name" : "map",
+      "table" : { "type" : "reference", "section" : "tables", "key" : "items" },
+      "assignments" : [
+        { "target" : "a.b.c", "source" : { "type" : "reference", "section" : "_context", "key" : "x.y.z" } },
+        { "target": "c", "source" : { "type" : "number", "value" : "2" } },
+        { "target": "d", "source" : { "type" : "string", "value" : "s" } }
+      ]
+    }
+  ]
+}
