@@ -1,0 +1,51 @@
+{
+  "steps" : [
+    {
+      "name" : "revise",
+      "table" : { "type" : "reference", "section" : "tables", "key" : "items" },
+      "revisions" : [
+        {
+          "op" : "add",
+          "source" : {
+            "column" : "a.b",
+            "table" : { "type" : "reference", "section" : "table", "key" : "foo" },
+            "whens" : [
+              {
+                "left" : { "type" : "reference", "section" : "_local", "key" : "x" },
+                "right" : { "type" : "reference", "section" : "_context", "key" : "y" },
+                "op": "eq"
+              }
+            ]
+          }
+        },
+        {
+          "op" : "update",
+          "source" : {
+            "column" : "c",
+            "table" : { "type" : "reference", "section" : "table", "key" : "bar" },
+            "whens" : [
+              {
+                "left" : { "type" : "reference", "section" : "_context", "key" : "q" },
+                "right" : { "type" : "number", "value" : "3" },
+                "op": "lt"
+              }
+            ]
+          }
+        },
+        {
+          "op" : "delete",
+          "source" : {
+            "column" : "d",
+            "whens" : [
+              {
+                "left" : { "type" : "reference", "section" : "_context", "key" : "r" },
+                "right" : { "type" : "number", "value" : "1" },
+                "op": "eq"
+              }
+            ]
+          }
+        }
+      ]
+    }
+  ]
+}

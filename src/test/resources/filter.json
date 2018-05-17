@@ -1,0 +1,15 @@
+{
+  "steps" : [
+    {
+      "name" : "filter",
+      "table" : { "type" : "reference", "section" : "tables", "key" : "table0" },
+      "filters" : [
+        {
+          "left" : { "type" : "reference", "section" : "_context", "key" : "a" },
+          "right" : { "type" : "number", "value" : "3" },
+          "op": "lt"
+        }
+      ]
+    }
+  ]
+}  
