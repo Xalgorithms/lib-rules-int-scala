@@ -1,0 +1,36 @@
+{
+  "steps": [
+    {
+      "reference": {
+        "package": "test",
+        "id": "table0",
+        "version": "0.0.0",
+        "name": "table0"
+      },
+      "indexes": [
+
+      ],
+      "name": "require"
+    },
+    {
+      "table_name": "table_final",
+      "columns": [
+        {
+          "table": {
+            "section": "table",
+            "key": "table0",
+            "type": "reference"
+          },
+          "sources": [
+            {
+              "columns": [
+
+              ]
+            }
+          ]
+        }
+      ],
+      "name": "assemble"
+    }
+  ]
+}

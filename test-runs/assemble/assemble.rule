@@ -1,0 +1,4 @@
+REQUIRE test:table0:0.0.0 AS table0;
+
+ASSEMBLE table_final
+  COLUMNS FROM table:table0;

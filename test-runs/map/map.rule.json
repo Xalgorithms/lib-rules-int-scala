@@ -1,0 +1,92 @@
+{
+  "steps": [
+    {
+      "reference": {
+        "package": "test",
+        "id": "table0",
+        "version": "0.0.1",
+        "name": "table0"
+      },
+      "indexes": [
+
+      ],
+      "name": "require"
+    },
+    {
+      "table_name": "t",
+      "columns": [
+        {
+          "table": {
+            "section": "table",
+            "key": "table0",
+            "type": "reference"
+          },
+          "sources": [
+            {
+              "columns": [
+
+              ]
+            }
+          ]
+        }
+      ],
+      "name": "assemble"
+    },
+    {
+      "table": {
+        "section": "table",
+        "key": "t",
+        "type": "reference"
+      },
+      "assignments": [
+        {
+          "source": {
+            "type": "function",
+            "name": "add",
+            "args": [
+              {
+                "section": "_context",
+                "key": "a",
+                "type": "reference"
+              },
+              {
+                "section": "_context",
+                "key": "b",
+                "type": "reference"
+              }
+            ]
+          },
+          "target": "c"
+        },
+        {
+          "source": {
+            "type": "function",
+            "name": "add",
+            "args": [
+              {
+                "section": "_local",
+                "key": "c",
+                "type": "reference"
+              },
+              {
+                "section": "_context",
+                "key": "a",
+                "type": "reference"
+              }
+            ]
+          },
+          "target": "d"
+        },
+        {
+          "source": {
+            "section": "_context",
+            "key": "b",
+            "type": "reference"
+          },
+          "target": "e"
+        }
+      ],
+      "name": "map"
+    }
+  ]
+}
