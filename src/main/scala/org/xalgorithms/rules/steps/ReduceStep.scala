@@ -23,13 +23,29 @@
 // <http://www.gnu.org/licenses/>.
 package org.xalgorithms.rules.steps
 
-import org.xalgorithms.rules.{ Context }
-import org.xalgorithms.rules.elements.{ Assignment, TableReference, When }
+import org.xalgorithms.rules.{ Context, RowContext }
+import org.xalgorithms.rules.elements._
 
 class ReduceStep(
-  val filters: Seq[When], table: TableReference,
-  assignments: Seq[Assignment]) extends AssignmentStep(table, assignments) {
+  val filters: Seq[When],
+  table: TableReference,
+  assignments: Seq[Assignment]
+) extends AssignmentStep(table, assignments) {
   def execute(ctx: Context) {
+    val tbl = ctx.lookup_table(table.section, table.name)
+    val reduced = tbl.foldLeft(Map[String, IntrinsicValue]()) { (acc_row, row) =>
+      val rctx = new RowContext(ctx, acc_row, row)
+      assignments.foldLeft(row) { (nrow, ass) =>
+        val ch: Map[String, IntrinsicValue] = ResolveValue(ass.source, rctx) match {
+          case Some(av) => Map(ass.target -> av)
+          case None => Map()
+        }
+        rctx.update_local(ch)
+        nrow ++ ch
+      }
+    }
+
+    ctx.retain_table(table.section, table.name, Seq(reduced))
   }
 }
 
