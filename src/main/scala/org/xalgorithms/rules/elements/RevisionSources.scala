@@ -23,20 +23,41 @@
 // <http://www.gnu.org/licenses/>.
 package org.xalgorithms.rules.elements
 
-class RevisionSource(val column: String, val whens: Seq[When]) {
+import org.xalgorithms.rules.{ Change, ChangeOps, Context }
+
+abstract class RevisionSource(val column: String, val whens: Seq[When]) {
+  def evaluate(ctx: Context): Seq[Map[String, Change]]
 }
 
 class TableRevisionSource(
-  column: String, whens: Seq[When], val table: TableReference) extends RevisionSource(column, whens) {
+  column: String,
+  whens: Seq[When],
+  val table: TableReference,
+  val op: ChangeOps.Value
+) extends RevisionSource(column, whens) {
+  def evaluate(ctx: Context): Seq[Map[String, Change]] = {
+    ctx.lookup_table(table.section, table.name).map { r =>
+      Map(column -> new Change(op, r(column)))
+    }
+  }
 }
 
 class AddRevisionSource(
-  column: String, whens: Seq[When], table: TableReference) extends TableRevisionSource(column, whens, table) {
+  column: String,
+  whens: Seq[When],
+  table: TableReference
+) extends TableRevisionSource(column, whens, table, ChangeOps.Add) {
 }
 
 class UpdateRevisionSource(
-  column: String, whens: Seq[When], table: TableReference) extends TableRevisionSource(column, whens, table) {
+  column: String,
+  whens: Seq[When],
+  table: TableReference
+) extends TableRevisionSource(column, whens, table, ChangeOps.Update) {
 }
 
 class RemoveRevisionSource(column: String, whens: Seq[When]) extends RevisionSource(column, whens) {
+  def evaluate(ctx: Context): Seq[Map[String, Change]] = {
+    Seq(Map(column -> new Change(ChangeOps.Remove, null)))
+  }
 }
