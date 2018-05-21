@@ -24,7 +24,7 @@
 package org.xalgorithms.rules.steps
 
 import org.xalgorithms.rules.{ Context, Change, ChangeOps, Revision }
-import org.xalgorithms.rules.elements.{ RevisionSource, TableReference, UpdateRevisionSource, Value }
+import org.xalgorithms.rules.elements._
 
 class ReviseStep(val table: TableReference, val revisions: Seq[RevisionSource]) extends Step {
   def execute(ctx: Context) {
@@ -37,14 +37,17 @@ class ReviseStep(val table: TableReference, val revisions: Seq[RevisionSource]) 
   }
 
   def changes_from_source(ctx: Context, src: RevisionSource): Seq[Map[String, Change]] = src match {
-    // DEBT: Missing Add/Remove
-    case (urs: UpdateRevisionSource) => changes_from_update(ctx, urs)
-    case _ => Seq[Map[String, Change]]()
+    case (trs: TableRevisionSource) => changes_from_table(ctx, trs)
+    case (rrs: RemoveRevisionSource) => Seq(Map(rrs.column -> new Change(ChangeOps.Remove, null)))
   }
 
-  def changes_from_update(ctx: Context, src: UpdateRevisionSource): Seq[Map[String, Change]] = {
+  def changes_from_table(ctx: Context, src: TableRevisionSource): Seq[Map[String, Change]] = {
+    val op = src match {
+      case (_: UpdateRevisionSource) => ChangeOps.Update
+      case (_: AddRevisionSource) => ChangeOps.Add
+    }
     val tbl = ctx.lookup_table(src.table.section, src.table.name)
-    tbl.map { r => Map(src.column -> new Change(ChangeOps.Update, r(src.column))) }
+    tbl.map { r => Map(src.column -> new Change(op, r(src.column))) }
   }
 }
 

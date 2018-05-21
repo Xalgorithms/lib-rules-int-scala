@@ -76,4 +76,83 @@ class ReviseStepSpec extends FlatSpec with Matchers with MockFactory {
 
     step.execute(ctx)
   }
+
+  it should "produce add Changes for existing tables from updated tables (same row count)" in {
+    val ctx = mock[Context]
+
+    val table0 = Seq(
+      Map("a" -> new StringValue("a0"), "b" -> new StringValue("foo"), "c" -> new StringValue("c0")),
+      Map("a" -> new StringValue("a1"), "b" -> new StringValue("bar"), "c" -> new StringValue("c1")),
+      Map("a" -> new StringValue("a2"), "b" -> new StringValue("baz"), "c" -> new StringValue("c2"))
+    )
+    val table_updates = Seq(
+      Map("d" -> new StringValue("D0"), "e" -> new StringValue("E0")),
+      Map("d" -> new StringValue("D1"), "e" -> new StringValue("E1")),
+      Map("d" -> new StringValue("D2"), "e" -> new StringValue("E1"))
+    )
+    val added_keys = Seq("d", "e")
+    val retained_keys = Seq("a", "b", "c")
+    val table_name = "table0"
+    val table_update_name = "table_updates"
+    val table_update_ref = new TableReference("table", table_update_name)
+
+    val step = new ReviseStep(
+      new TableReference("table", table_name),
+      added_keys.map { k => new AddRevisionSource(k, Seq(), table_update_ref) }
+    )
+
+    (ctx.lookup_table _)
+      .expects("table", table_update_name)
+      .repeat(added_keys.size)
+      .returning(table_updates)
+    (ctx.add_revision _).expects(table_name, *) onCall { (name, rev) =>
+      rev.changes should not be null
+      rev.changes.size shouldEqual(table_updates.size)
+      (rev.changes, table_updates).zipped.foreach { case (ch, row) =>
+        added_keys.foreach { k =>
+          ch.exists(_._1 == k) shouldEqual(true)
+          ch(k).op shouldEqual(ChangeOps.Add)
+          ch(k).value shouldBe a [StringValue]
+          ch(k).value.asInstanceOf[StringValue].value shouldEqual(row(k).asInstanceOf[StringValue].value)
+        }
+
+        retained_keys.foreach { k => ch.exists(_._1 == k) shouldEqual(false) }
+      }
+    }
+
+    step.execute(ctx)
+  }
+
+  it should "produce remove Changes" in {
+    val ctx = mock[Context]
+
+    val table0 = Seq(
+      Map("a" -> new StringValue("a0"), "b" -> new StringValue("foo"), "c" -> new StringValue("c0")),
+      Map("a" -> new StringValue("a1"), "b" -> new StringValue("bar"), "c" -> new StringValue("c1")),
+      Map("a" -> new StringValue("a2"), "b" -> new StringValue("baz"), "c" -> new StringValue("c2"))
+    )
+    val removed_keys = Seq("a", "b")
+    val retained_keys = Seq("c")
+    val table_name = "table0"
+    val table_update_name = "table_updates"
+    val table_update_ref = new TableReference("table", table_update_name)
+
+    val step = new ReviseStep(
+      new TableReference("table", table_name),
+      removed_keys.map { k => new RemoveRevisionSource(k, Seq()) }
+    )
+
+    (ctx.add_revision _).expects(table_name, *) onCall { (name, rev) =>
+      rev.changes should not be null
+      rev.changes.size shouldEqual(1)
+      val ch = rev.changes.head
+      removed_keys.foreach { case (k) =>
+        ch(k).op shouldEqual(ChangeOps.Remove)
+        ch(k).value shouldEqual(null)
+      }
+      retained_keys.foreach { k => ch.exists(_._1 == k) shouldEqual(false) }
+    }
+
+    step.execute(ctx)
+  }
 }
