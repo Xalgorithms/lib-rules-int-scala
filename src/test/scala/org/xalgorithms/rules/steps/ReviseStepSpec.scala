@@ -23,6 +23,7 @@
 // <http://www.gnu.org/licenses/>.
 package org.xalgorithms.rules.steps
 
+import com.github.javafaker.Faker
 import org.scalamock.scalatest.MockFactory
 import org.scalatest._
 
@@ -31,128 +32,35 @@ import org.xalgorithms.rules.elements._
 import org.xalgorithms.rules.steps._
 
 class ReviseStepSpec extends FlatSpec with Matchers with MockFactory {
-  "ReviseStep" should "produce update Changes for existing tables from updated tables (same row count)" in {
+  "ReviseStep" should "evaluate RevisionSources" in {
     val ctx = mock[Context]
-
-    val table0 = Seq(
-      Map("a" -> new StringValue("a0"), "b" -> new StringValue("foo"), "c" -> new StringValue("c0")),
-      Map("a" -> new StringValue("a1"), "b" -> new StringValue("bar"), "c" -> new StringValue("c1")),
-      Map("a" -> new StringValue("a2"), "b" -> new StringValue("baz"), "c" -> new StringValue("c2"))
+    val faker = new Faker()
+    val change_ops = Seq(
+      Tuple2(faker.crypto().sha1(), ChangeOps.Add),
+      Tuple2(faker.crypto().sha1(), ChangeOps.Remove),
+      Tuple2(faker.crypto().sha1(), ChangeOps.Update)
     )
-    val table_updates = Seq(
-      Map("a" -> new StringValue("AA"), "b" -> new StringValue("FOO")),
-      Map("a" -> new StringValue("AB"), "b" -> new StringValue("BAR")),
-      Map("a" -> new StringValue("AC"), "b" -> new StringValue("BAZ"))
-    )
-    val updated_keys = Seq("a", "b")
-    val retained_keys = Seq("c")
-    val table_name = "table0"
-    val table_update_name = "table_updates"
-    val table_update_ref = new TableReference("table", table_update_name)
-
-    val step = new ReviseStep(
-      new TableReference("table", table_name),
-      updated_keys.map { k => new UpdateRevisionSource(k, Seq(), table_update_ref) }
-    )
-
-    (ctx.lookup_table _)
-      .expects("table", table_update_name)
-      .repeat(updated_keys.size)
-      .returning(table_updates)
-    (ctx.add_revision _).expects(table_name, *) onCall { (name, rev) =>
-      rev.changes should not be null
-      rev.changes.size shouldEqual(table_updates.size)
-      (rev.changes, table_updates).zipped.foreach { case (ch, row) =>
-        updated_keys.foreach { k =>
-          ch.exists(_._1 == k) shouldEqual(true)
-          ch(k).op shouldEqual(ChangeOps.Update)
-          ch(k).value shouldBe a [StringValue]
-          ch(k).value.asInstanceOf[StringValue].value shouldEqual(row(k).asInstanceOf[StringValue].value)
-        }
-
-        retained_keys.foreach { k => ch.exists(_._1 == k) shouldEqual(false) }
-      }
+    val srcs = change_ops.map { tup =>
+      val src = mock[RevisionSource]
+      (src.evaluate _).expects(ctx).returning(
+        Seq(Map(tup._1 -> new Change(tup._2, null))))
+      src
     }
+    val table_ref = new TableReference(faker.hacker().noun(), faker.hacker().noun())
 
-    step.execute(ctx)
-  }
-
-  it should "produce add Changes for existing tables from updated tables (same row count)" in {
-    val ctx = mock[Context]
-
-    val table0 = Seq(
-      Map("a" -> new StringValue("a0"), "b" -> new StringValue("foo"), "c" -> new StringValue("c0")),
-      Map("a" -> new StringValue("a1"), "b" -> new StringValue("bar"), "c" -> new StringValue("c1")),
-      Map("a" -> new StringValue("a2"), "b" -> new StringValue("baz"), "c" -> new StringValue("c2"))
-    )
-    val table_updates = Seq(
-      Map("d" -> new StringValue("D0"), "e" -> new StringValue("E0")),
-      Map("d" -> new StringValue("D1"), "e" -> new StringValue("E1")),
-      Map("d" -> new StringValue("D2"), "e" -> new StringValue("E1"))
-    )
-    val added_keys = Seq("d", "e")
-    val retained_keys = Seq("a", "b", "c")
-    val table_name = "table0"
-    val table_update_name = "table_updates"
-    val table_update_ref = new TableReference("table", table_update_name)
-
-    val step = new ReviseStep(
-      new TableReference("table", table_name),
-      added_keys.map { k => new AddRevisionSource(k, Seq(), table_update_ref) }
-    )
-
-    (ctx.lookup_table _)
-      .expects("table", table_update_name)
-      .repeat(added_keys.size)
-      .returning(table_updates)
-    (ctx.add_revision _).expects(table_name, *) onCall { (name, rev) =>
-      rev.changes should not be null
-      rev.changes.size shouldEqual(table_updates.size)
-      (rev.changes, table_updates).zipped.foreach { case (ch, row) =>
-        added_keys.foreach { k =>
-          ch.exists(_._1 == k) shouldEqual(true)
-          ch(k).op shouldEqual(ChangeOps.Add)
-          ch(k).value shouldBe a [StringValue]
-          ch(k).value.asInstanceOf[StringValue].value shouldEqual(row(k).asInstanceOf[StringValue].value)
-        }
-
-        retained_keys.foreach { k => ch.exists(_._1 == k) shouldEqual(false) }
-      }
-    }
-
-    step.execute(ctx)
-  }
-
-  it should "produce remove Changes" in {
-    val ctx = mock[Context]
-
-    val table0 = Seq(
-      Map("a" -> new StringValue("a0"), "b" -> new StringValue("foo"), "c" -> new StringValue("c0")),
-      Map("a" -> new StringValue("a1"), "b" -> new StringValue("bar"), "c" -> new StringValue("c1")),
-      Map("a" -> new StringValue("a2"), "b" -> new StringValue("baz"), "c" -> new StringValue("c2"))
-    )
-    val removed_keys = Seq("a", "b")
-    val retained_keys = Seq("c")
-    val table_name = "table0"
-    val table_update_name = "table_updates"
-    val table_update_ref = new TableReference("table", table_update_name)
-
-    val step = new ReviseStep(
-      new TableReference("table", table_name),
-      removed_keys.map { k => new RemoveRevisionSource(k, Seq()) }
-    )
-
-    (ctx.add_revision _).expects(table_name, *) onCall { (name, rev) =>
-      rev.changes should not be null
+    (ctx.add_revision _).expects(table_ref.name, *) onCall { (name, rev) =>
+      // the way we're simulating in the RevisionSource mocks, we're
+      // acting as if the table has one row
       rev.changes.size shouldEqual(1)
-      val ch = rev.changes.head
-      removed_keys.foreach { case (k) =>
-        ch(k).op shouldEqual(ChangeOps.Remove)
-        ch(k).value shouldEqual(null)
+      rev.changes.head.size shouldEqual(change_ops.size)
+      change_ops.foreach { ch_op =>
+        rev.changes.head.exists(_._1 == ch_op._1) shouldEqual(true)
+        rev.changes.head(ch_op._1).op shouldEqual(ch_op._2)
+        rev.changes.head(ch_op._1).value shouldBe(null)
       }
-      retained_keys.foreach { k => ch.exists(_._1 == k) shouldEqual(false) }
     }
 
+    val step = new ReviseStep(table_ref, srcs)
     step.execute(ctx)
   }
 }
