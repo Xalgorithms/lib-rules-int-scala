@@ -299,7 +299,7 @@ class SyntaxSpec extends FlatSpec with Matchers {
     o.revisions(1).whens(0).op shouldEqual("lt")
 
     o.revisions(2) should not be null
-    o.revisions(2) shouldBe a [DeleteRevisionSource]
+    o.revisions(2) shouldBe a [RemoveRevisionSource]
     o.revisions(2).column shouldEqual("d")
     o.revisions(2).whens.length shouldEqual(1)
     o.revisions(2).whens(0) should not be null

@@ -38,5 +38,5 @@ class UpdateRevisionSource(
   column: String, whens: Seq[When], table: TableReference) extends TableRevisionSource(column, whens, table) {
 }
 
-class DeleteRevisionSource(column: String, whens: Seq[When]) extends RevisionSource(column, whens) {
+class RemoveRevisionSource(column: String, whens: Seq[When]) extends RevisionSource(column, whens) {
 }

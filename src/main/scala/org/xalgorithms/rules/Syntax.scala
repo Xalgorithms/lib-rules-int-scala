@@ -86,10 +86,10 @@ object StepProduce {
     (JsPath \ "whens").read[JsArray]
   )(produce_update_revision_source _)
 
-  implicit val deleteRevisionSourceReads : Reads[DeleteRevisionSource] = (
+  implicit val removeRevisionSourceReads : Reads[RemoveRevisionSource] = (
     (JsPath \ "column").read[String] and
     (JsPath \ "whens").read[JsArray]
-  )(produce_delete_revision_source _)
+  )(produce_remove_revision_source _)
 
   def stringOrNull(content: JsObject, k: String): String = {
     return (content \ k).validate[String].getOrElse(null)
@@ -165,7 +165,7 @@ object StepProduce {
   def produce_revision_source(op: String, source: JsObject): RevisionSource = op match {
     case "add" => source.validate[AddRevisionSource].getOrElse(null)
     case "update" => source.validate[UpdateRevisionSource].getOrElse(null)
-    case "delete" => source.validate[DeleteRevisionSource].getOrElse(null)
+    case "delete" => source.validate[RemoveRevisionSource].getOrElse(null)
     case _ => null
   }
 
@@ -185,8 +185,8 @@ object StepProduce {
     )
   }
 
-  def produce_delete_revision_source(column: String, whens: JsArray): DeleteRevisionSource = {
-    return new DeleteRevisionSource(
+  def produce_remove_revision_source(column: String, whens: JsArray): RemoveRevisionSource = {
+    return new RemoveRevisionSource(
       column,
       whens.validate[Seq[When]].getOrElse(Seq())
     )
