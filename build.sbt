@@ -28,6 +28,7 @@ lazy val VERSION_BETTER_FILES        = "3.4.0"
 //lazy val VERSION_JACKSON_DATABIND    = "2.6.5"
 lazy val VERSION_SCALA_TEST          = "3.0.5"
 lazy val VERSION_SCALA_MOCK          = "4.1.0"
+lazy val VERSION_FAKER               = "0.15"
 
 lazy val settings = Seq(
   name := "xa-rules-interpreter",
@@ -42,6 +43,7 @@ lazy val settings = Seq(
 
 lazy val deps = Seq(
   "com.typesafe.play"      %% "play-json"                 % VERSION_PLAY_JSON,
+  "com.github.javafaker"   %  "javafaker"                 % VERSION_FAKER,
   // for org.bson
   "org.mongodb.scala"      %% "mongo-scala-driver"        % VERSION_MONGO_SCALA,
   "org.scalactic"          %% "scalactic"                 % VERSION_SCALA_TEST,
