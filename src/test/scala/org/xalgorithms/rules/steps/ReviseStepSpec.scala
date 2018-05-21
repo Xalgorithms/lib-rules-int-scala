@@ -23,60 +23,57 @@
 // <http://www.gnu.org/licenses/>.
 package org.xalgorithms.rules.steps
 
+import org.scalamock.scalatest.MockFactory
 import org.scalatest._
+
 import org.xalgorithms.rules._
 import org.xalgorithms.rules.elements._
 import org.xalgorithms.rules.steps._
 
-class ReviseStepSpec extends FlatSpec with Matchers {
-  "ReviseStep" should "produce updates for existing tables" in {
-    val ctx = new GlobalContext(new ResourceLoadTableSource())
-    ctx.load(new PackagedTableReference("package", "table2", "0.0.1", "table2"))
-    ctx.load(new PackagedTableReference("package", "table2_updates", "0.0.1", "table2_updates"))
+class ReviseStepSpec extends FlatSpec with Matchers with MockFactory {
+  "ReviseStep" should "produce update Changes for existing tables from updated tables (same row count)" in {
+    val ctx = mock[Context]
+
+    val table0 = Seq(
+      Map("a" -> new StringValue("a0"), "b" -> new StringValue("foo"), "c" -> new StringValue("c0")),
+      Map("a" -> new StringValue("a1"), "b" -> new StringValue("bar"), "c" -> new StringValue("c1")),
+      Map("a" -> new StringValue("a2"), "b" -> new StringValue("baz"), "c" -> new StringValue("c2"))
+    )
+    val table_updates = Seq(
+      Map("a" -> new StringValue("AA"), "b" -> new StringValue("FOO")),
+      Map("a" -> new StringValue("AB"), "b" -> new StringValue("BAR")),
+      Map("a" -> new StringValue("AC"), "b" -> new StringValue("BAZ"))
+    )
+    val updated_keys = Seq("a", "b")
+    val retained_keys = Seq("c")
+    val table_name = "table0"
+    val table_update_name = "table_updates"
+    val table_update_ref = new TableReference("table", table_update_name)
 
     val step = new ReviseStep(
-      new TableReference("table", "table2"),
-      Seq(
-        new UpdateRevisionSource(
-          "a", Seq(), new TableReference("table", "table2_updates")
-        ),
-        new UpdateRevisionSource(
-          "b", Seq(), new TableReference("table", "table2_updates")
-        )
-      )
+      new TableReference("table", table_name),
+      updated_keys.map { k => new UpdateRevisionSource(k, Seq(), table_update_ref) }
     )
 
-    step.execute(ctx)
+    (ctx.lookup_table _)
+      .expects("table", table_update_name)
+      .repeat(updated_keys.size)
+      .returning(table_updates)
+    (ctx.add_revision _).expects(table_name, *) onCall { (name, rev) =>
+      rev.changes should not be null
+      rev.changes.size shouldEqual(table_updates.size)
+      (rev.changes, table_updates).zipped.foreach { case (ch, row) =>
+        updated_keys.foreach { k =>
+          ch.exists(_._1 == k) shouldEqual(true)
+          ch(k).op shouldEqual(ChangeOps.Update)
+          ch(k).value shouldBe a [StringValue]
+          ch(k).value.asInstanceOf[StringValue].value shouldEqual(row(k).asInstanceOf[StringValue].value)
+        }
 
-    val all_revs = ctx.revisions()
-    all_revs should not be null
-    all_revs.exists(_._1 == "table2") shouldBe true
-
-    val revs = all_revs("table2")
-    revs.length shouldEqual(1)
-
-    val rev0 = revs(0)
-    rev0.changes should not be null
-    rev0.changes.length shouldEqual(5)
-
-    val a_vals = Seq(10.0, 20.0, 30.0, 30.0, 40.0)
-    val b_vals = Seq("FOO", "BAR", "BAZ", "FOO", "FIB")
-
-    rev0.changes.indices.foreach { i =>
-      rev0.changes()(i) should not be null
-
-      rev0.changes()(i)("a") should not be null
-      rev0.changes()(i)("a").op shouldEqual(ChangeOps.Update)
-      rev0.changes()(i)("a").value shouldBe a [NumberValue]
-      rev0.changes()(i)("a").value.asInstanceOf[NumberValue].value shouldEqual(a_vals(i))
-
-      rev0.changes()(i)("b") should not be null
-      rev0.changes()(i)("b").op shouldEqual(ChangeOps.Update)
-      rev0.changes()(i)("b").value shouldBe a [StringValue]
-      rev0.changes()(i)("b").value.asInstanceOf[StringValue].value shouldEqual(b_vals(i))
-
-      rev0.changes()(i).exists(_._1 == "c") shouldBe false
-      rev0.changes()(i).exists(_._1 == "d") shouldBe false
+        retained_keys.foreach { k => ch.exists(_._1 == k) shouldEqual(false) }
+      }
     }
+
+    step.execute(ctx)
   }
 }
