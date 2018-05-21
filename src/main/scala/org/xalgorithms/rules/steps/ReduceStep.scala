@@ -35,13 +35,20 @@ class ReduceStep(
     val tbl = ctx.lookup_table(table.section, table.name)
     val reduced = tbl.foldLeft(Map[String, IntrinsicValue]()) { (acc_row, row) =>
       val rctx = new RowContext(ctx, acc_row, row)
-      assignments.foldLeft(row) { (nrow, ass) =>
-        val ch: Map[String, IntrinsicValue] = ResolveValue(ass.source, rctx) match {
-          case Some(av) => Map(ass.target -> av)
-          case None => Map()
+      // DEBT: This isn't quite correct b/c if there are multiple
+      // assignments against the row, this WHEN check won't be able to
+      // access previous local assignments
+      if (EvaluateMany(rctx, filters)) {
+        assignments.foldLeft(Map[String, IntrinsicValue]()) { (nrow, ass) =>
+          val ch: Map[String, IntrinsicValue] = ResolveValue(ass.source, rctx) match {
+            case Some(av) => Map(ass.target -> av)
+            case None => Map()
+          }
+          rctx.update_local(ch)
+          nrow ++ ch
         }
-        rctx.update_local(ch)
-        nrow ++ ch
+      } else {
+        acc_row
       }
     }
 

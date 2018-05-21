@@ -60,8 +60,6 @@ class ReduceStepSpec extends FlatSpec with Matchers with MockFactory {
 
     val expected = Seq(
       Map(
-        "a" -> new NumberValue(21.0),
-        "b" -> new NumberValue(22.0),
         "c" -> new NumberValue(22.0),
         "d" -> new NumberValue(21.0),
         "e" -> new NumberValue(33.0)
@@ -72,6 +70,60 @@ class ReduceStepSpec extends FlatSpec with Matchers with MockFactory {
     (ctx.retain_table _).expects(section, table_name, *) onCall { (section, name, tbl) =>
       tbl.size shouldEqual(expected.size)
       (tbl, expected).zipped.foreach { case (rac, rex) =>
+        rac.keySet shouldEqual(rex.keySet)
+        rex.foreach { case (k, v) =>
+          rac(k) shouldBe a [NumberValue]
+          rac(k).asInstanceOf[NumberValue].value shouldEqual(v.asInstanceOf[NumberValue].value)
+        }
+      }
+    }
+
+    step.execute(ctx)
+  }
+
+  it should "only include matching elements when executing" in {
+    val ctx = mock[Context]
+
+    val table0 = Seq(
+      Map("a" -> new NumberValue(1.0), "b" -> new NumberValue(2.0)),
+      Map("a" -> new NumberValue(11.0), "b" -> new NumberValue(12.0)),
+      Map("a" -> new NumberValue(16.0), "b" -> new NumberValue(6.0)),
+      Map("a" -> new NumberValue(5.0), "b" -> new NumberValue(6.0)),
+      Map("a" -> new NumberValue(21.0), "b" -> new NumberValue(22.0))
+    )
+
+    val section = "table"
+    val table_name = "table0"
+
+    val step = new ReduceStep(
+      Seq(
+        new When(
+          new DocumentReferenceValue("_context", "a"),
+          new NumberValue(15.0),
+          "lt")
+      ),
+      new TableReference(section, table_name),
+      Seq(
+        new Assignment("c", new FunctionValue(
+          "add", Seq(
+            new DocumentReferenceValue("_context", "a"),
+            new DocumentReferenceValue("_local", "c")
+          )
+        ))
+      )
+    )
+
+    val expected = Seq(
+      Map(
+        "c" -> new NumberValue(17.0)
+      )
+    )
+
+    (ctx.lookup_table _).expects(section, table_name).returning(table0)
+    (ctx.retain_table _).expects(section, table_name, *) onCall { (section, name, tbl) =>
+      tbl.size shouldEqual(expected.size)
+      (tbl, expected).zipped.foreach { case (rac, rex) =>
+        rac.keySet shouldEqual(rex.keySet)
         rex.foreach { case (k, v) =>
           rac(k) shouldBe a [NumberValue]
           rac(k).asInstanceOf[NumberValue].value shouldEqual(v.asInstanceOf[NumberValue].value)
