@@ -84,8 +84,8 @@ started](https://github.com/Xalgorithms/xa-rules/blob/master/README.md)
 for that library in order to compile your rules.
 
 Once you have been able to compile the rules to the *internal JSON
-format*, you can create your own "test run" in the test runs directory
-(the layout is straightforward). To invoke your rule, use:
+format*, you can create your own "test run" in the `test-runs/`
+directory (the layout is straightforward). To invoke your rule, use:
 
 ```
 $ sbt "runMain org.xalgorithms.rules.Runner test-runs/<your directory>/"
