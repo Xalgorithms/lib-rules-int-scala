@@ -32,11 +32,5 @@ object ChangeOps extends Enumeration {
 class Change(val op: ChangeOps.Value, val value: Value) {
 }
 
-class Revision(changes: Seq[Map[String, Change]]) {
-  var _changes: scala.collection.mutable.Seq[Map[String, Change]] =
-    scala.collection.mutable.Seq() ++ changes
-
-  def changes(): Seq[Map[String, Change]] = {
-    return _changes.toSeq
-  }
+class Revision(val changes: Seq[Map[String, Change]]) {
 }
