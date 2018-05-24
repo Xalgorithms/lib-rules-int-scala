@@ -147,10 +147,6 @@ class ContextSpec extends FlatSpec with Matchers with MockFactory {
     (ctx.revisions _).expects().returning(revisions)
 
     rctx.revisions() shouldEqual(revisions)
-
-    (ctx.add_revision _).expects(rev_key, rev)
-
-    rctx.add_revision(rev_key, rev)
   }
 
   it should "allow local modification without affecting the original source" in {

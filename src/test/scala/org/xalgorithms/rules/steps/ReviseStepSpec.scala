@@ -32,35 +32,127 @@ import org.xalgorithms.rules.elements._
 import org.xalgorithms.rules.steps._
 
 class ReviseStepSpec extends FlatSpec with Matchers with MockFactory {
-  "ReviseStep" should "evaluate RevisionSources" in {
-    val ctx = mock[Context]
-    val faker = new Faker()
-    val change_ops = Seq(
-      Tuple2(faker.crypto().sha1(), ChangeOps.Add),
-      Tuple2(faker.crypto().sha1(), ChangeOps.Remove),
-      Tuple2(faker.crypto().sha1(), ChangeOps.Update)
-    )
-    val srcs = change_ops.map { tup =>
-      val src = mock[RevisionSource]
-      (src.evaluate _).expects(ctx).returning(
-        Seq(Map(tup._1 -> new Change(tup._2, null))))
-      src
-    }
-    val table_ref = new TableReference(faker.hacker().noun(), faker.hacker().noun())
+  val faker = new Faker()
 
-    (ctx.add_revision _).expects(table_ref.name, *) onCall { (name, rev) =>
-      // the way we're simulating in the RevisionSource mocks, we're
-      // acting as if the table has one row
-      rev.changes.size shouldEqual(1)
-      rev.changes.head.size shouldEqual(change_ops.size)
-      change_ops.foreach { ch_op =>
-        rev.changes.head.exists(_._1 == ch_op._1) shouldEqual(true)
-        rev.changes.head(ch_op._1).op shouldEqual(ch_op._2)
-        rev.changes.head(ch_op._1).value shouldBe(null)
+  def make_string_table(tbl: Seq[Map[String, String]]): Seq[Map[String, IntrinsicValue]] = {
+    tbl.map(make_string_row)
+  }
+
+  def make_string_row(row: Map[String, String]): Map[String, IntrinsicValue] = {
+    row.mapValues { v => new StringValue(v) }
+  }
+
+  def validate_addition(
+    target_table: Seq[Map[String, String]],
+    changes: Seq[Map[String, String]],
+    expected: Seq[Option[Map[String, String]]]
+  ): Unit = {
+    val ctx = mock[Context]
+
+    val target_ref = new TableReference("table", faker.hacker().noun())
+    val source_ref = new TableReference("table", faker.hacker().noun())
+
+    val source = mock[RevisionSource]
+    val sources = Seq(source)
+    val source_evaluation = target_table.indices.map { i =>
+      if (i < changes.size) {
+        Some(new Addition(make_string_row(changes(i))))
+      } else {
+        None
       }
     }
 
-    val step = new ReviseStep(table_ref, srcs)
+    (source.evaluate _).expects(ctx).returning(source_evaluation)
+    (ctx.revise_table _).expects(target_ref, *).once onCall { (_, rev) =>
+      rev.changes.size shouldEqual(target_table.size)
+      (expected, rev.changes).zipped.foreach { case (opt_ex_row, applied_changes) =>
+        applied_changes.size shouldEqual(1)
+        val opt_ch = applied_changes.head
+        opt_ex_row match {
+          case Some(ex_row) => {
+            opt_ch match {
+              case Some(ch) => {
+                ch shouldBe a [Addition]
+                ch.columns.size shouldEqual(ex_row.size)
+                ex_row.foreach { case (k, v) =>
+                  ch.columns.exists(_._1 == k) shouldBe(true)
+                  ch.columns(k) shouldBe a [StringValue]
+                  ch.columns(k).asInstanceOf[StringValue].value shouldEqual(v)
+                }
+              }
+              case None => true shouldEqual(false)
+            }
+          }
+          case None => {
+            opt_ch shouldBe(None)
+          }
+        }
+      }
+    }
+    (ctx.lookup_table _).expects(target_ref.section, target_ref.name).returning(make_string_table(target_table))
+
+    val step = new ReviseStep(target_ref, sources)
     step.execute(ctx)
+  }
+
+  "ReviseStep" should "generate adds" in {
+    val target_table = Seq(
+      Map("a" -> "0", "b" -> "2"),
+      Map("a" -> "1", "b" -> "4"),
+      Map("a" -> "2", "b" -> "6")
+    )
+
+    val changes = Seq(
+      Map("c" -> "3"),
+      Map("c" -> "6"),
+      Map("c" -> "9")
+    )
+    val expected = changes.map { ch => Some(ch) }
+
+    validate_addition(target_table, changes, expected)
+  }
+
+  it should "generate empty changes if the source has less rows" in {
+    val target_table = Seq(
+      Map("a" -> "0", "b" -> "2"),
+      Map("a" -> "1", "b" -> "4"),
+      Map("a" -> "2", "b" -> "6")
+    )
+
+    val changes: Seq[Map[String, String]] = Seq(
+      Map("c" -> "3"),
+      Map("c" -> "6")
+    )
+
+    val expected: Seq[Option[Map[String, String]]] = Seq(
+      Some(Map("c" -> "3")),
+      Some(Map("c" -> "6")),
+      None
+    )
+
+    validate_addition(target_table, changes, expected)
+  }
+
+  it should "truncate to the size of the target table" in {
+    val target_table = Seq(
+      Map("a" -> "0", "b" -> "2"),
+      Map("a" -> "1", "b" -> "4"),
+      Map("a" -> "2", "b" -> "6")
+    )
+
+    val changes: Seq[Map[String, String]] = Seq(
+      Map("c" -> "3"),
+      Map("c" -> "6"),
+      Map("c" -> "9"),
+      Map("c" -> "12")
+    )
+
+    val expected: Seq[Option[Map[String, String]]] = Seq(
+      Some(Map("c" -> "3")),
+      Some(Map("c" -> "6")),
+      Some(Map("c" -> "9"))
+    )
+
+    validate_addition(target_table, changes, expected)
   }
 }

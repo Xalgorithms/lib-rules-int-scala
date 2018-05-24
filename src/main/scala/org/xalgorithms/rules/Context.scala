@@ -23,7 +23,7 @@
 // <http://www.gnu.org/licenses/>.
 package org.xalgorithms.rules
 
-import org.xalgorithms.rules.elements.{ PackagedTableReference, IntrinsicValue }
+import org.xalgorithms.rules.elements.{ PackagedTableReference, IntrinsicValue, TableReference }
 import scala.collection.mutable
 
 abstract class Context {
@@ -33,7 +33,7 @@ abstract class Context {
   def lookup_in_map(section: String, key: String): Option[IntrinsicValue]
   def lookup_table(section: String, table_name: String): Seq[Map[String, IntrinsicValue]]
   def revisions(): Map[String, Seq[Revision]]
-  def add_revision(key: String, rev: Revision)
+  def revise_table(ref: TableReference, rev: Revision)
 }
 
 class GlobalContext(load: LoadTableSource) extends Context {
@@ -75,9 +75,7 @@ class GlobalContext(load: LoadTableSource) extends Context {
     return _revisions.toMap
   }
 
-  def add_revision(key: String, rev: Revision) {
-    val current = _revisions.getOrElse(key, scala.collection.mutable.Seq())
-    _revisions.put(key, current ++ scala.collection.mutable.Seq(rev))
+  def revise_table(ref: TableReference, rev: Revision) {
   }
 }
 
@@ -107,5 +105,5 @@ class RowContext(
 
   def revisions(): Map[String, Seq[Revision]] = ctx.revisions()
 
-  def add_revision(key: String, rev: Revision) = ctx.add_revision(key, rev)
+  def revise_table(ref: TableReference, rev: Revision) = ctx.revise_table(ref, rev)
 }

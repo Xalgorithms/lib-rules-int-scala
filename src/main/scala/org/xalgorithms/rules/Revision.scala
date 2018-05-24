@@ -29,8 +29,11 @@ object ChangeOps extends Enumeration {
   val Add, Remove, Update = Value
 }
 
-class Change(val op: ChangeOps.Value, val value: Value) {
+class Change(val columns: Map[String, Value]) {
 }
 
-class Revision(val changes: Seq[Map[String, Change]]) {
+class Addition(columns: Map[String, Value]) extends Change(columns) {
+}
+
+class Revision(val changes: Seq[Seq[Option[Change]]]) {
 }

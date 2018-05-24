@@ -26,14 +26,163 @@ package org.xalgorithms.rules.steps
 import org.xalgorithms.rules.{ Context, Change, ChangeOps, Revision }
 import org.xalgorithms.rules.elements._
 
-class ReviseStep(val table: TableReference, val revisions: Seq[RevisionSource]) extends Step {
+// SYNTAX
+// REVISE <rev_table_ref>
+//   (ADD|UPDATE) <key> FROM <src_table_ref> WHEN (condition)+)
+//   REMOVE key WHEN (condition)+
+//
+// local   => keyspace of the revised table
+// context => keyspace of the source table (ADD, UPDATE) only
+//
+// OPERATIONS
+// - ADD
+//   - pulls <key> from <src_table_ref> into EVERY row of <rev_table_ref>
+//   - does nothing if a row in <rev_table_ref> contains <key>
+// - UPDATE
+//   - pulls <key> from <src_table_ref> into EVERY row of
+//     <rev_table_ref> ONLY IF <key> exists in the row
+//   - does nothing if a row in <rev_table_ref> DOES NOT contain <key>
+// - REMOVE
+//   - removes <key> from <rev>
+//
+// CONDICTIONS
+// - affect which rows in the revised table are affected
+//
+//
+// COMMENTARY
+//
+// Conceptually, this step is three stages:
+//
+// 1. CONCAT: ADD or UPDATE represent a concatination of the revised
+//    and source table; it is assumed that the author of the rule has
+//    already prepared the tables for REVISE. If <src_table_ref> has a
+//    different row count from <rev_table_ref>, then the row count of
+//    <rev_table_ref> will be the final size of the table.
+// 2. FILTER: The conditions on the modifications filter the rows that
+//    can participate in the revision
+// 3. REVISE: The revision is recorded according to the change
+//    operation
+//
+// EXAMPLES (represented using a pseudo-code):
+//
+// table0:
+// [
+//   { "a" : 0, "b": 2 },
+//   { "a" : 1, "b": 4 },
+//   { "a" : 2, "b": 6 }
+// ]
+// table1:
+// [
+//   { "a" : 0, "c": 3 },
+//   { "a" : 1, "c": 6 },
+//   { "a" : 2, "c": 9 }
+// ]
+// table2:
+// [
+//   { "a" : 2, "c": 3" },
+//   { "a" : 3, "c": 6" },
+// ]
+//
+// EXAMPLE0
+// 
+// REVISE table0 ADD c FROM table1
+//
+// would yield:
+//
+// [
+//   Add({ "c" : "3" }),
+//   Add({ "c" : "6" }),
+//   Add({ "c" : "9" })
+// ]
+//
+// Adding a WHEN to this REVISE could refine the result while
+// retaining the row count:
+//
+// REVISE table0 ADD c FROM table1 WHEN @c < 9 WHEN a > 1
+//
+// [
+//   Add({ }),
+//   Add({ "c" : "6" }),
+//   Add({ })
+// ]
+//
+// would yield:
+//
+// EXAMPLE1
+// 
+// REVISE table0 ADD c FROM table2
+//
+// would yield:
+//
+// [
+//   Add({ "c" : "3" }),
+//   Add({ "c" : "6" }),
+//   Add({ })
+// ]
+//
+// EXAMPLE2
+// 
+// REVISE table0 ADD a FROM table2
+//
+// would yield (due to 'a' existing):
+//
+// [
+//   Add({ }),
+//   Add({ }),
+//   Add({ })
+// ]
+//
+// EXAMPLE3
+// 
+// REVISE table0 UPDATE c FROM table2
+//
+// would yield (due to 'c' NOT existing):
+//
+// [
+//   Update({ }),
+//   Update({ }),
+//   Update({ })
+// ]
+//
+// EXAMPLE4
+// 
+// REVISE table0 UPDATE (a, c) FROM table2
+//
+// would yield (due to 'a' existing):
+//
+// [
+//   Update({ "a" : "2" }),
+//   Update({ "a" : "3" }),
+//   Update({ })
+// ]
+//
+// Adding a WHEN to this REVISE could refine the result while
+// retaining the row count:
+//
+// REVISE table0 ADD c FROM table1 WHEN a >= 1 WHEN @a < 3
+//
+// would yield:
+//
+// [
+//   Update({ "a" : "2" }),
+//   Update({ }),
+//   Update({ })
+// ]
+//
+class ReviseStep(val table: TableReference, val sources: Seq[RevisionSource]) extends Step {
   def execute(ctx: Context) {
-    val all_changes = revisions.foldLeft(Seq[Map[String, Change]]()) { (seq, src) =>
-      val changes = src.evaluate(ctx)
-      seq.zipAll(changes, Map(), Map()).map { tup => tup._1 ++ tup._2 }
+    val tbl = ctx.lookup_table(table.section, table.name)
+    val all_changes = sources.map(_.evaluate(ctx)).foldLeft(
+      Seq[Seq[Option[Change]]]()
+    ) { (changes, src_changes) =>
+      if (changes.size == 0) {
+        src_changes.map { ch => Seq(ch) }
+      } else {
+        (changes, src_changes).zipped.map { case (a, ch) => a :+ ch }
+      }
     }
 
-    ctx.add_revision(table.name, new Revision(all_changes))
+    ctx.revise_table(table, new Revision(all_changes))
   }
 }
 

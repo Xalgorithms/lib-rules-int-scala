@@ -26,7 +26,7 @@ package org.xalgorithms.rules.elements
 import org.xalgorithms.rules.{ Change, ChangeOps, Context }
 
 abstract class RevisionSource(val column: String, val whens: Seq[When]) {
-  def evaluate(ctx: Context): Seq[Map[String, Change]]
+  def evaluate(ctx: Context): Seq[Option[Change]]
 }
 
 class TableRevisionSource(
@@ -35,9 +35,10 @@ class TableRevisionSource(
   val table: TableReference,
   val op: ChangeOps.Value
 ) extends RevisionSource(column, whens) {
-  def evaluate(ctx: Context): Seq[Map[String, Change]] = {
+  def evaluate(ctx: Context): Seq[Option[Change]] = {
     ctx.lookup_table(table.section, table.name).map { r =>
-      Map(column -> new Change(op, r(column)))
+      //Map(column -> new Change(op, r(column)))
+      None
     }
   }
 }
@@ -57,7 +58,8 @@ class UpdateRevisionSource(
 }
 
 class RemoveRevisionSource(column: String, whens: Seq[When]) extends RevisionSource(column, whens) {
-  def evaluate(ctx: Context): Seq[Map[String, Change]] = {
-    Seq(Map(column -> new Change(ChangeOps.Remove, null)))
+  def evaluate(ctx: Context): Seq[Option[Change]] = {
+    //Seq(Map(column -> new Change(ChangeOps.Remove, null)))
+    Seq()
   }
 }
