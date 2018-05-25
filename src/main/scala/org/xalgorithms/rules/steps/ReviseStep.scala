@@ -28,8 +28,8 @@ import org.xalgorithms.rules.elements._
 
 // SYNTAX
 // REVISE <rev_table_ref>
-//   (ADD|UPDATE) <key> FROM <src_table_ref> WHEN (condition)+)
-//   REMOVE key WHEN (condition)+
+//   (ADD|UPDATE) <key> FROM <src_table_ref>
+//   REMOVE key WHEN
 //
 // local   => keyspace of the revised table
 // context => keyspace of the source table (ADD, UPDATE) only
@@ -95,19 +95,6 @@ import org.xalgorithms.rules.elements._
 //   Add({ "c" : "9" })
 // ]
 //
-// Adding a WHEN to this REVISE could refine the result while
-// retaining the row count:
-//
-// REVISE table0 ADD c FROM table1 WHEN @c < 9 WHEN a > 1
-//
-// [
-//   Add({ }),
-//   Add({ "c" : "6" }),
-//   Add({ })
-// ]
-//
-// would yield:
-//
 // EXAMPLE1
 // 
 // REVISE table0 ADD c FROM table2
@@ -153,19 +140,6 @@ import org.xalgorithms.rules.elements._
 // [
 //   Update({ "a" : "2" }),
 //   Update({ "a" : "3" }),
-//   Update({ })
-// ]
-//
-// Adding a WHEN to this REVISE could refine the result while
-// retaining the row count:
-//
-// REVISE table0 ADD c FROM table1 WHEN a >= 1 WHEN @a < 3
-//
-// would yield:
-//
-// [
-//   Update({ "a" : "2" }),
-//   Update({ }),
 //   Update({ })
 // ]
 //
