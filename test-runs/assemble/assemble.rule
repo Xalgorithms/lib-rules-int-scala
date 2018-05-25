@@ -1,4 +1,9 @@
-REQUIRE test:table0:0.0.0 AS table0;
+REQUIRE test:table_origin:0.0.0 AS table_origin;
+REQUIRE test:table_join:0.0.0 AS table_join;
 
-ASSEMBLE table_final
-  COLUMNS FROM table:table0;
+ASSEMBLE table0
+  COLUMNS FROM table:table_origin;
+
+ASSEMBLE table1
+  COLUMNS (a, c) FROM table:table_origin
+  COLUMN p FROM table:table_join;
