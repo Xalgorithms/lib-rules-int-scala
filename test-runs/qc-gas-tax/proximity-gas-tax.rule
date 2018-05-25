@@ -39,10 +39,11 @@ REQUIRE ca.qc.tax:reductions_by_distance:0.0.1 AS reductions_by_distance;
 # yields:
 #
 # [
-#  { "distance" : 1, "reduction" : 0.05 },
-#  { "distance" : 5, "reduction" : 0.03 },
-#  { "distance" : 10, "reduction" : 0.02 },
-#  { "distance" : 20, "reduction" : 0.01 }
+#  { "distance" : 20, "reduction" : 0.00 },
+#  { "distance" : 15, "reduction" : 0.02 },
+#  { "distance" : 10, "reduction" : 0.04 },
+#  { "distance" : 5,  "reduction" : 0.06 },
+#  { "distance" : 0,  "reduction" : 0.08  }
 # ]
 #
 # The second COLUMN expression performs a cartesian product against
@@ -52,12 +53,12 @@ REQUIRE ca.qc.tax:reductions_by_distance:0.0.1 AS reductions_by_distance;
 # This yields a final table:
 #
 # [
-#  { "distance" : 1, "reduction" : 0.05, "seller_distance" : 1.7 },
-#  { "distance" : 5, "reduction" : 0.03, "seller_distance" : 1.7 },
-#  { "distance" : 10, "reduction" : 0.02, "seller_distance" : 1.7 },
-#  { "distance" : 20, "reduction" : 0.01, "seller_distance" : 1.7 }
+#  { "distance" : 20, "reduction" : 0.00, "seller_distance" : 1.7 },
+#  { "distance" : 15, "reduction" : 0.02, "seller_distance" : 1.7 },
+#  { "distance" : 10, "reduction" : 0.04, "seller_distance" : 1.7 },
+#  { "distance" : 5,  "reduction" : 0.06, "seller_distance" : 1.7 },
+#  { "distance" : 0,  "reduction" : 0.08, "seller_distance" : 1.7 }
 # ]
-#
 
 ASSEMBLE sellers_reductions
   COLUMNS FROM table:reductions_by_distance
@@ -70,10 +71,11 @@ ASSEMBLE sellers_reductions
 # yielding:
 #
 # [
-#  { "distance" : 1, "reduction" : 0.05, "seller_distance" : 1.7, "difference" : -.7 },
-#  { "distance" : 5, "reduction" : 0.03, "seller_distance" : 1.7, "difference" : 3.3 },
-#  { "distance" : 10, "reduction" : 0.02, "seller_distance" : 1.7, "difference" : 8.3 },
-#  { "distance" : 20, "reduction" : 0.01, "seller_distance" : 1.7, "difference" : 18.3 }
+#  { "distance" : 20, "reduction" : 0.00, "seller_distance" : 1.7, "difference" : 18.3 },
+#  { "distance" : 15, "reduction" : 0.02, "seller_distance" : 1.7, "difference" : 13.3 },
+#  { "distance" : 10, "reduction" : 0.04, "seller_distance" : 1.7, "difference" : 8.3  },
+#  { "distance" : 5,  "reduction" : 0.06, "seller_distance" : 1.7, "difference" : 3.3  },
+#  { "distance" : 0,  "reduction" : 0.08, "seller_distance" : 1.7, "difference" : -1.7 }
 # ]
 #
 MAP table:sellers_reductions
@@ -82,10 +84,11 @@ MAP table:sellers_reductions
 # Since we will be reducing using min(), we should remove any rows that are < 0
 #
 # [
-#  { "distance" : 5, "reduction" : 0.03, "seller_distance" : 1.7, "difference" : 3.3 },
-#  { "distance" : 10, "reduction" : 0.02, "seller_distance" : 1.7, "difference" : 8.3 },
-#  { "distance" : 20, "reduction" : 0.01, "seller_distance" : 1.7, "difference" : 18.3 }
-# ]
+#  { "distance" : 20, "reduction" : 0.00, "seller_distance" : 1.7, "difference" : 18.3 },
+#  { "distance" : 15, "reduction" : 0.02, "seller_distance" : 1.7, "difference" : 13.3 },
+#  { "distance" : 10, "reduction" : 0.04, "seller_distance" : 1.7, "difference" : 8.3  },
+#  { "distance" : 5,  "reduction" : 0.06, "seller_distance" : 1.7, "difference" : 3.3  }
+# ] 
 #
 FILTER table:sellers_reductions
   WHEN @difference >= 0;
@@ -94,9 +97,9 @@ FILTER table:sellers_reductions
 # it. The accumulator we use in the reduction (min_difference) is not
 # retained in the resulting table.
 #
-# [
-#  { "distance" : 5, "reduction" : 0.03, "seller_distance" : 1.7, "difference" : 3.3 }
-# ]
+#[
+#  { "distance" : 5,  "reduction" : 0.06, "seller_distance" : 1.7, "difference" : 3.3  }
+#] 
 #
 REDUCE table:sellers_reductions
   USING min_difference = min(min_difference, @difference)
@@ -123,8 +126,8 @@ REDUCE table:sellers_reductions
 # using the cartesian product of the table we built in PHASE ONE. This yields:
 #
 # [
-#   { "classification" : { list_name: "UNSPSC", "value" : "506505" }, "price": { currency_code: "CAD", "value" : "10.00" }, "reduction" : .03 },
-#   { "classification" : { list_name: "UNSPSC", "value" : "506505" }, "price": { currency_code: "CAD", "value" : "18.00" }, "reduction" : .03 }
+#   { "classification" : { list_name: "UNSPSC", "value" : "506505" }, "price": { currency_code: "CAD", "value" : "10.00" }, "reduction" : .06 },
+#   { "classification" : { list_name: "UNSPSC", "value" : "506505" }, "price": { currency_code: "CAD", "value" : "18.00" }, "reduction" : .06 }
 # ]
 #
 ASSEMBLE item_reductions
@@ -137,8 +140,8 @@ ASSEMBLE item_reductions
 # allowance (a discount in this case) in UBL concepts, yielding:
 #
 # [
-#   { "classification" : { list_name: "UNSPSC", "value" : "506505" }, "price": { currency_code: "CAD", "value" : "10.00" }, "reduction" : 0.0.3, "allowance": { "charge" : false, "amount" : { "value" : 0.3, "currency_code" : "CAD" } },
-#   { "classification" : { list_name: "UNSPSC", "value" : "506505" }, "price": { currency_code: "CAD", "value" : "18.00" }, "reduction" : 0.0.3, "allowance": { "charge" : false, "amount" : { "value" : 0.54, "currency_code" : "CAD" } }
+#   { "classification" : { list_name: "UNSPSC", "value" : "506505" }, "price": { currency_code: "CAD", "value" : "10.00" }, "reduction" : .06, "allowance": { "charge" : false, "amount" : { "value" : 0.6, "currency_code" : "CAD" } },
+#   { "classification" : { list_name: "UNSPSC", "value" : "506505" }, "price": { currency_code: "CAD", "value" : "18.00" }, "reduction" : .06, "allowance": { "charge" : false, "amount" : { "value" : 1.08, "currency_code" : "CAD" } }
 # ]
 #
 MAP table:item_reductions

@@ -1,9 +1,19 @@
-REQUIRE table:numbers:0.0.1 AS numbers;
+REQUIRE test:numbers-one:0.0.1 AS table0;
+REQUIRE test:numbers-two:0.0.1 AS table1;
 
-ASSEMBLE table_one COLUMNS FROM table:numbers;
+ASSEMBLE add COLUMNS FROM table:numbers;
+ASSEMBLE subtract COLUMNS FROM table:numbers;
+ASSEMBLE multiply COLUMNS FROM table:numbers;
+ASSEMBLE divide COLUMNS FROM table:numbers;
 
-MAP table:table_one
-  USING a_plus_b = add(@a, @b)
-  USING a_minus_b = subtract(@a, @b)
-  USING a_times_b = multiply(@a, @b)
-  USING a_over_b = divide(@a, @b);
+MAP table:add
+  USING c = add(@a, @b);
+
+MAP table:subtract
+  USING c = subtract(@a, @b);
+
+MAP table:multiply
+  USING c = multiply(@a, @b);
+
+MAP table:divide
+  USING c = divide(@a, @b);
