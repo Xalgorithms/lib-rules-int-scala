@@ -1,0 +1,6 @@
+[
+  { "max_hours": 10,  "overtime_multiplier": 1.5 },
+  { "max_hours": 20, "overtime_multiplier": 2   },
+  { "max_hours": 30, "overtime_multiplier": 2.5 },
+  { "max_hours": 40, "overtime_multiplier": 3   }
+]

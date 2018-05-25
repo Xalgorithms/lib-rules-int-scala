@@ -1,0 +1,152 @@
+# GOAL: This rule operates on documents that are prepared by the
+# Lichen application, originating as UBL invoices. It selects invoices
+# that apply to consumer petrol sales (using ISIC and UNSPSC)
+# coding. For any items in the invoice that required UNSPSC code, it
+# will generate a revision that adds an allowance (discount) to the
+# invoice.
+
+# This rule only applies to invoices from suppliers in the consumer
+# petrol industry (ISIC/G4711).
+WHEN envelope:type == 'invoice';
+WHEN envelope:parties.supplier.industry.list_id == 'ISIC';
+WHEN envelope:parties.supplier.industry.value == 'G4711';
+
+# This rule only operates on invoice items that are coded as consumer
+# petrol (UNSPSC/506505).
+WHEN item:classification.list_name == 'UNSPSC';
+WHEN item:classification.value == '506505';
+WHEN item:quantity.value > 0;
+
+# load tables that add additional information
+REQUIRE ca.qc.tax:supplier_distances:0.0.1 AS supplier_distances;
+REQUIRE ca.qc.tax:reductions_by_distance:0.0.1 AS reductions_by_distance;
+
+# PHASE ONE: Build a table that can be used to transform any items in
+# the invoice that related to UNSPSC/506505. We will do this by
+# loading a table of registered station distances against a table of
+# discounts based on kilometer distance from the border. For this
+# example, it is assumed that the author of the rule has some facility
+# for generating the supplier distances table
+
+# For the purposes of illustration, the supplier in the comment
+# examples is "0002".
+
+# Build a table that contains the seller information joined against the predefined
+# reductions table.
+#
+# The first column selection build a basic table using the
+# reductions_by_distance table. Quoting from the sample tables, this
+# yields:
+#
+# [
+#  { "distance" : 1, "reduction" : 0.05 },
+#  { "distance" : 5, "reduction" : 0.03 },
+#  { "distance" : 10, "reduction" : 0.02 },
+#  { "distance" : 20, "reduction" : 0.01 }
+# ]
+#
+# The second COLUMN expression performs a cartesian product against
+# the table-under-construction. It also applies a condition that ONLY
+# accepts a row where the supplier from the invoice matches.
+#
+# This yields a final table:
+#
+# [
+#  { "distance" : 1, "reduction" : 0.05, "seller_distance" : 1.7 },
+#  { "distance" : 5, "reduction" : 0.03, "seller_distance" : 1.7 },
+#  { "distance" : 10, "reduction" : 0.02, "seller_distance" : 1.7 },
+#  { "distance" : 20, "reduction" : 0.01, "seller_distance" : 1.7 }
+# ]
+#
+
+ASSEMBLE sellers_reductions
+  COLUMNS FROM table:reductions_by_distance
+  COLUMN seller_distance FROM table:supplier_distances WHEN envelope:parties.suppler.id.value == @supplier_id;
+
+#
+# In order to determine the correct reduction, we learn WHICH bracket
+# of distance that the seller matches. We do this by performing a MAP,
+# FILTER, REDUCE. The first step generates the difference in distance,
+# yielding:
+#
+# [
+#  { "distance" : 1, "reduction" : 0.05, "seller_distance" : 1.7, "difference" : -.7 },
+#  { "distance" : 5, "reduction" : 0.03, "seller_distance" : 1.7, "difference" : 3.3 },
+#  { "distance" : 10, "reduction" : 0.02, "seller_distance" : 1.7, "difference" : 8.3 },
+#  { "distance" : 20, "reduction" : 0.01, "seller_distance" : 1.7, "difference" : 18.3 }
+# ]
+#
+MAP table:sellers_reductions
+  USING difference = subtract(@distance, @seller_distance);
+
+# Since we will be reducing using min(), we should remove any rows that are < 0
+#
+# [
+#  { "distance" : 5, "reduction" : 0.03, "seller_distance" : 1.7, "difference" : 3.3 },
+#  { "distance" : 10, "reduction" : 0.02, "seller_distance" : 1.7, "difference" : 8.3 },
+#  { "distance" : 20, "reduction" : 0.01, "seller_distance" : 1.7, "difference" : 18.3 }
+# ]
+#
+FILTER table:sellers_reductions
+  WHEN @difference >= 0;
+
+# Using the REDUCE step, we determine the minimal distance and select
+# it. The accumulator we use in the reduction (min_difference) is not
+# retained in the resulting table.
+#
+# [
+#  { "distance" : 5, "reduction" : 0.03, "seller_distance" : 1.7, "difference" : 3.3 }
+# ]
+#
+REDUCE table:sellers_reductions
+  USING min_difference = min(min_difference, @difference)
+  WHEN difference == @min_difference;
+
+# PHASE TWO: We need to apply this final reduction ACROSS the items
+# that appear in the invoice. Since this invoice originates as a UBL
+# document formatted to our internal format it will have HIERARCHICAL
+# columns (columns containing KEY/VALUE pair trees). Therefore the
+# example will only contain the information relevant to the rule.
+#
+# The items table in the originating document might contain:
+#
+# [
+#   { "classification" : { list_name: "UNSPSC", "value" : "506505" }, price: { currency_code: "CAD", "value" : "10.00" } },
+#   { "classification" : { list_name: "UNSPSC", "value" : "111111" }, price: { currency_code: "CAD", "value" : "35.00" } },
+#   { "classification" : { list_name: "UNSPSC", "value" : "222222" }, price: { currency_code: "CAD", "value" : "15.00" } },
+#   { "classification" : { list_name: "UNSPSC", "value" : "506505" }, price: { currency_code: "CAD", "value" : "18.00" } }
+# ]
+#
+
+# First, we use the items table as the basis for a new table. It is
+# filtered according to the classification. We form additional columns
+# using the cartesian product of the table we built in PHASE ONE. This yields:
+#
+# [
+#   { "classification" : { list_name: "UNSPSC", "value" : "506505" }, "price": { currency_code: "CAD", "value" : "10.00" }, "reduction" : .03 },
+#   { "classification" : { list_name: "UNSPSC", "value" : "506505" }, "price": { currency_code: "CAD", "value" : "18.00" }, "reduction" : .03 }
+# ]
+#
+ASSEMBLE item_reductions
+  COLUMNS (id, classification, price) FROM table:items
+    WHEN @classification.list_name == 'UNSPSC'
+    WHEN @classification.value == '506505'
+  COLUMN reduction FROM table:sellers_reductions;
+
+# We use MAP to add an additional NESTED COLUMN that translates to an
+# allowance (a discount in this case) in UBL concepts, yielding:
+#
+# [
+#   { "classification" : { list_name: "UNSPSC", "value" : "506505" }, "price": { currency_code: "CAD", "value" : "10.00" }, "reduction" : 0.0.3, "allowance": { "charge" : false, "amount" : { "value" : 0.3, "currency_code" : "CAD" } },
+#   { "classification" : { list_name: "UNSPSC", "value" : "506505" }, "price": { currency_code: "CAD", "value" : "18.00" }, "reduction" : 0.0.3, "allowance": { "charge" : false, "amount" : { "value" : 0.54, "currency_code" : "CAD" } }
+# ]
+#
+MAP table:item_reductions
+  USING allowance.charge = false
+  USING allowance.amount.value = multiply(@price.value, @reduction)
+  USING allowance.amount.currency_code = @price.currency_code;
+
+# This issues a revision of the original items table, adding the
+# ENTIRE allowance column.
+REVISE table:items
+  ADD allowance FROM table:item_reductions WHEN id.value == @id.value;

@@ -1,0 +1,32 @@
+{
+  "namespace" : "ca.qc.tax",
+  "rules" : {
+    "proximity-gas-tax" : {
+      "version" : "0.0.1",
+      "effective" : [
+        { "timezone" : "AST", "starts" : "2017-01-01T00:00", "ends" : "2019-12-30T23:59" }
+      ],
+      "jurisdiction" : {
+        "country" : "CA",
+        "region" : "CA-QC"
+      },
+      "xa" : {
+        "version" : "0.0.2"
+      },
+      "criticality" : "experimental",
+      "url" : "https://github.com/Xalgorithms/xadf-examples-general",
+      "roles" : {
+        "manager" : {
+          "name" : "Joseph Potvin",
+          "email" : "jpotvin@xalgorithms.org"
+        },
+        "author" : {
+          "name" : "Don Kelly",
+          "email" : "karfai@gmail.com"
+        }
+      }
+    }
+  },
+  "tables" : {
+  }
+}

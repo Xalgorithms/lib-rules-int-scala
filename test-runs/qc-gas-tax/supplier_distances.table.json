@@ -1,0 +1,7 @@
+[
+  { "supplier_id" : "0001", "seller_distance" : 2.2  },
+  { "supplier_id" : "0002", "seller_distance" : 15.7 },
+  { "supplier_id" : "0003", "seller_distance" : 0.4  },
+  { "supplier_id" : "0004", "seller_distance" : 7.8  },
+  { "supplier_id" : "0005", "seller_distance" : 24.3  }
+]

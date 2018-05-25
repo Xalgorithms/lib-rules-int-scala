@@ -1,0 +1,6 @@
+[
+  { "employee_id": 3001, "overtime_hours": 2 },
+  { "employee_id": 3002, "overtime_hours": 20 },
+  { "employee_id": 3003, "overtime_hours": 14 },
+  { "employee_id": 3004, "overtime_hours": 35 }
+]

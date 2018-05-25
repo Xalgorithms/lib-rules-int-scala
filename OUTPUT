@@ -1,0 +1,57 @@
+[0m[[0m[0minfo[0m] [0m[0mLoading project definition from /home/rflec028/xalgo/rules-interpreter/project[0m
+[0m[[0m[0minfo[0m] [0m[0mLoading settings from build.sbt ...[0m
+[0m[[0m[0minfo[0m] [0m[0mSet current project to xa-rules-interpreter (in build file:/home/rflec028/xalgo/rules-interpreter/)[0m
+[0m[[0m[0minfo[0m] [0m[0mRunning org.xalgorithms.rules.Runner test-runs/qc-gas-tax/[0m
+
+TEST: /home/rflec028/xalgo/rules-interpreter/test-runs/qc-gas-tax/proximity-gas-tax.rule.json
+[0m[[0m[31merror[0m] [0m[0m(run-main-0) java.nio.file.NoSuchFileException: /home/rflec028/xalgo/rules-interpreter/test-runs/qc-gas-tax/supplier_distances.table.json[0m
+[0m[[0m[31merror[0m] [0m[0mjava.nio.file.NoSuchFileException: /home/rflec028/xalgo/rules-interpreter/test-runs/qc-gas-tax/supplier_distances.table.json[0m
+[0m[[0m[31merror[0m] [0m[0m	at sun.nio.fs.UnixException.translateToIOException(UnixException.java:86)[0m
+[0m[[0m[31merror[0m] [0m[0m	at sun.nio.fs.UnixException.rethrowAsIOException(UnixException.java:102)[0m
+[0m[[0m[31merror[0m] [0m[0m	at sun.nio.fs.UnixException.rethrowAsIOException(UnixException.java:107)[0m
+[0m[[0m[31merror[0m] [0m[0m	at sun.nio.fs.UnixFileSystemProvider.newByteChannel(UnixFileSystemProvider.java:214)[0m
+[0m[[0m[31merror[0m] [0m[0m	at java.nio.file.Files.newByteChannel(Files.java:361)[0m
+[0m[[0m[31merror[0m] [0m[0m	at java.nio.file.Files.newByteChannel(Files.java:407)[0m
+[0m[[0m[31merror[0m] [0m[0m	at java.nio.file.Files.readAllBytes(Files.java:3152)[0m
+[0m[[0m[31merror[0m] [0m[0m	at better.files.File.loadBytes(File.scala:205)[0m
+[0m[[0m[31merror[0m] [0m[0m	at better.files.File.byteArray(File.scala:208)[0m
+[0m[[0m[31merror[0m] [0m[0m	at better.files.File.contentAsString(File.scala:266)[0m
+[0m[[0m[31merror[0m] [0m[0m	at org.xalgorithms.rules.LoadJsonFileTableSource.read(Runner.scala:33)[0m
+[0m[[0m[31merror[0m] [0m[0m	at org.xalgorithms.rules.LoadJsonTableSource.load(LoadJsonTableSource.scala:38)[0m
+[0m[[0m[31merror[0m] [0m[0m	at org.xalgorithms.rules.GlobalContext.load(Context.scala:53)[0m
+[0m[[0m[31merror[0m] [0m[0m	at org.xalgorithms.rules.steps.RequireStep.execute(RequireStep.scala:31)[0m
+[0m[[0m[31merror[0m] [0m[0m	at org.xalgorithms.rules.Runner$$anonfun$main$1$$anonfun$apply$1.apply(Runner.scala:45)[0m
+[0m[[0m[31merror[0m] [0m[0m	at org.xalgorithms.rules.Runner$$anonfun$main$1$$anonfun$apply$1.apply(Runner.scala:45)[0m
+[0m[[0m[31merror[0m] [0m[0m	at scala.collection.immutable.List.foreach(List.scala:392)[0m
+[0m[[0m[31merror[0m] [0m[0m	at org.xalgorithms.rules.Runner$$anonfun$main$1.apply(Runner.scala:45)[0m
+[0m[[0m[31merror[0m] [0m[0m	at org.xalgorithms.rules.Runner$$anonfun$main$1.apply(Runner.scala:39)[0m
+[0m[[0m[31merror[0m] [0m[0m	at scala.collection.Iterator$class.foreach(Iterator.scala:891)[0m
+[0m[[0m[31merror[0m] [0m[0m	at scala.collection.AbstractIterator.foreach(Iterator.scala:1334)[0m
+[0m[[0m[31merror[0m] [0m[0m	at org.xalgorithms.rules.Runner$.main(Runner.scala:39)[0m
+[0m[[0m[31merror[0m] [0m[0m	at org.xalgorithms.rules.Runner.main(Runner.scala)[0m
+[0m[[0m[31merror[0m] [0m[0m	at sun.reflect.NativeMethodAccessorImpl.invoke0(Native Method)[0m
+[0m[[0m[31merror[0m] [0m[0m	at sun.reflect.NativeMethodAccessorImpl.invoke(NativeMethodAccessorImpl.java:62)[0m
+[0m[[0m[31merror[0m] [0m[0m	at sun.reflect.DelegatingMethodAccessorImpl.invoke(DelegatingMethodAccessorImpl.java:43)[0m
+[0m[[0m[31merror[0m] [0m[0m	at java.lang.reflect.Method.invoke(Method.java:498)[0m
+[0m[[0m[31merror[0m] [0m[0m	at sbt.Run.invokeMain(Run.scala:93)[0m
+[0m[[0m[31merror[0m] [0m[0m	at sbt.Run.run0(Run.scala:87)[0m
+[0m[[0m[31merror[0m] [0m[0m	at sbt.Run.execute$1(Run.scala:65)[0m
+[0m[[0m[31merror[0m] [0m[0m	at sbt.Run.$anonfun$run$4(Run.scala:77)[0m
+[0m[[0m[31merror[0m] [0m[0m	at scala.runtime.java8.JFunction0$mcV$sp.apply(JFunction0$mcV$sp.java:12)[0m
+[0m[[0m[31merror[0m] [0m[0m	at sbt.util.InterfaceUtil$$anon$1.get(InterfaceUtil.scala:10)[0m
+[0m[[0m[31merror[0m] [0m[0m	at sbt.TrapExit$App.run(TrapExit.scala:252)[0m
+[0m[[0m[31merror[0m] [0m[0m	at java.lang.Thread.run(Thread.java:748)[0m
+[0m[[0m[31merror[0m] [0m[0mjava.lang.RuntimeException: Nonzero exit code: 1[0m
+[0m[[0m[31merror[0m] [0m[0m	at sbt.Run$.executeTrapExit(Run.scala:124)[0m
+[0m[[0m[31merror[0m] [0m[0m	at sbt.Run.run(Run.scala:77)[0m
+[0m[[0m[31merror[0m] [0m[0m	at sbt.Defaults$.$anonfun$bgRunMainTask$6(Defaults.scala:1152)[0m
+[0m[[0m[31merror[0m] [0m[0m	at sbt.Defaults$.$anonfun$bgRunMainTask$6$adapted(Defaults.scala:1147)[0m
+[0m[[0m[31merror[0m] [0m[0m	at sbt.internal.BackgroundThreadPool.$anonfun$run$1(DefaultBackgroundJobService.scala:366)[0m
+[0m[[0m[31merror[0m] [0m[0m	at scala.runtime.java8.JFunction0$mcV$sp.apply(JFunction0$mcV$sp.java:12)[0m
+[0m[[0m[31merror[0m] [0m[0m	at scala.util.Try$.apply(Try.scala:209)[0m
+[0m[[0m[31merror[0m] [0m[0m	at sbt.internal.BackgroundThreadPool$BackgroundRunnable.run(DefaultBackgroundJobService.scala:289)[0m
+[0m[[0m[31merror[0m] [0m[0m	at java.util.concurrent.ThreadPoolExecutor.runWorker(ThreadPoolExecutor.java:1149)[0m
+[0m[[0m[31merror[0m] [0m[0m	at java.util.concurrent.ThreadPoolExecutor$Worker.run(ThreadPoolExecutor.java:624)[0m
+[0m[[0m[31merror[0m] [0m[0m	at java.lang.Thread.run(Thread.java:748)[0m
+[0m[[0m[31merror[0m] [0m[0m(Compile / [31mrunMain[0m) Nonzero exit code: 1[0m
+[0m[[0m[31merror[0m] [0m[0mTotal time: 2 s, completed 22-May-2018 9:28:05 PM[0m
