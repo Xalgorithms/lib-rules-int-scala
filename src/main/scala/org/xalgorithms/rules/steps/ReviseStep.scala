@@ -175,9 +175,9 @@ class ReviseStep(val table: TableReference, val sources: Seq[RevisionSource]) ex
       Seq[Seq[Option[Change]]]()
     ) { (changes, src_changes) =>
       if (changes.size == 0) {
-        src_changes.map { ch => Seq(ch) }
+        src_changes.map { ch => Seq(Some(ch)) }
       } else {
-        (changes, src_changes).zipped.map { case (a, ch) => a :+ ch }
+        (changes, src_changes).zipped.map { case (a, ch) => a :+ Some(ch) }
       }
     }
 

@@ -29,10 +29,19 @@ object ChangeOps extends Enumeration {
   val Add, Remove, Update = Value
 }
 
-class Change(val columns: Map[String, Value]) {
+class Change {
 }
 
-class Addition(columns: Map[String, Value]) extends Change(columns) {
+class ValueChange(val columns: Map[String, Value]) extends Change {
+}
+
+class Addition(columns: Map[String, Value]) extends ValueChange(columns) {
+}
+
+class Update(columns: Map[String, Value]) extends ValueChange(columns) {
+}
+
+class Removal(val columns: Seq[String]) extends Change {
 }
 
 class Revision(val changes: Seq[Seq[Option[Change]]]) {
