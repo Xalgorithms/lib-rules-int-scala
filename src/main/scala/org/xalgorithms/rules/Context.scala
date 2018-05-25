@@ -23,7 +23,7 @@
 // <http://www.gnu.org/licenses/>.
 package org.xalgorithms.rules
 
-import org.xalgorithms.rules.elements.{ PackagedTableReference, IntrinsicValue }
+import org.xalgorithms.rules.elements.{ PackagedTableReference, IntrinsicValue, TableReference }
 import scala.collection.mutable
 
 abstract class Context {
@@ -32,14 +32,14 @@ abstract class Context {
   def retain_table(section: String, key: String, t: Seq[Map[String, IntrinsicValue]])
   def lookup_in_map(section: String, key: String): Option[IntrinsicValue]
   def lookup_table(section: String, table_name: String): Seq[Map[String, IntrinsicValue]]
-  def revisions(): Map[String, Seq[Revision]]
-  def add_revision(key: String, rev: Revision)
+  def revisions(): Map[TableReference, Seq[Revision]]
+  def revise_table(ref: TableReference, rev: Revision)
 }
 
 class GlobalContext(load: LoadTableSource) extends Context {
   var _tables = mutable.Map[String, mutable.Map[String, Seq[Map[String, IntrinsicValue]]]]()
-  var _revisions = mutable.Map[String, mutable.Seq[Revision]]()
   var _maps = mutable.Map[String, Map[String, IntrinsicValue]]()
+  var _revisions = mutable.Map[TableReference, Seq[Revision]]()
 
   def enumerate_tables(fn: (String, String, Seq[Map[String, IntrinsicValue]]) => Unit): Unit = {
     _tables.foreach { case (section, tables) =>
@@ -71,13 +71,12 @@ class GlobalContext(load: LoadTableSource) extends Context {
     _tables.getOrElse(section, mutable.Map[String, Seq[Map[String, IntrinsicValue]]]()).getOrElse(table_name, null)
   }
 
-  def revisions(): Map[String, Seq[Revision]] = {
+  def revisions(): Map[TableReference, Seq[Revision]] = {
     return _revisions.toMap
   }
 
-  def add_revision(key: String, rev: Revision) {
-    val current = _revisions.getOrElse(key, scala.collection.mutable.Seq())
-    _revisions.put(key, current ++ scala.collection.mutable.Seq(rev))
+  def revise_table(ref: TableReference, rev: Revision) {
+    _revisions.put(ref, _revisions.getOrElse(ref, mutable.Seq()) :+ rev)
   }
 }
 
@@ -105,7 +104,7 @@ class RowContext(
 
   def lookup_table(section: String, table_name: String): Seq[Map[String, IntrinsicValue]] = ctx.lookup_table(section, table_name)
 
-  def revisions(): Map[String, Seq[Revision]] = ctx.revisions()
+  def revisions(): Map[TableReference, Seq[Revision]] = ctx.revisions()
 
-  def add_revision(key: String, rev: Revision) = ctx.add_revision(key, rev)
+  def revise_table(ref: TableReference, rev: Revision) = ctx.revise_table(ref, rev)
 }

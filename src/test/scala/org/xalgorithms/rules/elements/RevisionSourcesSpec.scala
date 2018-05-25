@@ -27,7 +27,7 @@ import com.github.javafaker.Faker
 import org.scalamock.scalatest.MockFactory
 import org.scalatest._
 
-import org.xalgorithms.rules.{ Change, ChangeOps, Context }
+import org.xalgorithms.rules.{ Change, Addition, Update, Removal, Context }
 
 class RevisionSourcesSpec extends FlatSpec with Matchers with MockFactory {
   val faker = new Faker()
@@ -52,7 +52,7 @@ class RevisionSourcesSpec extends FlatSpec with Matchers with MockFactory {
     (0 to faker.number().numberBetween(2, 10)).foreach { _ =>
       val ctx = mock[Context]
       val column_name = sample(table.cols)
-      val src = new UpdateRevisionSource(column_name, Seq(), table_ref)
+      val src = new UpdateRevisionSource(column_name, table_ref)
 
       (ctx.lookup_table _).expects(table_ref.section, table_ref.name).returning(table.tbl)
       val changes = src.evaluate(ctx)
@@ -60,22 +60,24 @@ class RevisionSourcesSpec extends FlatSpec with Matchers with MockFactory {
       changes.size shouldEqual(table.tbl.size)
       val vals = table.tbl.map { row => row(column_name) }
       (changes, vals).zipped.foreach { case (ch, v) =>
-        ch.exists(_._1 == column_name) shouldBe(true)
-        ch(column_name).op shouldEqual(ChangeOps.Update)
-        ch(column_name).value shouldBe a [StringValue]
-        ch(column_name).value.asInstanceOf[StringValue].value shouldEqual(v.asInstanceOf[StringValue].value)
+        ch shouldBe a [Update]
+        val upd = ch.asInstanceOf[Update]
+        upd.columns.size shouldEqual(1)
+        upd.columns.exists(_._1 == column_name) shouldBe(true)
+        upd.columns(column_name) shouldBe a [StringValue]
+        upd.columns(column_name).asInstanceOf[StringValue].value shouldEqual(v.asInstanceOf[StringValue].value)
       }
     }
   }
 
-  "AddRevisionSource" should "produce a list of adds to a table" in {
+  "AddRevisionSource" should "produce a list of updates to a table" in {
     val table = new TestTable()
     val table_ref = new TableReference(faker.lorem.word(), faker.lorem.word())
 
     (0 to faker.number().numberBetween(2, 10)).foreach { _ =>
       val ctx = mock[Context]
       val column_name = sample(table.cols)
-      val src = new AddRevisionSource(column_name, Seq(), table_ref)
+      val src = new AddRevisionSource(column_name, table_ref)
 
       (ctx.lookup_table _).expects(table_ref.section, table_ref.name).returning(table.tbl)
       val changes = src.evaluate(ctx)
@@ -83,10 +85,12 @@ class RevisionSourcesSpec extends FlatSpec with Matchers with MockFactory {
       changes.size shouldEqual(table.tbl.size)
       val vals = table.tbl.map { row => row(column_name) }
       (changes, vals).zipped.foreach { case (ch, v) =>
-        ch.exists(_._1 == column_name) shouldBe(true)
-        ch(column_name).op shouldEqual(ChangeOps.Add)
-        ch(column_name).value shouldBe a [StringValue]
-        ch(column_name).value.asInstanceOf[StringValue].value shouldEqual(v.asInstanceOf[StringValue].value)
+        ch shouldBe a [Addition]
+        val add = ch.asInstanceOf[Addition]
+        add.columns.size shouldEqual(1)
+        add.columns.exists(_._1 == column_name) shouldBe(true)
+        add.columns(column_name) shouldBe a [StringValue]
+        add.columns(column_name).asInstanceOf[StringValue].value shouldEqual(v.asInstanceOf[StringValue].value)
       }
     }
   }
@@ -98,14 +102,15 @@ class RevisionSourcesSpec extends FlatSpec with Matchers with MockFactory {
     (0 to faker.number().numberBetween(2, 10)).foreach { _ =>
       val ctx = mock[Context]
       val column_name = sample(table.cols)
-      val src = new RemoveRevisionSource(column_name, Seq())
+      val src = new RemoveRevisionSource(column_name)
 
       val changes = src.evaluate(ctx)
 
       changes.size shouldEqual(1)
-      changes.head.exists(_._1 == column_name) shouldBe(true)
-      changes.head(column_name).op shouldEqual(ChangeOps.Remove)
-      changes.head(column_name).value shouldEqual(null)
+      changes.head shouldBe a [Removal]
+      val ch = changes.head.asInstanceOf[Removal]
+      ch.columns.size shouldEqual(1)
+      ch.columns.head shouldEqual(column_name)
     }
   }
 }
