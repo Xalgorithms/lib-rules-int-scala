@@ -274,41 +274,16 @@ class SyntaxSpec extends FlatSpec with Matchers {
     o.sources(0).column shouldEqual("a.b")
     o.sources(0).asInstanceOf[TableRevisionSource].table.section shouldEqual("table")
     o.sources(0).asInstanceOf[TableRevisionSource].table.name shouldEqual("foo")
-    o.sources(0).whens.length shouldEqual(1)
-    o.sources(0).whens(0) should not be null
-    o.sources(0).whens(0).left shouldBe a [ReferenceValue]
-    o.sources(0).whens(0).left.asInstanceOf[ReferenceValue].section shouldEqual("_local")
-    o.sources(0).whens(0).left.asInstanceOf[ReferenceValue].key shouldEqual("x")
-    o.sources(0).whens(0).right shouldBe a [ReferenceValue]
-    o.sources(0).whens(0).right.asInstanceOf[ReferenceValue].section shouldEqual("_context")
-    o.sources(0).whens(0).right.asInstanceOf[ReferenceValue].key shouldEqual("y")
-    o.sources(0).whens(0).op shouldEqual("eq")
 
     o.sources(1) should not be null
     o.sources(1) shouldBe a [UpdateRevisionSource]
     o.sources(1).column shouldEqual("c")
     o.sources(1).asInstanceOf[TableRevisionSource].table.section shouldEqual("table")
     o.sources(1).asInstanceOf[TableRevisionSource].table.name shouldEqual("bar")
-    o.sources(1).whens.length shouldEqual(1)
-    o.sources(1).whens(0) should not be null
-    o.sources(1).whens(0).left shouldBe a [ReferenceValue]
-    o.sources(1).whens(0).left.asInstanceOf[ReferenceValue].section shouldEqual("_context")
-    o.sources(1).whens(0).left.asInstanceOf[ReferenceValue].key shouldEqual("q")
-    o.sources(1).whens(0).right shouldBe a [NumberValue]
-    o.sources(1).whens(0).right.asInstanceOf[NumberValue].value shouldEqual(3.0)
-    o.sources(1).whens(0).op shouldEqual("lt")
 
     o.sources(2) should not be null
     o.sources(2) shouldBe a [RemoveRevisionSource]
     o.sources(2).column shouldEqual("d")
-    o.sources(2).whens.length shouldEqual(1)
-    o.sources(2).whens(0) should not be null
-    o.sources(2).whens(0).left shouldBe a [ReferenceValue]
-    o.sources(2).whens(0).left.asInstanceOf[ReferenceValue].section shouldEqual("_context")
-    o.sources(2).whens(0).left.asInstanceOf[ReferenceValue].key shouldEqual("r")
-    o.sources(2).whens(0).right shouldBe a [NumberValue]
-    o.sources(2).whens(0).right.asInstanceOf[NumberValue].value shouldEqual(1.0)
-    o.sources(2).whens(0).op shouldEqual("eq")
   }
 
   "AssembleStep" should "load from JSON" in {

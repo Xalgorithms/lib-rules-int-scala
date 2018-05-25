@@ -54,13 +54,8 @@ class ReviseStepSpec extends FlatSpec with Matchers with MockFactory {
 
     val source = mock[RevisionSource]
     val sources = Seq(source)
-    val source_evaluation = target_table.indices.map { i =>
-      if (i < changes.size) {
-        Some(new Addition(make_string_row(changes(i))))
-      } else {
-        None
-      }
-    }
+
+    val source_evaluation = changes.map { row => Some(new Addition(make_string_row(row))) }
 
     (source.evaluate _).expects(ctx).returning(source_evaluation)
     (ctx.revise_table _).expects(target_ref, *).once onCall { (_, rev) =>

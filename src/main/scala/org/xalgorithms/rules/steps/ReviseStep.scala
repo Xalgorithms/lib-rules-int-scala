@@ -171,7 +171,6 @@ import org.xalgorithms.rules.elements._
 //
 class ReviseStep(val table: TableReference, val sources: Seq[RevisionSource]) extends Step {
   def execute(ctx: Context) {
-    val tbl = ctx.lookup_table(table.section, table.name)
     val all_changes = sources.map(_.evaluate(ctx)).foldLeft(
       Seq[Seq[Option[Change]]]()
     ) { (changes, src_changes) =>
@@ -182,7 +181,14 @@ class ReviseStep(val table: TableReference, val sources: Seq[RevisionSource]) ex
       }
     }
 
-    ctx.revise_table(table, new Revision(all_changes))
+    val table_changes = ctx.lookup_table(table.section, table.name).indices.map { i =>
+      if (i < all_changes.size) {
+        all_changes(i)
+      } else {
+        Seq(None)
+      }
+    }
+    ctx.revise_table(table, new Revision(table_changes))
   }
 }
 
