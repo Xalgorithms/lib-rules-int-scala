@@ -1,0 +1,9 @@
+REQUIRE table:numbers:0.0.1 AS numbers;
+
+ASSEMBLE table_one COLUMNS FROM table:numbers;
+
+MAP table:table_one
+  USING a_plus_b = add(@a, @b)
+  USING a_minus_b = subtract(@a, @b)
+  USING a_times_b = multiply(@a, @b)
+  USING a_over_b = divide(@a, @b);
