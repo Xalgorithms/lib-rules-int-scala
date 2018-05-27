@@ -1,0 +1,110 @@
+{
+  "rules" : {
+    "basic-operations"    : {
+      "id" :      "exAmPlE01",
+      
+      "version"   : "0.0.1", // version of this rule (http://semver.org)?
+      "effective" : [
+        { "timezone": "AST", "starts" : "2007-04-05T12:30", "ends" : "2008-04-05T12:30" }
+      ],
+      "jurisdiction" : {
+        "country" : "CA",
+        "region"  : "ON"
+      },
+      "xa" : {
+        "version", "1.0.0"
+      },
+      "criticality" : "experimental",
+      "url" : "ryanfleck.github.io",
+      "roles" {
+        "manager" : {
+          "name"  : "Ryan Fleck",
+          "email" : "ryan.fleck@protonmail.com",
+          "url"   : "ryanfleck.github.io"
+        },
+        "author" : {
+          "name"  : "Ryan Fleck",
+          "email" : "ryan.fleck@protonmail.com",
+          "url"   : "ryanfleck.github.io"
+        }
+        "committer" : {
+          "name"  : "",
+          "email" : "",
+          "url"   : ""
+        }
+      }
+    }
+  },
+  "tables" : {
+  
+    "numbers-one": {
+      "id" :      "exAmPlE02",
+      
+      "version"   : "0.0.1", // version of this rule (http://semver.org)?
+      "effective" : [
+        { "timezone": "AST", "starts" : "2007-04-05T12:30", "ends" : "2008-04-05T12:30" }
+      ],
+      "jurisdiction" : {
+        "country" : "CA",
+        "region"  : "ON"
+      },
+      "xa" : {
+        "version", "1.0.0"
+      },
+      "criticality" : "experimental",
+      "url" : "ryanfleck.github.io",
+      "roles" {
+        "manager" : {
+          "name"  : "Ryan Fleck",
+          "email" : "ryan.fleck@protonmail.com",
+          "url"   : "ryanfleck.github.io"
+        },
+        "author" : {
+          "name"  : "Ryan Fleck",
+          "email" : "ryan.fleck@protonmail.com",
+          "url"   : "ryanfleck.github.io"
+        }
+        "committer" : {
+          "name"  : "",
+          "email" : "",
+          "url"   : ""
+        }
+      }
+    },
+    
+    "overtime_pay"    : {
+      "id" :      "exAmPlE03",
+      
+      "version"   : "0.0.1", // version of this rule (http://semver.org)?
+      "effective" : [
+        { "timezone": "AST", "starts" : "2007-04-05T12:30", "ends" : "2008-04-05T12:30" }
+      ],
+      "jurisdiction" : {
+        "country" : "CA",
+        "region"  : "ON"
+      },
+      "xa" : {
+        "version", "1.0.0"
+      },
+      "criticality" : "experimental",
+      "url" : "ryanfleck.github.io",
+      "roles" {
+        "manager" : {
+          "name"  : "Ryan Fleck",
+          "email" : "ryan.fleck@protonmail.com",
+          "url"   : "ryanfleck.github.io"
+        },
+        "author" : {
+          "name"  : "Ryan Fleck",
+          "email" : "ryan.fleck@protonmail.com",
+          "url"   : "ryanfleck.github.io"
+        }
+        "committer" : {
+          "name"  : "",
+          "email" : "",
+          "url"   : ""
+        }
+      }
+    }
+  }
+}

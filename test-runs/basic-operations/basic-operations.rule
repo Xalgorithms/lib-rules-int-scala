@@ -1,10 +1,10 @@
-REQUIRE test:numbers-one:0.0.1 AS table0;
-REQUIRE test:numbers-two:0.0.1 AS table1;
+REQUIRE test:numbers-one:0.0.1 AS tableone;
+REQUIRE test:numbers-two:0.0.1 AS tabletwo;
 
-ASSEMBLE add COLUMNS FROM table:numbers;
-ASSEMBLE subtract COLUMNS FROM table:numbers;
-ASSEMBLE multiply COLUMNS FROM table:numbers;
-ASSEMBLE divide COLUMNS FROM table:numbers;
+ASSEMBLE add COLUMNS FROM table:tableone;
+ASSEMBLE subtract COLUMNS FROM table:tableone;
+ASSEMBLE multiply COLUMNS FROM table:tableone;
+ASSEMBLE divide COLUMNS FROM table:tableone;
 
 MAP table:add
   USING c = add(@a, @b);
