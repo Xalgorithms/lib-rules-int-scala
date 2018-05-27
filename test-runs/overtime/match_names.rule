@@ -1,0 +1,18 @@
+#The name data is not in order, this should map the correct name to overtime.
+
+REQUIRE test:overtime_worked:0.0.1 AS hours;
+REQUIRE test:employee_names:0.0.1 AS names; 
+
+
+ASSEMBLE employee_info
+  COLUMN employee_id AS id FROM table:hours
+  COLUMN employee_name AS name FROM table:names WHEN @id == table:names.employee_id;
+
+#ASSEMBLE employee_info 
+  #COLUMNS FROM table:hours
+  #COLUMN employee_name FROM table:names WHEN employee_id == @employee_id;
+  ##COLUMN name FROM table:names WHEN @employee_id == employee_id;
+
+ASSEMBLE all_info
+  COLUMNS from table:names
+  COLUMNS from table:hours;
