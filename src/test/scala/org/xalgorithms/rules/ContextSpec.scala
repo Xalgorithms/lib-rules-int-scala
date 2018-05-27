@@ -23,6 +23,7 @@
 // <http://www.gnu.org/licenses/>.
 package org.xalgorithms.rules.elements
 
+import com.github.javafaker.Faker
 import org.scalamock.scalatest.MockFactory
 import org.scalatest._
 
@@ -30,6 +31,8 @@ import org.xalgorithms.rules._
 import org.xalgorithms.rules.elements._
 
 class ContextSpec extends FlatSpec with Matchers with MockFactory {
+  val faker = new Faker()
+
   "GlobalContext" should "retain maps" in {
     val maps = Map(
       "map0" -> Map("a" -> new StringValue("00"), "b" -> new StringValue("01")),
@@ -79,6 +82,22 @@ class ContextSpec extends FlatSpec with Matchers with MockFactory {
       ctx.retain_table("tables1", name, table)
       ctx.lookup_table("tables0", name) shouldEqual(table)
       ctx.lookup_table("tables1", name) shouldEqual(table)
+    }
+  }
+
+  it should "record revisions to a table" in {
+    val ctx = new GlobalContext(null)
+    val tables = (0 to faker.number().numberBetween(2, 10)).map { i =>
+      new TableReference("table", s"table${i}")
+    }
+
+    tables.foreach { table => ctx.revise_table(table, new Revision(Seq())) }
+    tables.foreach { table => ctx.revise_table(table, new Revision(Seq())) }
+
+    val revs = ctx.revisions()
+    revs.size shouldEqual(tables.size)
+    tables.foreach { table =>
+      revs(table).size shouldEqual(2)
     }
   }
 
@@ -141,16 +160,13 @@ class ContextSpec extends FlatSpec with Matchers with MockFactory {
     t(0)("a") shouldBe a [StringValue]
     t(0)("a").asInstanceOf[StringValue].value shouldEqual(m("a").value)
 
-    val rev = new Revision(Seq())
-    val rev_key = "0"
-    val revisions = Map(rev_key -> Seq(rev))
+    val revisions = (0 to faker.number().numberBetween(2, 10)).map { i =>
+      Tuple2(new TableReference("table", s"table${i}"), Seq(new Revision(Seq())))
+    }.toMap
+
     (ctx.revisions _).expects().returning(revisions)
 
     rctx.revisions() shouldEqual(revisions)
-
-    (ctx.add_revision _).expects(rev_key, rev)
-
-    rctx.add_revision(rev_key, rev)
   }
 
   it should "allow local modification without affecting the original source" in {

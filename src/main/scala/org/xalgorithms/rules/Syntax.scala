@@ -76,20 +76,13 @@ object StepProduce {
 
   implicit val addRevisionSourceReads : Reads[AddRevisionSource] = (
     (JsPath \ "column").read[String] and
-    (JsPath \ "table").read[JsObject] and
-    (JsPath \ "whens").read[JsArray]
+    (JsPath \ "table").read[JsObject]
   )(produce_add_revision_source _)
   
   implicit val updateRevisionSourceReads : Reads[UpdateRevisionSource] = (
     (JsPath \ "column").read[String] and
-    (JsPath \ "table").read[JsObject] and
-    (JsPath \ "whens").read[JsArray]
+    (JsPath \ "table").read[JsObject]
   )(produce_update_revision_source _)
-
-  implicit val removeRevisionSourceReads : Reads[RemoveRevisionSource] = (
-    (JsPath \ "column").read[String] and
-    (JsPath \ "whens").read[JsArray]
-  )(produce_remove_revision_source _)
 
   def stringOrNull(content: JsObject, k: String): String = {
     return (content \ k).validate[String].getOrElse(null)
@@ -165,31 +158,26 @@ object StepProduce {
   def produce_revision_source(op: String, source: JsObject): RevisionSource = op match {
     case "add" => source.validate[AddRevisionSource].getOrElse(null)
     case "update" => source.validate[UpdateRevisionSource].getOrElse(null)
-    case "delete" => source.validate[RemoveRevisionSource].getOrElse(null)
+    case "delete" => new RemoveRevisionSource(stringOrNull(source, "column"))
     case _ => null
   }
 
-  def produce_add_revision_source(column: String, table: JsObject, whens: JsArray): AddRevisionSource = {
+  def produce_add_revision_source(column: String, table: JsObject): AddRevisionSource = {
     return new AddRevisionSource(
       column,
-      whens.validate[Seq[When]].getOrElse(Seq()),
       table.validate[TableReference].getOrElse(null)
     )
   }
 
-  def produce_update_revision_source(column: String, table: JsObject, whens: JsArray): UpdateRevisionSource = {
+  def produce_update_revision_source(column: String, table: JsObject): UpdateRevisionSource = {
     return new UpdateRevisionSource(
       column,
-      whens.validate[Seq[When]].getOrElse(Seq()),
       table.validate[TableReference].getOrElse(null)
     )
   }
 
-  def produce_remove_revision_source(column: String, whens: JsArray): RemoveRevisionSource = {
-    return new RemoveRevisionSource(
-      column,
-      whens.validate[Seq[When]].getOrElse(Seq())
-    )
+  def produce_remove_revision_source(column: String): RemoveRevisionSource = {
+    return new RemoveRevisionSource(column)
   }
 
   def produce_column(table_reference: JsObject, sources: JsArray): Column = {

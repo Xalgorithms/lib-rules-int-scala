@@ -24,9 +24,10 @@
 package org.xalgorithms.rules
 
 import better.files._
-import scala.io.Source
 import org.xalgorithms.rules.elements._
 import play.api.libs.json._
+import scala.collection.mutable
+import scala.io.Source
 
 class LoadJsonFileTableSource(dn: String) extends LoadJsonTableSource {
   def read(ptref: PackagedTableReference): JsValue = {
@@ -34,15 +35,51 @@ class LoadJsonFileTableSource(dn: String) extends LoadJsonTableSource {
   }
 }
 
+class Times {
+  val _times = mutable.Map[String, Long]()
+
+  def start(label: String) {
+    _times.put(label, System.nanoTime())
+  }
+
+  def stop(label: String) {
+    val now = System.nanoTime()
+    _times.put(label, now - _times.getOrElse(label, now))
+  }
+
+  def show() {
+    _times.foreach { case (label, t) =>
+      println(s"${label}: ${t / 1000000}ms (${t}ns)")
+    }
+  }
+}
+
 object Runner {
   def main(args: Array[String]): Unit = {
+    val times = new Times()
+
     File(args.head).glob("*.rule.json").foreach { fn =>
       println
       println(s"TEST: ${fn}")
 
       val ts = new LoadJsonFileTableSource(args.head)
       val ctx = new GlobalContext(ts)
-      SyntaxFromRaw(fn.contentAsString).foreach(_.execute(ctx))
+
+      println(s"> loading rule (${fn})")
+      times.start("load")
+      val steps = SyntaxFromRaw(fn.contentAsString)
+      times.stop("load")
+      println("< loaded")
+
+      times.start("execute")
+      steps.zipWithIndex.foreach { case (step, i) =>
+        println(s"> step${i}")
+        times.start(s"step${i}")
+        step.execute(ctx)
+        times.stop(s"step${i}")
+        println(s"< step${i}")
+      }
+      times.stop("execute")
 
       println
       println("ALL TABLES")
@@ -53,20 +90,25 @@ object Runner {
         print_table(tbl)
         println
       })
+
+      println
+      println("TIMES")
+      times.show()
     }
   }
 
   def print_table(tbl: Seq[Map[String, IntrinsicValue]]): Unit = {
-    tbl.foreach { row =>
+    tbl.zipWithIndex.foreach { case (row, i) =>
+      val initial = ("%6s").format(i.toString())
       val vals = row.foldLeft(Seq[String]()) { case (seq, (k, v)) =>
-        val vs = ("%10s").format(v match {
+        val vs = ("%14s").format(v match {
           case (sv: StringValue) => sv.value
           case (nv: NumberValue) => nv.value.toString
           case _ => "?"
         })
 
         seq :+ s"${k}: ${vs}"
-      }.mkString("| ", " | ", " |")
+      }.mkString(s"${initial} | ", " | ", " |")
       println(vals)
     }
   }

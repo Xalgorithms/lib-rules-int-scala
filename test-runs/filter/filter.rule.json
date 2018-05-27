@@ -40,27 +40,6 @@
               ]
             }
           ]
-        }
-      ],
-      "name": "assemble"
-    },
-    {
-      "table_name": "table1",
-      "columns": [
-        {
-          "table": {
-            "section": "table",
-            "key": "table_origin",
-            "type": "reference"
-          },
-          "sources": [
-            {
-              "columns": [
-                "a",
-                "c"
-              ]
-            }
-          ]
         },
         {
           "table": {
@@ -70,13 +49,36 @@
           },
           "sources": [
             {
-              "name": "p",
-              "source": "p"
+              "columns": [
+
+              ]
             }
           ]
         }
       ],
       "name": "assemble"
+    },
+    {
+      "table": {
+        "section": "table",
+        "key": "table0",
+        "type": "reference"
+      },
+      "filters": [
+        {
+          "left": {
+            "section": "_context",
+            "key": "a",
+            "type": "reference"
+          },
+          "right": {
+            "type": "number",
+            "value": "10"
+          },
+          "op": "lt"
+        }
+      ],
+      "name": "filter"
     }
   ]
 }

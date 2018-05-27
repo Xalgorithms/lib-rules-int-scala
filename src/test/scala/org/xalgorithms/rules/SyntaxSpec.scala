@@ -268,47 +268,22 @@ class SyntaxSpec extends FlatSpec with Matchers {
     o.table.section shouldEqual("tables")
     o.table.name shouldEqual("items")
 
-    o.revisions.length shouldEqual(3)
-    o.revisions(0) should not be null
-    o.revisions(0) shouldBe a [AddRevisionSource]
-    o.revisions(0).column shouldEqual("a.b")
-    o.revisions(0).asInstanceOf[TableRevisionSource].table.section shouldEqual("table")
-    o.revisions(0).asInstanceOf[TableRevisionSource].table.name shouldEqual("foo")
-    o.revisions(0).whens.length shouldEqual(1)
-    o.revisions(0).whens(0) should not be null
-    o.revisions(0).whens(0).left shouldBe a [ReferenceValue]
-    o.revisions(0).whens(0).left.asInstanceOf[ReferenceValue].section shouldEqual("_local")
-    o.revisions(0).whens(0).left.asInstanceOf[ReferenceValue].key shouldEqual("x")
-    o.revisions(0).whens(0).right shouldBe a [ReferenceValue]
-    o.revisions(0).whens(0).right.asInstanceOf[ReferenceValue].section shouldEqual("_context")
-    o.revisions(0).whens(0).right.asInstanceOf[ReferenceValue].key shouldEqual("y")
-    o.revisions(0).whens(0).op shouldEqual("eq")
+    o.sources.length shouldEqual(3)
+    o.sources(0) should not be null
+    o.sources(0) shouldBe a [AddRevisionSource]
+    o.sources(0).column shouldEqual("a.b")
+    o.sources(0).asInstanceOf[TableRevisionSource].table.section shouldEqual("table")
+    o.sources(0).asInstanceOf[TableRevisionSource].table.name shouldEqual("foo")
 
-    o.revisions(1) should not be null
-    o.revisions(1) shouldBe a [UpdateRevisionSource]
-    o.revisions(1).column shouldEqual("c")
-    o.revisions(1).asInstanceOf[TableRevisionSource].table.section shouldEqual("table")
-    o.revisions(1).asInstanceOf[TableRevisionSource].table.name shouldEqual("bar")
-    o.revisions(1).whens.length shouldEqual(1)
-    o.revisions(1).whens(0) should not be null
-    o.revisions(1).whens(0).left shouldBe a [ReferenceValue]
-    o.revisions(1).whens(0).left.asInstanceOf[ReferenceValue].section shouldEqual("_context")
-    o.revisions(1).whens(0).left.asInstanceOf[ReferenceValue].key shouldEqual("q")
-    o.revisions(1).whens(0).right shouldBe a [NumberValue]
-    o.revisions(1).whens(0).right.asInstanceOf[NumberValue].value shouldEqual(3.0)
-    o.revisions(1).whens(0).op shouldEqual("lt")
+    o.sources(1) should not be null
+    o.sources(1) shouldBe a [UpdateRevisionSource]
+    o.sources(1).column shouldEqual("c")
+    o.sources(1).asInstanceOf[TableRevisionSource].table.section shouldEqual("table")
+    o.sources(1).asInstanceOf[TableRevisionSource].table.name shouldEqual("bar")
 
-    o.revisions(2) should not be null
-    o.revisions(2) shouldBe a [RemoveRevisionSource]
-    o.revisions(2).column shouldEqual("d")
-    o.revisions(2).whens.length shouldEqual(1)
-    o.revisions(2).whens(0) should not be null
-    o.revisions(2).whens(0).left shouldBe a [ReferenceValue]
-    o.revisions(2).whens(0).left.asInstanceOf[ReferenceValue].section shouldEqual("_context")
-    o.revisions(2).whens(0).left.asInstanceOf[ReferenceValue].key shouldEqual("r")
-    o.revisions(2).whens(0).right shouldBe a [NumberValue]
-    o.revisions(2).whens(0).right.asInstanceOf[NumberValue].value shouldEqual(1.0)
-    o.revisions(2).whens(0).op shouldEqual("eq")
+    o.sources(2) should not be null
+    o.sources(2) shouldBe a [RemoveRevisionSource]
+    o.sources(2).column shouldEqual("d")
   }
 
   "AssembleStep" should "load from JSON" in {
