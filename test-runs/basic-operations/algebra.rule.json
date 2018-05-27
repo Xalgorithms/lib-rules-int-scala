@@ -1,0 +1,212 @@
+{
+  "steps": [
+    {
+      "reference": {
+        "package": "test",
+        "id": "numbers1",
+        "version": "0.0.0",
+        "name": "table_one"
+      },
+      "indexes": [
+
+      ],
+      "name": "require"
+    },
+    {
+      "table_name": "t_add",
+      "columns": [
+        {
+          "table": {
+            "section": "table",
+            "key": "table_one",
+            "type": "reference"
+          },
+          "sources": [
+            {
+              "columns": [
+
+              ]
+            }
+          ]
+        }
+      ],
+      "name": "assemble"
+    },
+    {
+      "table": {
+        "section": "table",
+        "key": "t_add",
+        "type": "reference"
+      },
+      "assignments": [
+        {
+          "source": {
+            "type": "function",
+            "name": "add",
+            "args": [
+              {
+                "section": "_context",
+                "key": "a",
+                "type": "reference"
+              },
+              {
+                "section": "_context",
+                "key": "b",
+                "type": "reference"
+              }
+            ]
+          },
+          "target": "c"
+        }
+      ],
+      "name": "map"
+    },
+    {
+      "table_name": "t_subtract",
+      "columns": [
+        {
+          "table": {
+            "section": "table",
+            "key": "table_one",
+            "type": "reference"
+          },
+          "sources": [
+            {
+              "columns": [
+
+              ]
+            }
+          ]
+        }
+      ],
+      "name": "assemble"
+    },
+    {
+      "table": {
+        "section": "table",
+        "key": "t_subtract",
+        "type": "reference"
+      },
+      "assignments": [
+        {
+          "source": {
+            "type": "function",
+            "name": "subtract",
+            "args": [
+              {
+                "section": "_context",
+                "key": "a",
+                "type": "reference"
+              },
+              {
+                "section": "_context",
+                "key": "b",
+                "type": "reference"
+              }
+            ]
+          },
+          "target": "c"
+        }
+      ],
+      "name": "map"
+    },
+    {
+      "table_name": "t_multiply",
+      "columns": [
+        {
+          "table": {
+            "section": "table",
+            "key": "table_one",
+            "type": "reference"
+          },
+          "sources": [
+            {
+              "columns": [
+
+              ]
+            }
+          ]
+        }
+      ],
+      "name": "assemble"
+    },
+    {
+      "table": {
+        "section": "table",
+        "key": "t_multiply",
+        "type": "reference"
+      },
+      "assignments": [
+        {
+          "source": {
+            "type": "function",
+            "name": "multiply",
+            "args": [
+              {
+                "section": "_context",
+                "key": "a",
+                "type": "reference"
+              },
+              {
+                "section": "_context",
+                "key": "b",
+                "type": "reference"
+              }
+            ]
+          },
+          "target": "c"
+        }
+      ],
+      "name": "map"
+    },
+    {
+      "table_name": "t_divide",
+      "columns": [
+        {
+          "table": {
+            "section": "table",
+            "key": "table_one",
+            "type": "reference"
+          },
+          "sources": [
+            {
+              "columns": [
+
+              ]
+            }
+          ]
+        }
+      ],
+      "name": "assemble"
+    },
+    {
+      "table": {
+        "section": "table",
+        "key": "t_divide",
+        "type": "reference"
+      },
+      "assignments": [
+        {
+          "source": {
+            "type": "function",
+            "name": "divide",
+            "args": [
+              {
+                "section": "_context",
+                "key": "a",
+                "type": "reference"
+              },
+              {
+                "section": "_context",
+                "key": "b",
+                "type": "reference"
+              }
+            ]
+          },
+          "target": "c"
+        }
+      ],
+      "name": "map"
+    }
+  ]
+}

@@ -1,0 +1,19 @@
+REQUIRE test:numbers1:0.0.0 as table_one;
+
+ASSEMBLE t_add COLUMNS FROM table:table_one;
+MAP table:t_add USING c = add(@a, @b);
+
+ASSEMBLE t_subtract COLUMNS FROM table:table_one;
+MAP table:t_subtract USING c = subtract(@a, @b);
+
+ASSEMBLE t_multiply COLUMNS FROM table:table_one;
+MAP table:t_multiply USING c = multiply(@a, @b);
+
+ASSEMBLE t_divide COLUMNS FROM table:table_one;
+MAP table:t_divide USING c = divide(@a, @b);
+
+
+
+
+
+
