@@ -12,6 +12,12 @@ load rules from MongoDB, to arrange a logic series of steps that will
 form the execution of that rule and to output a set of revisions that
 *could be* applied to the original document to yield a new document.
 
+This library is a *naive reference implementation* of the execution
+model for Xalgo. It is (and never will be) optimized for improved
+production exeuction times. Addition implementations of the Xalgo
+execution model will be added for this purpose, leaving this library
+to remain clean as a reference for new implementations.
+
 # Status
 
 This library is *currently capable* of executing rules *locally*
