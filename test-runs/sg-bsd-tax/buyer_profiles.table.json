@@ -1,0 +1,14 @@
+[
+  { "buyer_id" : "0001", "buyer_profile" : sgc-1 },
+  { "buyer_id" : "0002", "buyer_profile" : spr-n },
+  { "buyer_id" : "0003", "buyer_profile" : sfe-n },
+  { "buyer_id" : "0004", "buyer_profile" : sgc-n },
+  { "buyer_id" : "0005", "buyer_profile" : sgc-2 },
+  { "buyer_id" : "0006", "buyer_profile" : spr-1 },
+  { "buyer_id" : "0007", "buyer_profile" : sgc-1 },
+  { "buyer_id" : "0008", "buyer_profile" : spr-1 },
+  { "buyer_id" : "0009", "buyer_profile" : sgc-1 },
+  { "buyer_id" : "0010", "buyer_profile" : sfe-n },
+  { "buyer_id" : "0011", "buyer_profile" : sgc-n },
+  { "buyer_id" : "0012", "buyer_profile" : spr-1 }
+]

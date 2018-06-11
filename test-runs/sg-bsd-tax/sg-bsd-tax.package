@@ -1,0 +1,31 @@
+{
+  "namespace" : "sg..tax",
+  "rules" : {
+    "additional-buyers-stamp-duty" : {
+      "version" : "0.1.0",
+      "effective" : [
+        { "timezone" : "AST", "starts" : "2013-01-12T00:00", "ends" : "9999-12-30T23:59" }
+      ],
+      "jurisdiction" : {
+        "country" : "SG",
+      },
+      "xa" : {
+        "version" : "0.1.2"
+      },
+      "criticality" : "experimental",
+      "url" : "https://www.iras.gov.sg/irashome/Other-Taxes/Stamp-Duty-for-Property/Working-out-your-Stamp-Duty/Buying-or-Acquiring-Property/What-is-the-Duty-that-I-Need-to-Pay-as-a-Buyer-or-Transferee-of-Residential-Property/Additional-Buyer-s-Stamp-Duty--ABSD-/",
+      "roles" : {
+        "manager" : {
+          "name" : "Joseph Potvin",
+          "email" : "jpotvin@xalgorithms.org"
+        },
+        "author" : {
+          "name" : "Joseph Potvin",
+          "email" : "jpotvin@xalgorithms.org"
+        }
+      }
+    }
+  },
+  "tables" : {
+  }
+}

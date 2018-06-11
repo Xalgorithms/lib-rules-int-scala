@@ -1,0 +1,136 @@
+# GOAL: This rule operates on documents that are prepared by the Lichen
+# application, originating as UBL purchase orders. It is invoked by 
+# purchase orders for real property in Singapore (using ISIC 
+# and UNSPSC coding). In this jursidiction, buyers of real property 
+# are required to pay Additional Buyer’s Stamp Duty (ABSD) on top of the 
+# existing Buyer’s Stamp Duty (BSD). ABSD and BSD are computed on the 
+# purchase price as stated in the dutiable document or the market value of 
+# the property (whichever is the higher amount).
+
+# This rule applies only to purchase orders classified as
+# "real estate activities with own or leased property" (ISIC/L6810).
+
+WHEN envelope:type == 'purchase-order';
+WHEN envelope:parties.buyer.industry.list_id == 'ISIC';
+WHEN envelope:parties.buyer.industry.value == 'L6810';
+
+# This rule operates only on purchase orders that are coded as 
+# "Sale of property and building (UNSPSC/80131600).
+
+WHEN item:classification.list_name == 'UNSPSC';
+WHEN item:classification.value == '80131600';
+WHEN item:quantity.value > 0;
+
+# load tables that add additional information
+REQUIRE sg..tax:buyer_profiles:0.1.1;
+REQUIRE sg..tax:rates_by_profile:0.1.1;
+
+# PHASE ONE: Build a table that can be used to transform any items in
+# the purchase order related to UNSPSC/80131600. We will do this by
+# loading a table of registered buyer profiles against a table of
+# rates based on buyer profiles. For this example, it is assumed that 
+# the author of the rule has some facility for using or generating the 
+# table of buyer profiles (buyer_profiles.json) from an official registry.
+
+# For the purposes of illustration, the buyer in these comment
+# examples is "0002".
+
+# We need to build a table that contains the buyer information joined 
+# against the rates table specified by the Inland Revenue Authority of 
+# Singapore.
+#
+# The first COLUMN selection will build a basic table using the
+# external rates_by_profile table. Quoting from the sample tables, this
+# yields:
+#
+# [
+#  { "profile" : sgc-1, "absd_rate" : 0.00 },
+#  { "profile" : sgc-2, "absd_rate" : 0.07 },
+#  { "profile" : sgc-n, "absd_rate" : 0.10 },
+#  { "profile" : spr-1, "absd_rate" : 0.05 },
+#  { "profile" : spr-n, "absd_rate" : 0.10 },
+#  { "profile" : sfe-n, "absd_rate" : 0.15 }
+# ]
+#
+# The second COLUMN expression will perform a cartesian product against
+# the table that is under construction. In addition, it will apply a condition that ONLY
+# accepts a row where the buyer from the purchase order matches. The table 
+# buyer_profiles has buyer "0002" recorded as "spr-n".
+#
+# This will yield a table in which only the fifth row has the buyer 
+# from the purchase order matching a profile.
+#
+# [
+#  { "profile" : sgc-1, "absd_rate" : 0.05, "buyer_profile" : spr-n },
+#  { "profile" : sgc-2, "absd_rate" : 0.03, "buyer_profile" : spr-n },
+#  { "profile" : sgc-n, "absd_rate" : 0.02, "buyer_profile" : spr-n },
+#  { "profile" : spr-1, "absd_rate" : 0.01, "buyer_profile" : spr-n },
+#  { "profile" : spr-n, "absd_rate" : 0.05, "buyer_profile" : spr-n },
+#  { "profile" : sfe-n, "absd_rate" : 0.03, "buyer_profile" : spr-n }
+# ]
+
+
+ASSEMBLE buyers_rates
+  COLUMNS FROM table:rates_by_profile
+  COLUMN buyer_profile FROM table:buyer_profiles WHEN envelope:parties.buyer.id.value == @buyer_id;
+
+# In order to determine the correct reduction, we learn WHICH profile
+# the buyer matches. We do this by performing a MAP, FILTER, REDUCE.
+
+MAP table:rates_by_profile
+  USING profile;
+
+FILTER table:buyers_rates
+  WHEN @profile = @buyer_profile;
+
+REDUCE table:buyers_rates
+  USING @profile
+  WHEN @profile == @buyer_profile;
+
+# PHASE TWO: We need to apply this final rate ACROSS the items
+# that appear in the purchase order. Since this purchase order originates as a UBL 
+# document formatted to our internal format it will have HIERARCHICAL
+# columns (columns containing KEY/VALUE pair trees). Therefore the
+# example will only contain the information relevant to the rule.
+#
+# The items table in the originating document might contain:
+#
+# [
+#   { "classification" : { list_name: "UNSPSC", "value" : "80131600" }, price: { currency_code: "SGD", "value" : "1000000.00" } },
+#   { "classification" : { list_name: "UNSPSC", "value" : "11111111" }, price: { currency_code: "SGD", "value" : "35000.00" } },
+#   { "classification" : { list_name: "UNSPSC", "value" : "22222222" }, price: { currency_code: "SGD", "value" : "1500.00" } },
+#   { "classification" : { list_name: "UNSPSC", "value" : "80131600" }, price: { currency_code: "SGD", "value" : "180000.00" } }
+# ]
+#
+# First, we use the items table as the basis for a new table. It is
+# filtered according to the classification. We form additional columns
+# using the cartesian product of the table we built in PHASE ONE. This yields:
+#
+# [
+#   { "classification" : { list_name: "UNSPSC", "value" : "80131600" }, "price": { currency_code: "SGD", "value" : "1000000.00" }, "reduction" : 0.0.3 },
+#   { "classification" : { list_name: "UNSPSC", "value" : "80131600" }, "price": { currency_code: "SGD", "value" : "180000.00" }, "reduction" : 0.0.3 }
+# ]
+#
+ASSEMBLE item_absd
+  COLUMNS (id, classification, price) FROM table:items
+    WHEN item:classification.list_name == 'UNSPSC'
+    WHEN item:classification.value == '80131600'
+  COLUMN absd_rate FROM table:buyers_rates; 
+
+# We use MAP to add an additional NESTED COLUMN that translates to an
+# taxamount in UBL concepts, yielding:
+# THE FOLLOWING EXAMPLE IS NOT QUITE RIGHT YET
+# [
+#   { "classification" : { list_name: "UNSPSC", "value" : "80131600" }, "price": { currency_code: "SGD", "value" : "1000000.00" }, "absd_rate" : 0.10, "taxamount": { "amount" : { "value" : 100000, "currency_code" : "SGD" } },
+#   { "classification" : { list_name: "UNSPSC", "value" : "80131600" }, "price": { currency_code: "SGD", "value" : "180000.00" }, "absd_rate" : 0.10, "taxamount": { "amount" : { "value" : 18000 "currency_code" : "SGD" } }
+# ]
+#
+MAP table:item_absd
+  USING taxamount.absd = multiply(@price.value, @absd_rate)
+  USING taxamount.absd.currency_code = @price.currency_code;
+
+# This issues a revision of the original items table, adding the
+# ENTIRE taxamount column.
+# THE FOLLOWING EXAMPLE IS NOT QUITE RIGHT YET
+REVISE table:items
+ADD taxamount.absd.charge.currency_code FROM table:item_absdta WHEN id.value == @id.value;
