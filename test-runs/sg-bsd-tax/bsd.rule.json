@@ -25,6 +25,18 @@
       "name": "require"
     },
     {
+      "reference": {
+        "package": "sg_bsd_tax",
+        "id": "faux_envelope",
+        "version": "0.1.1",
+        "name": "faux_envelope"
+      },
+      "indexes": [
+
+      ],
+      "name": "require"
+    },
+    {
       "table_name": "buyers_rates",
       "columns": [
         {
@@ -49,8 +61,23 @@
           },
           "sources": [
             {
-              "name": "buyer_profile",
-              "source": "buyer_profile"
+              "name": "buyer_id",
+              "source": "buyer_id",
+              "whens": [
+                {
+                  "left": {
+                    "section": "buyer_profiles",
+                    "key": "buyer_profile",
+                    "type": "reference"
+                  },
+                  "right": {
+                    "section": "buyers_rates",
+                    "key": "buyer_profile",
+                    "type": "reference"
+                  },
+                  "op": "eq"
+                }
+              ]
             }
           ]
         }
