@@ -25,7 +25,7 @@
       "name": "require"
     },
     {
-      "table_name": "employee_info",
+      "table_name": "all_info",
       "columns": [
         {
           "table": {
@@ -35,8 +35,9 @@
           },
           "sources": [
             {
-              "name": "id",
-              "source": "employee_id"
+              "columns": [
+
+              ]
             }
           ]
         },
@@ -53,8 +54,8 @@
               "whens": [
                 {
                   "left": {
-                    "section": "_context",
-                    "key": "id",
+                    "section": "_local",
+                    "key": "employee_id",
                     "type": "reference"
                   },
                   "right": {
@@ -64,40 +65,6 @@
                   },
                   "op": "eq"
                 }
-              ]
-            }
-          ]
-        }
-      ],
-      "name": "assemble"
-    },
-    {
-      "table_name": "all_info",
-      "columns": [
-        {
-          "table": {
-            "section": "table",
-            "key": "names",
-            "type": "reference"
-          },
-          "sources": [
-            {
-              "columns": [
-
-              ]
-            }
-          ]
-        },
-        {
-          "table": {
-            "section": "table",
-            "key": "hours",
-            "type": "reference"
-          },
-          "sources": [
-            {
-              "columns": [
-
               ]
             }
           ]

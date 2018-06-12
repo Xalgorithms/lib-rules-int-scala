@@ -62,22 +62,7 @@
           "sources": [
             {
               "name": "buyer_id",
-              "source": "buyer_id",
-              "whens": [
-                {
-                  "left": {
-                    "section": "buyer_profiles",
-                    "key": "buyer_profile",
-                    "type": "reference"
-                  },
-                  "right": {
-                    "section": "buyers_rates",
-                    "key": "buyer_profile",
-                    "type": "reference"
-                  },
-                  "op": "eq"
-                }
-              ]
+              "source": "buyer_id"
             }
           ]
         }
