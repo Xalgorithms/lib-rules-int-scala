@@ -1,5 +1,5 @@
 {
-  "namespace" : "sg..tax",
+  "namespace" : "sg_bsd_tax",
   "rules" : {
     "additional-buyers-stamp-duty" : {
       "version" : "0.1.0",

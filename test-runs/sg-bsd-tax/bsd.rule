@@ -1,0 +1,17 @@
+#WHEN envelope:type == 'purchase-order';
+#WHEN envelope:parties.buyer.industry.list_id == 'ISIC';
+
+REQUIRE sg_bsd_tax:buyer_profiles:0.1.1;
+REQUIRE sg_bsd_tax:rates_by_profile:0.1.1;
+
+#Encountered an error:
+#> step0 [error] (run-main-0) com.fasterxml.jackson.core.JsonParseException: 
+#     Unrecognized token 'sgc': was expecting ('true', 'false' or 'null')
+# Resolution: Placed " around profile identifiers.
+
+ASSEMBLE buyers_rates
+  COLUMNS FROM table:rates_by_profile
+  COLUMN buyer_profile FROM table:buyer_profiles; #WHEN envelope:parties.buyer.id.value == @buyer_id; 
+
+FILTER table:buyers_rates
+  WHEN @profile == @buyer_profile;

@@ -1,0 +1,84 @@
+{
+  "steps": [
+    {
+      "reference": {
+        "package": "sg_bsd_tax",
+        "id": "buyer_profiles",
+        "version": "0.1.1",
+        "name": "buyer_profiles"
+      },
+      "indexes": [
+
+      ],
+      "name": "require"
+    },
+    {
+      "reference": {
+        "package": "sg_bsd_tax",
+        "id": "rates_by_profile",
+        "version": "0.1.1",
+        "name": "rates_by_profile"
+      },
+      "indexes": [
+
+      ],
+      "name": "require"
+    },
+    {
+      "table_name": "buyers_rates",
+      "columns": [
+        {
+          "table": {
+            "section": "table",
+            "key": "rates_by_profile",
+            "type": "reference"
+          },
+          "sources": [
+            {
+              "columns": [
+
+              ]
+            }
+          ]
+        },
+        {
+          "table": {
+            "section": "table",
+            "key": "buyer_profiles",
+            "type": "reference"
+          },
+          "sources": [
+            {
+              "name": "buyer_profile",
+              "source": "buyer_profile"
+            }
+          ]
+        }
+      ],
+      "name": "assemble"
+    },
+    {
+      "table": {
+        "section": "table",
+        "key": "buyers_rates",
+        "type": "reference"
+      },
+      "filters": [
+        {
+          "left": {
+            "section": "_context",
+            "key": "profile",
+            "type": "reference"
+          },
+          "right": {
+            "section": "_context",
+            "key": "buyer_profile",
+            "type": "reference"
+          },
+          "op": "eq"
+        }
+      ],
+      "name": "filter"
+    }
+  ]
+}
