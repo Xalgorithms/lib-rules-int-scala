@@ -132,5 +132,6 @@ MAP table:item_absd
 # This issues a revision of the original items table, adding the
 # ENTIRE taxamount column.
 # THE FOLLOWING EXAMPLE IS NOT QUITE RIGHT YET
+
 REVISE table:items
 ADD taxamount.absd.charge.currency_code FROM table:item_absdta WHEN id.value == @id.value;
