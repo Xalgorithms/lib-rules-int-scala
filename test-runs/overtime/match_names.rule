@@ -2,18 +2,38 @@
 
 REQUIRE test:overtime_worked:0.0.1 AS hours;
 REQUIRE test:employee_names:0.0.1 AS names; 
+REQUIRE test:employee_names_v2:0.0.1 AS names_v2; 
+REQUIRE test:overtime_pay:0.0.1 AS pay; 
 
 
+#SECTION 1
 #I keep gravitating towards this pattern based on xalgo.md :
 
-#Functional:
-ASSEMBLE all_info
-  COLUMNS FROM table:hours
-  COLUMN employee_name AS name FROM table:names; #WHEN @employee_id == table:names.employee_id;
+#FIGURE 1-A: Functional without WHEN:
+#ASSEMBLE all_info
+#  COLUMNS FROM table:hours
+#  COLUMN employee_name AS name FROM table:names; #WHEN @employee_id == table:names.employee_id;
+
+#FIGURE 1-B: Non-Functional with WHEN:
+#ASSEMBLE all_info_when
+#  COLUMNS FROM table:hours
+#  COLUMN employee_name AS name FROM table:names WHEN @employee_id == table:names.employee_id;
 
 
-#Non-Functional:
-ASSEMBLE all_info_when
+#SECTION 2
+#If column keys in two different tables have the same name, a column will be discarded without sorting.
+
+#FIGURE 2-A
+ASSEMBLE overtime_table_A
   COLUMNS FROM table:hours
-  COLUMN employee_name AS name FROM table:names WHEN @employee_id == table:names.employee_id;
+  COLUMNS FROM table:names;
+
+
+#FIGURE 2-B: When tables use a different key to store the same value, filtering can occur as the column is added to the table:
+ASSEMBLE overtime_table_B
+  COLUMNS FROM table:hours
+  COLUMNS FROM table:names_v2;
+
+FILTER table:overtime_table_B
+  WHEN @id == @employee_id;
 

@@ -17,14 +17,19 @@ REQUIRE sg_bsd_tax:faux_envelope:0.1.1;
 
 ASSEMBLE buyers_rates
   COLUMNS FROM table:rates_by_profile
-  COLUMN buyer_id FROM table:buyer_profiles; #WHEN buyer_profiles:buyer_profile == buyers_rates:buyer_profile; 
+  COLUMNS FROM table:buyer_profiles
+  COLUMN buyer_id AS envelope_id FROM table:faux_envelope;
+  #COLUMN buyer_id FROM table:buyer_profiles; #WHEN buyer_profiles:buyer_profile == buyers_rates:buyer_profile; 
   #COLUMN buyer_id AS buyer_envelope_id FROM table:faux_envelope; #WHEN envelope:parties.buyer.id.value == @buyer_id; 
 
 #MAP table:rates_by_profile
 #  USING profile;
 
+# This isolates the ID from the envelope:
 FILTER table:buyers_rates
+  WHEN @buyer_id == @envelope_id
   WHEN @profile == @buyer_profile;
+
 
 #ASSEMBLE test_one
 
