@@ -15,5 +15,5 @@ ASSEMBLE full_table
 #FIGURE 1-B: Non-Functional with WHEN:
 ASSEMBLE matched_table
   COLUMNS FROM table:a
-  COLUMN roman FROM table:b WHEN @shared == shared; #Issue 11.
+  COLUMN roman FROM table:b WHEN shared == @shared; #Issue 11.
  

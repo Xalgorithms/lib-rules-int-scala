@@ -88,12 +88,12 @@
               "whens": [
                 {
                   "left": {
-                    "section": "_context",
+                    "section": "_local",
                     "key": "shared",
                     "type": "reference"
                   },
                   "right": {
-                    "section": "_local",
+                    "section": "_context",
                     "key": "shared",
                     "type": "reference"
                   },
