@@ -15,9 +15,9 @@ REQUIRE test:overtime_pay:0.0.1 AS pay;
 #  COLUMN employee_name AS name FROM table:names; #WHEN @employee_id == table:names.employee_id;
 
 #FIGURE 1-B: Non-Functional with WHEN:
-#ASSEMBLE all_info_when
-#  COLUMNS FROM table:hours
-#  COLUMN employee_name AS name FROM table:names WHEN @employee_id == table:names.employee_id;
+ASSEMBLE all_info_when
+  COLUMNS FROM table:hours
+  COLUMN employee_name AS name FROM table:names WHEN employee_id == @employee_id;
 
 
 #SECTION 2

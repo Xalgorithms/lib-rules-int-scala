@@ -49,6 +49,54 @@
       "name": "require"
     },
     {
+      "table_name": "all_info_when",
+      "columns": [
+        {
+          "table": {
+            "section": "table",
+            "key": "hours",
+            "type": "reference"
+          },
+          "sources": [
+            {
+              "columns": [
+
+              ]
+            }
+          ]
+        },
+        {
+          "table": {
+            "section": "table",
+            "key": "names",
+            "type": "reference"
+          },
+          "sources": [
+            {
+              "name": "name",
+              "source": "employee_name",
+              "whens": [
+                {
+                  "left": {
+                    "section": "_local",
+                    "key": "employee_id",
+                    "type": "reference"
+                  },
+                  "right": {
+                    "section": "_context",
+                    "key": "employee_id",
+                    "type": "reference"
+                  },
+                  "op": "eq"
+                }
+              ]
+            }
+          ]
+        }
+      ],
+      "name": "assemble"
+    },
+    {
       "table_name": "overtime_table_A",
       "columns": [
         {
