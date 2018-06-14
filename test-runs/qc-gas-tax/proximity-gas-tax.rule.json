@@ -1,0 +1,224 @@
+{
+  "whens": {
+    "envelope": [
+      {
+        "expr": {
+          "left": {
+            "section": "envelope",
+            "key": "type",
+            "type": "reference"
+          },
+          "right": {
+            "type": "string",
+            "value": "invoice"
+          },
+          "op": "eq"
+        }
+      },
+      {
+        "expr": {
+          "left": {
+            "section": "envelope",
+            "key": "parties.supplier.industry.list_id",
+            "type": "reference"
+          },
+          "right": {
+            "type": "string",
+            "value": "ISIC"
+          },
+          "op": "eq"
+        }
+      },
+      {
+        "expr": {
+          "left": {
+            "section": "envelope",
+            "key": "parties.supplier.industry.value",
+            "type": "reference"
+          },
+          "right": {
+            "type": "string",
+            "value": "G4711"
+          },
+          "op": "eq"
+        }
+      }
+    ],
+    "item": [
+      {
+        "expr": {
+          "left": {
+            "section": "item",
+            "key": "classification.list_name",
+            "type": "reference"
+          },
+          "right": {
+            "type": "string",
+            "value": "UNSPSC"
+          },
+          "op": "eq"
+        }
+      },
+      {
+        "expr": {
+          "left": {
+            "section": "item",
+            "key": "classification.value",
+            "type": "reference"
+          },
+          "right": {
+            "type": "string",
+            "value": "506505"
+          },
+          "op": "eq"
+        }
+      },
+      {
+        "expr": {
+          "left": {
+            "section": "item",
+            "key": "quantity.value",
+            "type": "reference"
+          },
+          "right": {
+            "type": "number",
+            "value": "0"
+          },
+          "op": "gt"
+        }
+      }
+    ]
+  },
+  "steps": [
+    {
+      "reference": {
+        "package": "ca.qc.tax",
+        "id": "supplier_distances",
+        "version": "0.0.1",
+        "name": "supplier_distances"
+      },
+      "indexes": [
+
+      ],
+      "name": "require"
+    },
+    {
+      "reference": {
+        "package": "ca.qc.tax",
+        "id": "reductions_by_distance",
+        "version": "0.0.1",
+        "name": "reductions_by_distance"
+      },
+      "indexes": [
+
+      ],
+      "name": "require"
+    },
+    {
+      "reference": {
+        "package": "ca.qc.tax",
+        "id": "emulated_envelope",
+        "version": "0.0.1",
+        "name": "envelope"
+      },
+      "indexes": [
+
+      ],
+      "name": "require"
+    },
+    {
+      "table_name": "sellers_reductions",
+      "columns": [
+        {
+          "table": {
+            "section": "table",
+            "key": "reductions_by_distance",
+            "type": "reference"
+          },
+          "sources": [
+            {
+              "columns": [
+
+              ]
+            }
+          ]
+        },
+        {
+          "table": {
+            "section": "table",
+            "key": "supplier_distances",
+            "type": "reference"
+          },
+          "sources": [
+            {
+              "columns": [
+
+              ]
+            }
+          ]
+        },
+        {
+          "table": {
+            "section": "table",
+            "key": "envelope",
+            "type": "reference"
+          },
+          "sources": [
+            {
+              "columns": [
+
+              ]
+            }
+          ]
+        }
+      ],
+      "name": "assemble"
+    },
+    {
+      "table": {
+        "section": "table",
+        "key": "sellers_reductions",
+        "type": "reference"
+      },
+      "filters": [
+        {
+          "left": {
+            "section": "_context",
+            "key": "supplier_id",
+            "type": "reference"
+          },
+          "right": {
+            "section": "_context",
+            "key": "envelope_supplier_id",
+            "type": "reference"
+          },
+          "op": "eq"
+        }
+      ],
+      "name": "filter"
+    },
+    {
+      "table": {
+        "section": "table",
+        "key": "sellers_reductions",
+        "type": "reference"
+      },
+      "filters": [
+        {
+          "left": {
+            "section": "_context",
+            "key": "seller_distance",
+            "type": "reference"
+          },
+          "right": {
+            "section": "_context",
+            "key": "distance",
+            "type": "reference"
+          },
+          "op": "gt"
+        }
+      ],
+      "name": "filter"
+    }
+  ]
+}

@@ -20,7 +20,7 @@ WHEN item:quantity.value > 0;
 # load tables that add additional information
 REQUIRE ca.qc.tax:supplier_distances:0.0.1 AS supplier_distances;
 REQUIRE ca.qc.tax:reductions_by_distance:0.0.1 AS reductions_by_distance;
-
+REQUIRE ca.qc.tax:emulated_envelope:0.0.1 AS envelope;
 # PHASE ONE: Build a table that can be used to transform any items in
 # the invoice that related to UNSPSC/506505. We will do this by
 # loading a table of registered station distances against a table of
@@ -61,8 +61,14 @@ REQUIRE ca.qc.tax:reductions_by_distance:0.0.1 AS reductions_by_distance;
 # ]
 
 ASSEMBLE sellers_reductions
+  #COLUMN seller_distance FROM table:supplier_distances; #WHEN envelope:parties.suppler.id.value == @supplier_id;
   COLUMNS FROM table:reductions_by_distance
-  COLUMN seller_distance FROM table:supplier_distances WHEN envelope:parties.suppler.id.value == @supplier_id;
+  COLUMNS FROM table:supplier_distances
+  # This Column and next FILTER are stand-ins while WHILE is updated.
+  COLUMNS FROM table:envelope;
+
+FILTER table:sellers_reductions
+  WHEN @supplier_id == @envelope_supplier_id;
 
 #
 # In order to determine the correct reduction, we learn WHICH bracket
@@ -78,8 +84,17 @@ ASSEMBLE sellers_reductions
 #  { "distance" : 0,  "reduction" : 0.08, "seller_distance" : 1.7, "difference" : -1.7 }
 # ]
 #
-MAP table:sellers_reductions
-  USING difference = subtract(@distance, @seller_distance);
+
+
+# Theoretical Implementation:
+#MAP table:sellers_reductions
+  #USING difference = subtract(@distance, @seller_distance);
+
+# Test Implementation: This produces all tax zones between the station and the border. 
+FILTER table:sellers_reductions
+  WHEN @seller_distance > @distance; 
+
+
 
 # Since we will be reducing using min(), we should remove any rows that are < 0
 #
@@ -90,8 +105,8 @@ MAP table:sellers_reductions
 #  { "distance" : 5,  "reduction" : 0.06, "seller_distance" : 1.7, "difference" : 3.3  }
 # ] 
 #
-FILTER table:sellers_reductions
-  WHEN @difference >= 0;
+#FILTER table:sellers_reductions
+  #WHEN @difference >= 0;
 
 # Using the REDUCE step, we determine the minimal distance and select
 # it. The accumulator we use in the reduction (min_difference) is not
@@ -101,9 +116,9 @@ FILTER table:sellers_reductions
 #  { "distance" : 5,  "reduction" : 0.06, "seller_distance" : 1.7, "difference" : 3.3  }
 #] 
 #
-REDUCE table:sellers_reductions
-  USING min_difference = min(min_difference, @difference)
-  WHEN difference == @min_difference;
+#REDUCE table:sellers_reductions
+  #USING min_difference = min(min_difference, @difference)
+  #WHEN difference == @min_difference;
 
 # PHASE TWO: We need to apply this final reduction ACROSS the items
 # that appear in the invoice. Since this invoice originates as a UBL
@@ -130,11 +145,11 @@ REDUCE table:sellers_reductions
 #   { "classification" : { list_name: "UNSPSC", "value" : "506505" }, "price": { currency_code: "CAD", "value" : "18.00" }, "reduction" : .06 }
 # ]
 #
-ASSEMBLE item_reductions
-  COLUMNS (id, classification, price) FROM table:items
-    WHEN @classification.list_name == 'UNSPSC'
-    WHEN @classification.value == '506505'
-  COLUMN reduction FROM table:sellers_reductions;
+#ASSEMBLE item_reductions
+  #COLUMNS (id, classification, price) FROM table:items
+    #WHEN @classification.list_name == 'UNSPSC'
+    #WHEN @classification.value == '506505'
+  #COLUMN reduction FROM table:sellers_reductions;
 
 # We use MAP to add an additional NESTED COLUMN that translates to an
 # allowance (a discount in this case) in UBL concepts, yielding:
@@ -144,12 +159,12 @@ ASSEMBLE item_reductions
 #   { "classification" : { list_name: "UNSPSC", "value" : "506505" }, "price": { currency_code: "CAD", "value" : "18.00" }, "reduction" : .06, "allowance": { "charge" : false, "amount" : { "value" : 1.08, "currency_code" : "CAD" } }
 # ]
 #
-MAP table:item_reductions
-  USING allowance.charge = false
-  USING allowance.amount.value = multiply(@price.value, @reduction)
-  USING allowance.amount.currency_code = @price.currency_code;
+#MAP table:item_reductions
+  #USING allowance.charge = false
+  #USING allowance.amount.value = multiply(@price.value, @reduction)
+  #USING allowance.amount.currency_code = @price.currency_code;
 
 # This issues a revision of the original items table, adding the
 # ENTIRE allowance column.
-REVISE table:items
-  ADD allowance FROM table:item_reductions WHEN id.value == @id.value;
+#REVISE table:items
+  #ADD allowance FROM table:item_reductions WHEN id.value == @id.value;
