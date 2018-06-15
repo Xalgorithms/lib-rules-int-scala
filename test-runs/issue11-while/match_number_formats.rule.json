@@ -51,6 +51,21 @@
             {
               "columns": [
 
+              ],
+              "whens": [
+                {
+                  "left": {
+                    "section": "_local",
+                    "key": "shared",
+                    "type": "reference"
+                  },
+                  "right": {
+                    "section": "_context",
+                    "key": "shared",
+                    "type": "reference"
+                  },
+                  "op": "eq"
+                }
               ]
             }
           ]
@@ -59,7 +74,7 @@
       "name": "assemble"
     },
     {
-      "table_name": "matched_table",
+      "table_name": "half_table",
       "columns": [
         {
           "table": {
