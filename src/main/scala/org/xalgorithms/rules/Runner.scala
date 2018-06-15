@@ -55,6 +55,58 @@ class Times {
 }
 
 object Runner {
+  def internalize_object(o: JsObject): Map[String, IntrinsicValue] = {
+    o.fields.foldLeft(Map[String, IntrinsicValue]()) { (m, tup) =>
+      tup._2 match {
+        case (s: JsString)   => m ++ Map(tup._1 -> new StringValue(s.value))
+        case (n: JsNumber)   => m ++ Map(tup._1 -> new NumberValue(n.value))
+        case (cho: JsObject) => m ++ internalize_object(cho).map { case (k, v) => s"${tup._1}.${k}" -> v }
+        case _ => m
+      }
+    }
+  }
+
+  def internalize_array(a: JsArray): Seq[Map[String, IntrinsicValue]] = {
+    a.value.foldLeft(Seq[Map[String, IntrinsicValue]]()) { (seq, v) =>
+      v match {
+        case (o: JsObject) => seq :+ internalize_object(o)
+        case _ => seq
+      }
+    }
+  }
+
+  def populate_context(ctx: Context, dir: String): Unit = {
+    try {
+      Json.parse((dir / "context.json").contentAsString()) match {
+        case (o: JsObject) => {
+          o.fields.foreach { case (k, v) =>
+            v match {
+              case (cho: JsObject) => {
+                println(s"# adding map to context (k=${k})")
+                println(internalize_object(cho))
+                ctx.retain_map(k, internalize_object(cho))
+              }
+
+              case (cha: JsArray) => {
+                println(s"# adding table to context (k=${k})")
+                ctx.retain_table("table", k, internalize_array(cha))
+              }
+
+              case _ => println(s"? in context, key is neither array nor object (k=${k})")
+            }
+          }
+        }
+
+        case _ => {
+        }
+      }
+    } catch {
+      case (e: java.nio.file.NoSuchFileException) => {
+        // nothing
+      }
+    }
+  }
+
   def main(args: Array[String]): Unit = {
     val times = new Times()
 
@@ -64,6 +116,8 @@ object Runner {
 
       val ts = new LoadJsonFileTableSource(args.head)
       val ctx = new GlobalContext(ts)
+
+      populate_context(ctx, args.head)
 
       println(s"> loading rule (${fn})")
       times.start("load")

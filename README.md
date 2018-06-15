@@ -1,5 +1,5 @@
 [![License: AGPL v3](https://img.shields.io/badge/License-AGPL%20v3-blue.svg)](https://www.gnu.org/licenses/agpl-3.0)
-[![Build Status](https://www.travis-ci.com/Xalgorithms/rules-interpreter.svg?branch=master)](https://www.travis-ci.com/Xalgorithms/rules-interpreter)
+[![Build Status](https://www.travis-ci.com/Xalgorithms/lib-rules-int-scala.svg?branch=master)](https://www.travis-ci.com/Xalgorithms/lib-rules-int-scala)
 
 # About
 
