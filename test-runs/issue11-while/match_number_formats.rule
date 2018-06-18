@@ -7,13 +7,13 @@ REQUIRE test:a:0.0.1;
 #Table with arabic and roman.
 REQUIRE test:b:0.0.1;
 
-#Incorrect assembly method:
+# No join at all
 ASSEMBLE full_table
   COLUMNS FROM table:a
-  COLUMNS FROM table:b;
-  
-#FIGURE 1-B: Non-Functional with WHEN:
-ASSEMBLE matched_table
+  COLUMNS FROM table:b WHEN shared == @shared;
+
+# empty table
+ASSEMBLE half_table
   COLUMNS FROM table:a
-  COLUMN roman FROM table:b WHEN shared == @shared; #Issue 11.
- 
+  COLUMN roman FROM table:b WHEN shared == @shared;
+  
