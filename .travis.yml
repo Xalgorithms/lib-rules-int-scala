@@ -11,6 +11,6 @@ deploy:
   provider: releases
   api_key:
     secure: Em6NZC0hz5p8HyW9S7wpCvHlIx/bB+6r/Bu+Up4B4utnQh+YvMsti9786x2d/1bDCS3fqBMzG2jPw40khz7fDYrM6cOxcA9lqxTJSLiKP1eK10QP1qAscXGr+rf5YVEcqv3a+d6WgmHklROOAw84N1Xcyzps0A3lXxiXExU0DTqNJQcJkVLgzlNt28krf1ifI7PuMvakZxyhyy4jfjxnbQyvWEMm9vcrdmUaF6BCIl/0nVBGq+PYh4hIatTZVhjvhqeg6tTTYWhlJBaUkakkkALEslSO72/6Q8NWLVpUEUs7yTIB5WBTMk/UafiNbvAx1UEqT+rZh2NKNsjidyXESXPh1t9pG57Ogso0DV3rJXQGXwFJq/QulSD45gjl8QcXZAokKgRUC3P+AY7dZ249t82xTKcFCFohm1Yf8EjlwYk98IUiyaP+SgOWIy3xhSEM472WZ3Efvlm3+ErMujUSUktEe856GPXNbRaF09t77tx65MB3SNlBosdQtlkeHUvI3aRX+8AUxAn2VXI9hk9i9wOoXp7FLMVrZto+xIrqG2Zj/kosfgytPzwWOCUsZ3MQ9bMqsdIEbnEWtpDzf2PDuL/W78ujJjhQW/eKgAajhoJVbnyHOG7oWeYTCvM28xzugn7henv5crHkPafNbTjJs7YtOtCsBHR6sbpCKiKKjHs=
-  file: "target/scala-2.11/xa-spark-jobs_2.11-0.0.1.jar"
+  file: target/scala-2.11/il-rules-interpreter_2.11-0.0.1.jar
   on:
     tags: true
