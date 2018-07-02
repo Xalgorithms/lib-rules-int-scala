@@ -1,5 +1,5 @@
-REQUIRE test:table_origin:0.0.0 AS table_origin;
-REQUIRE test:table_join:0.0.0 AS table_join;
+REQUIRE test:origin:0.0.0 AS table_origin;
+REQUIRE test:join:0.0.0 AS table_join;
 
 ASSEMBLE table0
   COLUMNS FROM table:table_origin
