@@ -31,9 +31,9 @@ lazy val VERSION_SCALA_MOCK          = "4.1.0"
 lazy val VERSION_FAKER               = "0.15"
 
 lazy val settings = Seq(
-  name := "xa-rules-interpreter",
-  version := "0.0.1",
-  organization := "http://xalgorithms.org",
+  name := "il-rules-interpreter",
+  version := "0.0.2",
+  organization := "org.xalgorithms",
   scalaVersion := VERSION_SCALA
 )
 

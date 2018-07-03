@@ -23,7 +23,8 @@
 // <http://www.gnu.org/licenses/>.
 package org.xalgorithms.rules
 
-import org.xalgorithms.rules.elements.{ PackagedTableReference, IntrinsicValue, TableReference }
+import org.xalgorithms.rules.elements._
+import play.api.libs.json._
 import scala.collection.mutable
 
 abstract class Context {
@@ -34,6 +35,7 @@ abstract class Context {
   def lookup_table(section: String, table_name: String): Seq[Map[String, IntrinsicValue]]
   def revisions(): Map[TableReference, Seq[Revision]]
   def revise_table(ref: TableReference, rev: Revision)
+  def serialize: JsValue
 }
 
 class GlobalContext(load: LoadTableSource) extends Context {
@@ -78,6 +80,32 @@ class GlobalContext(load: LoadTableSource) extends Context {
   def revise_table(ref: TableReference, rev: Revision) {
     _revisions.put(ref, _revisions.getOrElse(ref, mutable.Seq()) :+ rev)
   }
+
+  def serialize: JsValue = {
+    Json.obj(
+      "documents" -> serialize_maps,
+      "tables" -> serialize_tables
+    )
+  }
+
+  implicit val val_writes = new Writes[IntrinsicValue] {
+    def writes(v: IntrinsicValue) = v match {
+      case (sv: StringValue) => JsString(sv.value)
+      case (nv: NumberValue) => JsNumber(nv.value)
+      case _ => {
+        println(v)
+        JsString("")
+      }
+    }
+  }
+
+  private def serialize_maps: JsValue = {
+    Json.toJson(_maps)
+  }
+
+  private def serialize_tables: JsValue = {
+    Json.toJson(_tables)
+  }
 }
 
 class RowContext(
@@ -107,4 +135,6 @@ class RowContext(
   def revisions(): Map[TableReference, Seq[Revision]] = ctx.revisions()
 
   def revise_table(ref: TableReference, rev: Revision) = ctx.revise_table(ref, rev)
+
+  def serialize = ctx.serialize
 }

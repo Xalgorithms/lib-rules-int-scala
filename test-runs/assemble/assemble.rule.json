@@ -3,7 +3,7 @@
     {
       "reference": {
         "package": "test",
-        "id": "table_origin",
+        "id": "origin",
         "version": "0.0.0",
         "name": "table_origin"
       },
@@ -15,7 +15,7 @@
     {
       "reference": {
         "package": "test",
-        "id": "table_join",
+        "id": "join",
         "version": "0.0.0",
         "name": "table_join"
       },

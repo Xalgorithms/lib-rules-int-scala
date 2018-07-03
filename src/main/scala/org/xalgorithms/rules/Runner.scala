@@ -24,14 +24,29 @@
 package org.xalgorithms.rules
 
 import better.files._
+import java.nio.file._
 import org.xalgorithms.rules.elements._
 import play.api.libs.json._
 import scala.collection.mutable
 import scala.io.Source
 
-class LoadJsonFileTableSource(dn: String) extends LoadJsonTableSource {
+class LoadJsonFileTableSource(dn: Path) extends LoadJsonTableSource {
   def read(ptref: PackagedTableReference): JsValue = {
-    Json.parse((dn / s"${ptref.id}.table.json").contentAsString)
+    val f = (dn.toString / "tables" / ptref.package_name / ptref.version / s"${ptref.id}.json")
+    println(s"# trying to read table (f=${f}; ptref=${ptref.package_name}:${ptref.id}:${ptref.version})")
+    try {
+      Json.parse(f.contentAsString)
+    } catch {
+      case (th: NoSuchFileException) => {
+        println(s"! file not found (f=${f})")
+        JsNull
+      }
+
+      case (th: Throwable) => {
+        println(s"unknown error (#{th})")
+        JsNull
+      }
+    }
   }
 }
 
@@ -75,9 +90,9 @@ object Runner {
     }
   }
 
-  def populate_context(ctx: Context, dir: String): Unit = {
+  def populate_context(ctx: Context, dir: Path): Unit = {
     try {
-      Json.parse((dir / "context.json").contentAsString()) match {
+      Json.parse((dir.toString / "context.json").contentAsString()) match {
         case (o: JsObject) => {
           o.fields.foreach { case (k, v) =>
             v match {
@@ -101,23 +116,22 @@ object Runner {
         }
       }
     } catch {
-      case (e: java.nio.file.NoSuchFileException) => {
+      case (e: NoSuchFileException) => {
         // nothing
       }
     }
   }
 
-  def main(args: Array[String]): Unit = {
+  def execute_test_run(f: File): Unit = {
     val times = new Times()
-
-    File(args.head).glob("*.rule.json").foreach { fn =>
+    f.glob("*.rule.json").foreach { fn =>
       println
       println(s"TEST: ${fn}")
 
-      val ts = new LoadJsonFileTableSource(args.head)
+      val ts = new LoadJsonFileTableSource(f.path)
       val ctx = new GlobalContext(ts)
 
-      populate_context(ctx, args.head)
+      populate_context(ctx, f.path)
 
       println(s"> loading rule (${fn})")
       times.start("load")
@@ -148,6 +162,15 @@ object Runner {
       println
       println("TIMES")
       times.show()
+    }
+  }
+
+  def main(args: Array[String]): Unit = {
+    try {
+      execute_test_run(File(args.head))
+    } catch {
+      case (th: java.nio.file.NoSuchFileException) => println(s"! test run does not exist (${args.head})")
+      case (th: Throwable) => println(s"! error (${th})")
     }
   }
 
