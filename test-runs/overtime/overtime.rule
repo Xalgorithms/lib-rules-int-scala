@@ -2,5 +2,19 @@ WHEN envelope:type == 'pay_request';
 
 REQUIRE test:employee_hours:0.0.1;
 REQUIRE test:employee_information:0.0.1;
+REQUIRE test:employee_information_mmc:0.0.1; #Mismatched id column.
 REQUIRE test:overtime_pay:0.0.1;
 
+
+ASSEMBLE employee_hours_hardcoded_filter
+  COLUMNS FROM table:employee_hours WHEN employee_id == 3001
+  COLUMNS FROM table:employee_information WHEN employee_id == 3001;
+
+
+ASSEMBLE employee_hours_mismatched_column_label_filtering
+  COLUMNS FROM table:employee_hours
+  COLUMNS FROM table:employee_information_mmc;
+FILTER table:employee_hours_mismatched_column_label_filtering
+  WHEN @employee_id_mmc == @employee_id;
+
+#Requires multiply() to proceed with implementation.

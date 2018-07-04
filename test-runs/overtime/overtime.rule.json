@@ -45,6 +45,18 @@
     {
       "reference": {
         "package": "test",
+        "id": "employee_information_mmc",
+        "version": "0.0.1",
+        "name": "employee_information_mmc"
+      },
+      "indexes": [
+
+      ],
+      "name": "require"
+    },
+    {
+      "reference": {
+        "package": "test",
         "id": "overtime_pay",
         "version": "0.0.1",
         "name": "overtime_pay"
@@ -53,6 +65,125 @@
 
       ],
       "name": "require"
+    },
+    {
+      "table_name": "employee_hours_hardcoded_filter",
+      "columns": [
+        {
+          "table": {
+            "section": "table",
+            "key": "employee_hours",
+            "type": "reference"
+          },
+          "sources": [
+            {
+              "columns": [
+
+              ],
+              "whens": [
+                {
+                  "left": {
+                    "section": "_local",
+                    "key": "employee_id",
+                    "type": "reference"
+                  },
+                  "right": {
+                    "type": "number",
+                    "value": "3001"
+                  },
+                  "op": "eq"
+                }
+              ]
+            }
+          ]
+        },
+        {
+          "table": {
+            "section": "table",
+            "key": "employee_information",
+            "type": "reference"
+          },
+          "sources": [
+            {
+              "columns": [
+
+              ],
+              "whens": [
+                {
+                  "left": {
+                    "section": "_local",
+                    "key": "employee_id",
+                    "type": "reference"
+                  },
+                  "right": {
+                    "type": "number",
+                    "value": "3001"
+                  },
+                  "op": "eq"
+                }
+              ]
+            }
+          ]
+        }
+      ],
+      "name": "assemble"
+    },
+    {
+      "table_name": "employee_hours_mismatched_column_label_filtering",
+      "columns": [
+        {
+          "table": {
+            "section": "table",
+            "key": "employee_hours",
+            "type": "reference"
+          },
+          "sources": [
+            {
+              "columns": [
+
+              ]
+            }
+          ]
+        },
+        {
+          "table": {
+            "section": "table",
+            "key": "employee_information_mmc",
+            "type": "reference"
+          },
+          "sources": [
+            {
+              "columns": [
+
+              ]
+            }
+          ]
+        }
+      ],
+      "name": "assemble"
+    },
+    {
+      "table": {
+        "section": "table",
+        "key": "employee_hours_mismatched_column_label_filtering",
+        "type": "reference"
+      },
+      "filters": [
+        {
+          "left": {
+            "section": "_context",
+            "key": "employee_id_mmc",
+            "type": "reference"
+          },
+          "right": {
+            "section": "_context",
+            "key": "employee_id",
+            "type": "reference"
+          },
+          "op": "eq"
+        }
+      ],
+      "name": "filter"
     }
   ]
 }

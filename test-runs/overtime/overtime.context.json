@@ -1,9 +1,9 @@
 {
   "envelope" : {
     "id" : 18,
-    "type" : "pay_request",
+    "type" : "not_pay_request",
     "items" :
     [
-      { "x" : "Item X", "y" : "Item Y" }
+      { "type" : "not_pay_request", "y" : "Item Y" }
     ]
 }
