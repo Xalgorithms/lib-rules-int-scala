@@ -4,7 +4,7 @@
       "reference": {
         "package": "sg_bsd_tax",
         "id": "buyer_profiles",
-        "version": "0.1.1",
+        "version": "0.0.1",
         "name": "buyer_profiles"
       },
       "indexes": [
@@ -16,20 +16,8 @@
       "reference": {
         "package": "sg_bsd_tax",
         "id": "rates_by_profile",
-        "version": "0.1.1",
+        "version": "0.0.1",
         "name": "rates_by_profile"
-      },
-      "indexes": [
-
-      ],
-      "name": "require"
-    },
-    {
-      "reference": {
-        "package": "sg_bsd_tax",
-        "id": "faux_envelope",
-        "version": "0.1.1",
-        "name": "faux_envelope"
       },
       "indexes": [
 
@@ -66,58 +54,9 @@
               ]
             }
           ]
-        },
-        {
-          "table": {
-            "section": "table",
-            "key": "faux_envelope",
-            "type": "reference"
-          },
-          "sources": [
-            {
-              "name": "envelope_id",
-              "source": "buyer_id"
-            }
-          ]
         }
       ],
       "name": "assemble"
-    },
-    {
-      "table": {
-        "section": "table",
-        "key": "buyers_rates",
-        "type": "reference"
-      },
-      "filters": [
-        {
-          "left": {
-            "section": "_context",
-            "key": "buyer_id",
-            "type": "reference"
-          },
-          "right": {
-            "section": "_context",
-            "key": "envelope_id",
-            "type": "reference"
-          },
-          "op": "eq"
-        },
-        {
-          "left": {
-            "section": "_context",
-            "key": "profile",
-            "type": "reference"
-          },
-          "right": {
-            "section": "_context",
-            "key": "buyer_profile",
-            "type": "reference"
-          },
-          "op": "eq"
-        }
-      ],
-      "name": "filter"
     }
   ]
 }

@@ -3,9 +3,21 @@
     {
       "reference": {
         "package": "test",
-        "id": "numbers1",
-        "version": "0.0.0",
+        "id": "set1",
+        "version": "0.0.1",
         "name": "table_one"
+      },
+      "indexes": [
+
+      ],
+      "name": "require"
+    },
+    {
+      "reference": {
+        "package": "test",
+        "id": "set2",
+        "version": "0.0.1",
+        "name": "table_two"
       },
       "indexes": [
 

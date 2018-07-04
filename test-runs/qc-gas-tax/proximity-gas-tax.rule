@@ -18,9 +18,8 @@ WHEN item:classification.value == '506505';
 WHEN item:quantity.value > 0;
 
 # load tables that add additional information
-REQUIRE ca.qc.tax:supplier_distances:0.0.1 AS supplier_distances;
-REQUIRE ca.qc.tax:reductions_by_distance:0.0.1 AS reductions_by_distance;
-REQUIRE ca.qc.tax:emulated_envelope:0.0.1 AS envelope;
+REQUIRE ca.qc.tax:supplier_distances:0.0.1;
+REQUIRE ca.qc.tax:reductions_by_distance:0.0.1;
 # PHASE ONE: Build a table that can be used to transform any items in
 # the invoice that related to UNSPSC/506505. We will do this by
 # loading a table of registered station distances against a table of
@@ -60,15 +59,15 @@ REQUIRE ca.qc.tax:emulated_envelope:0.0.1 AS envelope;
 #  { "distance" : 0,  "reduction" : 0.08, "seller_distance" : 1.7 }
 # ]
 
-ASSEMBLE sellers_reductions
+#ASSEMBLE sellers_reductions
   #COLUMN seller_distance FROM table:supplier_distances; #WHEN envelope:parties.suppler.id.value == @supplier_id;
-  COLUMNS FROM table:reductions_by_distance
-  COLUMNS FROM table:supplier_distances
+#  COLUMNS FROM table:reductions_by_distance
+#  COLUMNS FROM table:supplier_distances
   # This Column and next FILTER are stand-ins while WHILE is updated.
-  COLUMNS FROM table:envelope;
+#  COLUMNS FROM table:envelope;
 
-FILTER table:sellers_reductions
-  WHEN @supplier_id == @envelope_supplier_id;
+#FILTER table:sellers_reductions
+#  WHEN @supplier_id == @envelope_supplier_id;
 
 #
 # In order to determine the correct reduction, we learn WHICH bracket
@@ -91,8 +90,8 @@ FILTER table:sellers_reductions
   #USING difference = subtract(@distance, @seller_distance);
 
 # Test Implementation: This produces all tax zones between the station and the border. 
-FILTER table:sellers_reductions
-  WHEN @seller_distance > @distance; 
+#FILTER table:sellers_reductions
+#  WHEN @seller_distance > @distance; 
 
 
 

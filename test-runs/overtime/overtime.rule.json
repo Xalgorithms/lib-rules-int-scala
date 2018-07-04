@@ -1,0 +1,58 @@
+{
+  "whens": {
+    "envelope": [
+      {
+        "expr": {
+          "left": {
+            "section": "envelope",
+            "key": "type",
+            "type": "reference"
+          },
+          "right": {
+            "type": "string",
+            "value": "pay_request"
+          },
+          "op": "eq"
+        }
+      }
+    ]
+  },
+  "steps": [
+    {
+      "reference": {
+        "package": "test",
+        "id": "employee_hours",
+        "version": "0.0.1",
+        "name": "employee_hours"
+      },
+      "indexes": [
+
+      ],
+      "name": "require"
+    },
+    {
+      "reference": {
+        "package": "test",
+        "id": "employee_information",
+        "version": "0.0.1",
+        "name": "employee_information"
+      },
+      "indexes": [
+
+      ],
+      "name": "require"
+    },
+    {
+      "reference": {
+        "package": "test",
+        "id": "overtime_pay",
+        "version": "0.0.1",
+        "name": "overtime_pay"
+      },
+      "indexes": [
+
+      ],
+      "name": "require"
+    }
+  ]
+}

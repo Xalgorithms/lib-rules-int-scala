@@ -3,13 +3,13 @@ echo
 echo "[info] [cnr] Compiling and running rules."
 
 #Location of XA-Rules
-loc_rule_compiler="/home/rflec028/xalgo/xa-rules/"
+loc_rule_compiler="/home/rflec028/Xalgo/lib-rules-parse-ruby/"
 
 #Location of Test Runs
-loc_test_run="/home/rflec028/xalgo/rules-interpreter/test-runs/"
+loc_test_run="/home/rflec028/Xalgo/lib-rules-int-scala/test-runs/"
 
 #Location of Rule Interpreter
-loc_interpreter="/home/rflec028/xalgo/rules-interpreter/"
+loc_interpreter="/home/rflec028/Xalgo/lib-rules-int-scala/"
 
 #Name of Rule Package
 name_rule="qc-gas-tax"

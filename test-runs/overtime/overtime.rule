@@ -1,0 +1,6 @@
+WHEN envelope:type == 'pay_request';
+
+REQUIRE test:employee_hours:0.0.1;
+REQUIRE test:employee_information:0.0.1;
+REQUIRE test:overtime_pay:0.0.1;
+
