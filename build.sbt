@@ -25,21 +25,16 @@ lazy val VERSION_SCALA               = "2.11.11"
 lazy val VERSION_MONGO_SCALA         = "2.3.0"
 lazy val VERSION_PLAY_JSON           = "2.6.0"
 lazy val VERSION_BETTER_FILES        = "3.4.0"
-//lazy val VERSION_JACKSON_DATABIND    = "2.6.5"
 lazy val VERSION_SCALA_TEST          = "3.0.5"
 lazy val VERSION_SCALA_MOCK          = "4.1.0"
 lazy val VERSION_FAKER               = "0.15"
 
 lazy val settings = Seq(
   name := "il-rules-interpreter",
-  version := "0.0.2",
+  version := "0.0.3",
   organization := "org.xalgorithms",
   scalaVersion := VERSION_SCALA
 )
-
-// lazy val depOverrides = Seq(
-//   "com.fasterxml.jackson.core" % "jackson-databind"       % VERSION_JACKSON_DATABIND
-// )
 
 lazy val deps = Seq(
   "com.typesafe.play"      %% "play-json"                 % VERSION_PLAY_JSON,
@@ -54,5 +49,4 @@ lazy val deps = Seq(
 
 lazy val root = (project in file("."))
   .settings(settings)
-//  .settings(dependencyOverrides ++= depOverrides)
   .settings(libraryDependencies ++= deps)
