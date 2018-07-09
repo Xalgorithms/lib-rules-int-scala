@@ -89,7 +89,7 @@
                   },
                   "right": {
                     "type": "number",
-                    "value": "3001"
+                    "value": "3004"
                   },
                   "op": "eq"
                 }
@@ -117,7 +117,70 @@
                   },
                   "right": {
                     "type": "number",
+                    "value": "3004"
+                  },
+                  "op": "eq"
+                }
+              ]
+            }
+          ]
+        }
+      ],
+      "name": "assemble"
+    },
+    {
+      "table_name": "employee_hours_hardcoded_filter_2",
+      "columns": [
+        {
+          "table": {
+            "section": "table",
+            "key": "employee_hours",
+            "type": "reference"
+          },
+          "sources": [
+            {
+              "columns": [
+
+              ],
+              "whens": [
+                {
+                  "left": {
+                    "section": "_local",
+                    "key": "employee_id",
+                    "type": "reference"
+                  },
+                  "right": {
+                    "type": "number",
                     "value": "3001"
+                  },
+                  "op": "eq"
+                }
+              ]
+            }
+          ]
+        },
+        {
+          "table": {
+            "section": "table",
+            "key": "employee_information",
+            "type": "reference"
+          },
+          "sources": [
+            {
+              "columns": [
+
+              ],
+              "whens": [
+                {
+                  "left": {
+                    "section": "_local",
+                    "key": "employee_id",
+                    "type": "reference"
+                  },
+                  "right": {
+                    "section": "_context",
+                    "key": "employee_id",
+                    "type": "reference"
                   },
                   "op": "eq"
                 }
@@ -181,6 +244,112 @@
             "type": "reference"
           },
           "op": "eq"
+        }
+      ],
+      "name": "filter"
+    },
+    {
+      "table_name": "employee_hours_mismatched_column_label_filtering_2",
+      "columns": [
+        {
+          "table": {
+            "section": "table",
+            "key": "employee_hours",
+            "type": "reference"
+          },
+          "sources": [
+            {
+              "columns": [
+
+              ]
+            }
+          ]
+        },
+        {
+          "table": {
+            "section": "table",
+            "key": "employee_information_mmc",
+            "type": "reference"
+          },
+          "sources": [
+            {
+              "columns": [
+
+              ],
+              "whens": [
+                {
+                  "left": {
+                    "section": "_local",
+                    "key": "employee_id_mmc",
+                    "type": "reference"
+                  },
+                  "right": {
+                    "section": "_context",
+                    "key": "employee_id",
+                    "type": "reference"
+                  },
+                  "op": "eq"
+                }
+              ]
+            }
+          ]
+        }
+      ],
+      "name": "assemble"
+    },
+    {
+      "table_name": "calculate_employee_pay",
+      "columns": [
+        {
+          "table": {
+            "section": "table",
+            "key": "employee_hours_hardcoded_filter",
+            "type": "reference"
+          },
+          "sources": [
+            {
+              "columns": [
+
+              ]
+            }
+          ]
+        },
+        {
+          "table": {
+            "section": "table",
+            "key": "overtime_pay",
+            "type": "reference"
+          },
+          "sources": [
+            {
+              "columns": [
+
+              ]
+            }
+          ]
+        }
+      ],
+      "name": "assemble"
+    },
+    {
+      "table": {
+        "section": "table",
+        "key": "calculate_employee_pay",
+        "type": "reference"
+      },
+      "filters": [
+        {
+          "left": {
+            "section": "_context",
+            "key": "hours_after",
+            "type": "reference"
+          },
+          "right": {
+            "section": "_context",
+            "key": "overtime_hours",
+            "type": "reference"
+          },
+          "op": "lte"
         }
       ],
       "name": "filter"
