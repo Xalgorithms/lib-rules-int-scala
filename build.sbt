@@ -21,7 +21,7 @@
 // You should have received a copy of the GNU Affero General Public
 // License along with this program. If not, see
 // <http://www.gnu.org/licenses/>.
-lazy val VERSION_SCALA               = "2.11.11"
+lazy val VERSION_SCALA               = "2.12.4"
 lazy val VERSION_MONGO_SCALA         = "2.3.0"
 lazy val VERSION_PLAY_JSON           = "2.6.0"
 lazy val VERSION_BETTER_FILES        = "3.4.0"
@@ -31,7 +31,7 @@ lazy val VERSION_FAKER               = "0.15"
 
 lazy val settings = Seq(
   name := "il-rules-interpreter",
-  version := "0.0.3",
+  version := "0.0.4",
   organization := "org.xalgorithms",
   scalaVersion := VERSION_SCALA
 )
