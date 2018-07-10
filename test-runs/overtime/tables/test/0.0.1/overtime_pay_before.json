@@ -1,0 +1,5 @@
+[
+  { "hours_before": 15,  "overtime_multiplier": 1.5 },
+  { "hours_before": 30, "overtime_multiplier": 2   },
+  { "hours_before": 100, "overtime_multiplier": 2.5 }
+]

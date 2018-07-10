@@ -3,7 +3,10 @@ WHEN envelope:type == 'pay_request';
 REQUIRE test:employee_hours:0.0.1;
 REQUIRE test:employee_information:0.0.1;
 REQUIRE test:employee_information_mmc:0.0.1; #Mismatched id column.
-REQUIRE test:overtime_pay:0.0.1;
+
+# Two different overtime pay formats:
+REQUIRE test:overtime_pay_before:0.0.1;
+REQUIRE test:overtime_pay_after:0.0.1;
 
 # This test rule, "Overtime", attempts to apply an overtime pay-scale to the
 # hours worked by the employees of a theoretical company. The current 
@@ -50,10 +53,14 @@ ASSEMBLE employee_hours_mismatched_column_label_filtering_2
 #     functional and strips the correct upper pay brackets. 
 ASSEMBLE calculate_employee_pay
   COLUMNS FROM table:employee_hours_hardcoded_filter
-  COLUMNS FROM table:overtime_pay;
-FILTER table:calculate_employee_pay
-  WHEN @hours_after <= @overtime_hours;
-#MAP stip_neg_vals
+  COLUMNS FROM table:overtime_pay_before;
+
+#FILTER table:calculate_employee_pay
+#  WHEN @hours_before > @overtime_hours;
+
+## Need subtract() for this.
+#MAP table:calculate_employee_pay
+#  USING determine_bracket = @hours_before - @overtime_hours;
 
 
-#Requires multiply() to proceed with implementation.
+#Requires multiply() and to proceed with implementation.
