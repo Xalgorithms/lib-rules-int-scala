@@ -13,8 +13,10 @@ form the execution of that rule and to output a set of revisions that
 *could be* applied to the original document to yield a new document.
 
 This library is a *naive reference implementation* of the execution
-model for Xalgo. It is (and never will be) optimized for improved
-production exeuction times. Addition implementations of the Xalgo
+model for Xalgo. The primary purpose of the library is to have an *initial
+implementation* that can be used to evaluate the effectiveness of the
+execution model. It is (and never will be) optimized for improved
+production execution times. Addition implementations of the Xalgo
 execution model will be added for this purpose, leaving this library
 to remain clean as a reference for new implementations.
 
