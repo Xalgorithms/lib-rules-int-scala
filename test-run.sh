@@ -1,3 +1,7 @@
 #!/bin/bash
-bundle exec ruby compile.rb "test-runs/assemble/$1.rule" test-runs/assemble/$1.rule.json
+ls test-runs/$1/*.rule | while read f; do
+    n=`basename $f`
+    d=`dirname $f`
+    bundle exec ruby compile.rb $f "$d/$n.json"
+done
 sbt "runMain org.xalgorithms.rules.Runner test-runs/$1"
