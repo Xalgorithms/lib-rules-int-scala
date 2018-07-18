@@ -74,7 +74,11 @@ table:table0
 [success] Total time: 2 s, completed 22-May-2018 5:37:31 PM
 ```
 
-Again, if you do not receive the expected output, log an issue.
+If you do not receive the expected output, log an issue.
+
+This is the *raw* method for running the interpreter. In the next
+section, you can read how to execute a test-run **with**
+recompilation.
 
 ### Playing with Rules
 
@@ -86,15 +90,6 @@ the project, there are a number of example Xalgo rules that can serve
 as starting points for your own rules.
 
 The [Xalgo compiler](https://github.com/Xalgorithms/xa-rules) is
-implemented as a different library. Over time, this will change, but,
-for now, you will need to follow the [getting
-started](https://github.com/Xalgorithms/xa-rules/blob/master/README.md)
-for that library in order to compile your rules.
+implemented as a different library, in ruby. This project contains a help script that will run the compiler for you, if you want to recompile rules in the test-runs. For example, to run the test-run above, with recompilation, just run:
 
-Once you have been able to compile the rules to the *internal JSON
-format*, you can create your own "test run" in the `test-runs/`
-directory (the layout is straightforward). To invoke your rule, use:
-
-```
-$ sbt "runMain org.xalgorithms.rules.Runner test-runs/<your directory>/"
-```
+```$ ./test-run.sh map```
