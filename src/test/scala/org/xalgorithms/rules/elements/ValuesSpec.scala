@@ -29,7 +29,7 @@ import org.scalatest._
 import org.xalgorithms.rules._
 import org.xalgorithms.rules.elements._
 
-class ValuesSpec extends FlatSpec with Matchers with MockFactory {
+class ValuesSpec extends FlatSpec with Matchers with MockFactory with AppendedClues {
   "NumberValue" should "match or convert" in {
     Seq(
       Tuple4(1.0, new NumberValue(1.0), "eq", true),
@@ -52,6 +52,24 @@ class ValuesSpec extends FlatSpec with Matchers with MockFactory {
       Tuple4(2.0, new StringValue("2.0"), "gt", false)
     ).foreach { case (n, rhs, op, ex) =>
         new NumberValue(n).matches(rhs, op) shouldEqual(ex)
+    }
+  }
+
+  it should "have a precise equivalence based on type" in {
+    Seq(
+      (1.0, new NumberValue(1.0), true, "number:1.0"),
+      (1.0, new NumberValue(2.0), false, "number:2.0"),
+      (2.0, new NumberValue(2.0), true, "number:2.0"),
+      (1.0, new StringValue("1.0"), false, "string:1.0"),
+      (1.0, new StringValue("2.0"), false, "string:2.0"),
+      (2.0, new StringValue("2.0"), false, "string:2.0"),
+    ).foreach { case (n, rhs, ex, label) =>
+        val clue = if (ex) {
+          s"expected ${n} to exactly match ${label}"
+        } else {
+          s"expected ${n} to not exactly match ${label}"
+        }
+        new NumberValue(n).exactly_equals(rhs) shouldEqual(ex) withClue(clue)
     }
   }
 
@@ -101,6 +119,21 @@ class ValuesSpec extends FlatSpec with Matchers with MockFactory {
     }
   }
 
+  it should "have a precise equivalence based on type" in {
+    Seq(
+      ("bb", new StringValue("bb"), true, "string:bb"),
+      ("bb", new StringValue("aa"), false, "string:aa"),
+      ("1.0", new NumberValue(1.0), false, "number:1.0"),
+      ("1.0", new NumberValue(2.0), false, "number:2.0")
+    ).foreach { case (n, rhs, ex, label) =>
+        val clue = if (ex) {
+          s"expected ${n} to exactly match ${label}"
+        } else {
+          s"expected ${n} to not exactly match ${label}"
+        }
+        new StringValue(n).exactly_equals(rhs) shouldEqual(ex) withClue(clue)
+    }
+  }
 
   it should "perform addition of basic Values as CONCAT" in {
     Seq(

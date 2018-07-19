@@ -31,6 +31,7 @@ abstract class Value {
 
 abstract class IntrinsicValue extends Value {
   def apply_func(args: Seq[Value], func: String): Option[IntrinsicValue]
+  def exactly_equals(v: IntrinsicValue): Boolean
 }
 
 class NumberValue(val value: BigDecimal) extends IntrinsicValue {
@@ -52,6 +53,11 @@ class NumberValue(val value: BigDecimal) extends IntrinsicValue {
   def apply_func(args: Seq[Value], func: String): Option[IntrinsicValue] = func match {
     case "add" => Some(sum(args))
     case _ => None
+  }
+
+  def exactly_equals(v: IntrinsicValue): Boolean = v match {
+    case (nv: NumberValue) => nv.value == value
+    case _ => false
   }
 
   def sum(args: Seq[Value]): IntrinsicValue = {
@@ -81,6 +87,11 @@ class StringValue(val value: String) extends IntrinsicValue {
   def apply_func(args: Seq[Value], func: String): Option[IntrinsicValue] = func match {
     case "add" => Some(concat(args))
     case _ => None
+  }
+
+  def exactly_equals(v: IntrinsicValue): Boolean = v match {
+    case (sv: StringValue) => sv.value == value
+    case _ => false
   }
 
   def matches_value(v: String, op: String): Boolean = op match {
