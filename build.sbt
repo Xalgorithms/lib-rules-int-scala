@@ -31,7 +31,7 @@ lazy val VERSION_FAKER               = "0.15"
 
 lazy val settings = Seq(
   name := "il-rules-interpreter",
-  version := "0.0.4",
+  version := "0.0.5",
   organization := "org.xalgorithms",
   scalaVersion := VERSION_SCALA
 )
