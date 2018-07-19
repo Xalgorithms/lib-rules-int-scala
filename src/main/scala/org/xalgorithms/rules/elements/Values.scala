@@ -35,6 +35,8 @@ abstract class IntrinsicValue extends Value {
 }
 
 class NumberValue(val value: BigDecimal) extends IntrinsicValue {
+  override def toString = s"number:${value}"
+
   def matches(v: Value, op: String): Boolean = v match {
     case (sv: StringValue) => matches_value(BigDecimal(sv.value), op)
     case (nv: NumberValue) => matches_value(nv.value, op)
@@ -78,6 +80,8 @@ class NumberValue(val value: BigDecimal) extends IntrinsicValue {
 }
 
 class StringValue(val value: String) extends IntrinsicValue {
+  override def toString = s"string:${value}"
+
   def matches(v: Value, op: String): Boolean = v match {
     case (sv: StringValue) => matches_value(sv.value, op)
     case (nv: NumberValue) => matches_value(nv.value.toString, op)

@@ -73,6 +73,12 @@ class ValuesSpec extends FlatSpec with Matchers with MockFactory with AppendedCl
     }
   }
 
+  it should "have a string representation" in {
+    new NumberValue(1.0).toString shouldEqual("number:1.0")
+    new NumberValue(1.11).toString shouldEqual("number:1.11")
+    new NumberValue(54321.12345).toString shouldEqual("number:54321.12345")
+  }
+
   it should "perform addition of basic Values as SUM" in {
     Seq(
       Tuple3(1.0, Seq(new NumberValue(2.2), new NumberValue(3.3), new NumberValue(4.4)), 10.9),
@@ -133,6 +139,11 @@ class ValuesSpec extends FlatSpec with Matchers with MockFactory with AppendedCl
         }
         new StringValue(n).exactly_equals(rhs) shouldEqual(ex) withClue(clue)
     }
+  }
+
+  it should "have a string representation" in {
+    new StringValue("aa").toString shouldEqual("string:aa")
+    new StringValue("bb").toString shouldEqual("string:bb")
   }
 
   it should "perform addition of basic Values as CONCAT" in {
