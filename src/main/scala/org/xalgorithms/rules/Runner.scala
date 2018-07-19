@@ -93,6 +93,11 @@ object Runner {
     private val _context_fn = s"${run_name}.context.json"
     private val _ctx = new GlobalContext(new LoadJsonFileTableSource(_dir.path))
 
+    private def warn(s: String) = Console.YELLOW + s + Console.RESET
+    private def error(s: String) = Console.RED + s + Console.RESET
+    private def ok(s: String) = Console.GREEN + s + Console.RESET
+    private def title(s: String) = Console.BOLD + s.toUpperCase + Console.RESET
+    private def subtitle(s: String) = Console.UNDERLINED + s + Console.RESET
 
     private def load_steps = {
       _times.start("load")
@@ -187,7 +192,7 @@ object Runner {
     }
 
     def execute() {
-      println(s"# executing ${run_name}")
+      println(title(s"execute: ${run_name}"))
       load_steps match {
         case Some(steps) => {
           populate_context
@@ -248,17 +253,18 @@ object Runner {
           }
         }
         if (diffs.size > 0) {
-          println(s"## ${section}:${name} => FAIL")
+          println(error(s"! ${section}:${name} => FAIL"))
           diffs.foreach { case (ri, problems) =>
             problems.foreach { problem =>
-              println(s"  [${ri}]: ${problem}")
+              println(warn(s"  [${ri}]: ${problem}"))
             }
           }
         } else {
-          println(s"## ${section}:${name} => OK")
+          println(ok(s"> ${section}:${name} => OK"))
         }
       } else {
-        println(s" ! tables are different sizes (ex=${ex_tbl.size}; ac=${ac_tbl.size})")
+        println(error(s"! ${section}:${name} => FAIL"))
+        println(warn(s"  tables are different sizes (ex=${ex_tbl.size}; ac=${ac_tbl.size})"))
       }
     }
 
@@ -266,7 +272,7 @@ object Runner {
       load_expected match {
         case Some(v) => v match {
           case (o: JsObject) => {
-            println("# checking expectations")
+            println(subtitle("expectations"))
             _ctx.enumerate_tables((section: String, name: String, tbl: Seq[Map[String, IntrinsicValue]]) => {
               (o \ "tables" \ section \ name).asOpt[JsArray].map(internalize_array(_)) match {
                 case Some(ex_tbl) => {
@@ -282,7 +288,7 @@ object Runner {
         }
 
         case None => {
-          println("# no expectations exist, dumping tables")
+          println(warn("# no expectations exist, dumping tables"))
           _ctx.enumerate_tables((section: String, name: String, tbl: Seq[Map[String, IntrinsicValue]]) => {
             println(s"${section}:${name}")
             show_table(tbl)
@@ -291,8 +297,8 @@ object Runner {
       }
 
       println
-      println("# timing")
-      _times.show("## ")
+      println(subtitle("timing"))
+      _times.show("> ")
       println
     }
   }
