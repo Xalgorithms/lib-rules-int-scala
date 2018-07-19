@@ -25,5 +25,10 @@ require 'multi_json'
 require 'xa/rules'
 
 include XA::Rules::Parse
-puts "> compiling #{ARGV[0]} to #{ARGV[1]}"
-IO.write(ARGV[1], MultiJson.dump(parse(IO.read(ARGV[0])), pretty: true))
+
+Dir.glob("test-runs/#{ARGV[0]}/*.rule") do |ifn|
+  ofn = "#{ifn}.json"
+  puts "> compiling #{ifn} to #{ofn}"
+  IO.write(ofn, MultiJson.dump(parse(IO.read(ifn)), pretty: true))
+end
+
