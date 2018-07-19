@@ -216,19 +216,73 @@ object Runner {
       }
     }
 
+    def find_mismatches(ex: Map[String, IntrinsicValue], ac: Map[String, IntrinsicValue]) = {
+      ex.foldLeft(Seq[String]()) { (seq, kv) =>
+        ac.get(kv._1) match {
+          case Some(v) => {
+            if (kv._2.exactly_equals(v)) {
+              seq
+            } else {
+              seq :+ s"(${kv._1}): expected ${kv._2}, got ${v}"
+            }
+          }
+
+          case None => seq :+ s"(${kv._1}): missing value"
+        }
+      }
+    }
+
+    def compare_and_show(
+      section: String,
+      name: String,
+      ex_tbl: Seq[Map[String, IntrinsicValue]],
+      ac_tbl: Seq[Map[String, IntrinsicValue]]
+    ) {
+      if (ex_tbl.size == ac_tbl.size) {
+        val diffs = ex_tbl.zip(ac_tbl).zipWithIndex.foldLeft(Seq[(Int, Seq[String])]()) { (seq, tup) =>
+          val mismatches = find_mismatches(tup._1._1, tup._1._2)
+          if (mismatches.size > 0) {
+            seq :+ (tup._2, mismatches)
+          } else {
+            seq
+          }
+        }
+        if (diffs.size > 0) {
+          println(s"## ${section}:${name} => FAIL")
+          diffs.foreach { case (ri, problems) =>
+            problems.foreach { problem =>
+              println(s"  [${ri}]: ${problem}")
+            }
+          }
+        } else {
+          println(s"## ${section}:${name} => OK")
+        }
+      } else {
+        println(s" ! tables are different sizes (ex=${ex_tbl.size}; ac=${ac_tbl.size})")
+      }
+    }
+
     def show() {
       load_expected match {
         case Some(v) => v match {
           case (o: JsObject) => {
             println("# checking expectations")
+            _ctx.enumerate_tables((section: String, name: String, tbl: Seq[Map[String, IntrinsicValue]]) => {
+              (o \ "tables" \ section \ name).asOpt[JsArray].map(internalize_array(_)) match {
+                case Some(ex_tbl) => {
+                  compare_and_show(section, name, ex_tbl, tbl)
+                }
+                case None => {}
+              }
+            })
           }
           case _ => {
-            println("? expectations exists in the wrong format")
+            println("? expectations exist in the wrong format")
           }
         }
 
         case None => {
-          println("# no expectations exists, dumping tables")
+          println("# no expectations exist, dumping tables")
           _ctx.enumerate_tables((section: String, name: String, tbl: Seq[Map[String, IntrinsicValue]]) => {
             println(s"${section}:${name}")
             show_table(tbl)
