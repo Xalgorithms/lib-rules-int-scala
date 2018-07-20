@@ -32,10 +32,12 @@ abstract class Value {
 abstract class IntrinsicValue extends Value {
   def apply_func(args: Seq[Value], func: String): Option[IntrinsicValue]
   def exactly_equals(v: IntrinsicValue): Boolean
+  def typed_string: String
 }
 
 class NumberValue(val value: BigDecimal) extends IntrinsicValue {
-  override def toString = s"number:${value}"
+  override def typed_string = s"number:${value}"
+  override def toString = s"${value}"
 
   def matches(v: Value, op: String): Boolean = v match {
     case (sv: StringValue) => matches_value(BigDecimal(sv.value), op)
@@ -80,7 +82,8 @@ class NumberValue(val value: BigDecimal) extends IntrinsicValue {
 }
 
 class StringValue(val value: String) extends IntrinsicValue {
-  override def toString = s"string:${value}"
+  override def typed_string = s"string:${value}"
+  override def toString = value
 
   def matches(v: Value, op: String): Boolean = v match {
     case (sv: StringValue) => matches_value(sv.value, op)
@@ -125,6 +128,11 @@ abstract class ComputedValue extends Value {
 class FunctionValue(val name: String, val args: Seq[Value]) extends ComputedValue {
   def matches(v: Value, op: String): Boolean = false
 
+  override def toString = {
+    val args_s = args.map(_.toString).mkString(", ")
+    s"${name}(${args_s})"
+  }
+
   def resolve(ctx: Context): Option[IntrinsicValue] = {
     val largs = args.foldLeft(Seq[IntrinsicValue]()) { (a, v) =>
       ResolveValue(v, ctx) match {
@@ -143,6 +151,11 @@ class FunctionValue(val name: String, val args: Seq[Value]) extends ComputedValu
 
 abstract class ReferenceValue(val section: String, val key: String) extends ComputedValue {
   def resolve(ctx: Context): Option[IntrinsicValue]
+  override def toString = section match {
+    case "_local" => s"${key}"
+    case "_context" => s"@${key}"
+    case _ => s"${section}:${key}"
+  }
 
   def matches(v: Value, op: String): Boolean = v match {
     case (vr: ReferenceValue) => if ("eq" == op) section == vr.section && key == vr.key else false

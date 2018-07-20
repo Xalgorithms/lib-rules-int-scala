@@ -228,7 +228,7 @@ object Runner {
             if (kv._2.exactly_equals(v)) {
               seq
             } else {
-              seq :+ s"(${kv._1}): expected ${kv._2}, got ${v}"
+              seq :+ s"(${kv._1}): expected ${kv._2.typed_string}, got ${v.typed_string}"
             }
           }
 

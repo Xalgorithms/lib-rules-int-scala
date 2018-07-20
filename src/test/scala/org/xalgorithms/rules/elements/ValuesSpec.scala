@@ -74,9 +74,15 @@ class ValuesSpec extends FlatSpec with Matchers with MockFactory with AppendedCl
   }
 
   it should "have a string representation" in {
-    new NumberValue(1.0).toString shouldEqual("number:1.0")
-    new NumberValue(1.11).toString shouldEqual("number:1.11")
-    new NumberValue(54321.12345).toString shouldEqual("number:54321.12345")
+    new NumberValue(1.0).toString shouldEqual("1.0")
+    new NumberValue(1.11).toString shouldEqual("1.11")
+    new NumberValue(54321.12345).toString shouldEqual("54321.12345")
+  }
+
+  it should "have a typed string representation" in {
+    new NumberValue(1.0).typed_string shouldEqual("number:1.0")
+    new NumberValue(1.11).typed_string shouldEqual("number:1.11")
+    new NumberValue(54321.12345).typed_string shouldEqual("number:54321.12345")
   }
 
   it should "perform addition of basic Values as SUM" in {
@@ -142,8 +148,13 @@ class ValuesSpec extends FlatSpec with Matchers with MockFactory with AppendedCl
   }
 
   it should "have a string representation" in {
-    new StringValue("aa").toString shouldEqual("string:aa")
-    new StringValue("bb").toString shouldEqual("string:bb")
+    new StringValue("aa").toString shouldEqual("aa")
+    new StringValue("bb").toString shouldEqual("bb")
+  }
+
+  it should "have a typed string representation" in {
+    new StringValue("aa").typed_string shouldEqual("string:aa")
+    new StringValue("bb").typed_string shouldEqual("string:bb")
   }
 
   it should "perform addition of basic Values as CONCAT" in {
@@ -217,6 +228,35 @@ class ValuesSpec extends FlatSpec with Matchers with MockFactory with AppendedCl
     }
   }
 
+  it should "have a string representation" in {
+    val funcs = Seq(
+      ("add(2.0, 3.0)", new FunctionValue("add", Seq(new NumberValue(2.0), new NumberValue(3.0)))),
+      ("mul(a, @b)", new FunctionValue(
+        "mul", Seq(
+          new DocumentReferenceValue("_local", "a"),
+          new DocumentReferenceValue("_context", "b")
+        )
+      )),
+      ("add(@a, b, mul(@c, 3.0, doc:a.b.c))", new FunctionValue(
+        "add", Seq(
+          new DocumentReferenceValue("_context", "a"),
+          new DocumentReferenceValue("_local", "b"),
+          new FunctionValue(
+            "mul",
+            Seq(
+              new DocumentReferenceValue("_context", "c"),
+              new NumberValue(3.0),
+              new DocumentReferenceValue("doc", "a.b.c")
+            )
+          )
+        )
+      )))
+
+    funcs.foreach { case (ex, v) =>
+      v.toString shouldEqual(ex)
+    }
+  }
+
   it should "resolve to intrinsics via ResolveValue" in {
     val arg0 = mock[IntrinsicValue]
     val ref1 = mock[ReferenceValue]
@@ -272,6 +312,17 @@ class ValuesSpec extends FlatSpec with Matchers with MockFactory with AppendedCl
         check_fn(ResolveValue(ref, ctx))
       }
     }
+  }
+
+  it should "have a string representation" in {
+    val refs = Seq(
+      ("doc:a.b.c", new DocumentReferenceValue("doc", "a.b.c")),
+      ("xxx:p.q", new DocumentReferenceValue("xxx", "p.q")),
+      ("@a", new DocumentReferenceValue("_context", "a")),
+      ("a", new DocumentReferenceValue("_local", "a"))
+    )
+
+    refs.foreach { case (ex, v) => v.toString shouldEqual(ex) }
   }
 
   it should "match equivalent references" in {
