@@ -13,8 +13,10 @@ form the execution of that rule and to output a set of revisions that
 *could be* applied to the original document to yield a new document.
 
 This library is a *naive reference implementation* of the execution
-model for Xalgo. It is (and never will be) optimized for improved
-production exeuction times. Addition implementations of the Xalgo
+model for Xalgo. The primary purpose of the library is to have an *initial
+implementation* that can be used to evaluate the effectiveness of the
+execution model. It is (and never will be) optimized for improved
+production execution times. Addition implementations of the Xalgo
 execution model will be added for this purpose, leaving this library
 to remain clean as a reference for new implementations.
 
@@ -46,33 +48,33 @@ of the failure.
 Next, run:
 
 ```
-$ sbt "runMain org.xalgorithms.rules.Runner test-runs/map/"
+$ ./test-run.sh validate
 ```
 
-This command runs a prewritten, precompiled run. You should see this
-output:
+This command runs a basic validation test to demonstrate that the
+application is running properly.
 
 ```
-ALL TABLES
+> compiling test-runs/validate/validate.rule to test-runs/validate/validate.rule.json
+# discovered 1 test runs in test-runs/validate, executing all...
+EXECUTE: VALIDATE
+# no expectations exist, dumping tables
+table:validate
+     0 | a:              1 | b:              2 |
+     1 | a:              2 | b:              4 |
+     2 | a:              3 | b:              6 |
 
-table:t
-| e:          2 | a:          1 | b:          2 | c:          3 | d:          4 |
-| e:          4 | a:          2 | b:          4 | c:          6 | d:          8 |
-| e:          6 | a:          3 | b:          6 | c:          9 | d:         12 |
-| e:          8 | a:          4 | b:          8 | c:         12 | d:         16 |
-| e:         10 | a:          5 | b:         10 | c:         15 | d:         20 |
+timing
+> load: 295ms (295483393ns)
+> populate_context: 0ms (193146ns)
+> execute: 8ms (8218206ns)
+> execute > step0: 6ms (6931532ns)
+> load_expected: 0ms (176204ns)
 
-table:table0
-| a:          1 | b:          2 |
-| a:          2 | b:          4 |
-| a:          3 | b:          6 |
-| a:          4 | b:          8 |
-| a:          5 | b:         10 |
-
-[success] Total time: 2 s, completed 22-May-2018 5:37:31 PM
+[success] Total time: 2 s, completed 19-Jul-2018 12:17:05 PM
 ```
 
-Again, if you do not receive the expected output, log an issue.
+If you do not receive the expected output, log an issue.
 
 ### Playing with Rules
 
@@ -84,15 +86,27 @@ the project, there are a number of example Xalgo rules that can serve
 as starting points for your own rules.
 
 The [Xalgo compiler](https://github.com/Xalgorithms/xa-rules) is
-implemented as a different library. Over time, this will change, but,
-for now, you will need to follow the [getting
-started](https://github.com/Xalgorithms/xa-rules/blob/master/README.md)
-for that library in order to compile your rules.
-
-Once you have been able to compile the rules to the *internal JSON
-format*, you can create your own "test run" in the `test-runs/`
-directory (the layout is straightforward). To invoke your rule, use:
+implemented as a different library, in ruby. This project contains the
+`test-run.sh` helper script that will run the compiler for you. If you
+want to run validation **without** recompiling the rules, do (using
+the previous example):
 
 ```
-$ sbt "runMain org.xalgorithms.rules.Runner test-runs/<your directory>/"
+$ sbt "runMain org.xalgorithms.rules.Runner test-runs/validate"
 ```
+
+### Test Run Structure
+
+In the project, there is a directory called `test-runs/`. Any test of
+the interpreter should be created in that directory. The directory
+format follows a basic structure:
+
+- <name>.rule: A rule that will be compiled and executed.
+- <name>.context.json: An initial context to be loaded before <name> is executed.
+- <name>.expected.json: An expected set out outputs for the test runs
+  (if this is **not** created, then the test run merely dumps the
+  context
+- tables/<namespace>/<version>/<table_name>.json: Any tables that are
+  referenced in a `REQUIRE` step will be loaded from the `tables/`
+  directory. The structure of the directory follows the structure of
+  the tables references in Xalgo.

@@ -25,6 +25,8 @@ package org.xalgorithms.rules
 
 import better.files._
 import java.nio.file._
+import org.xalgorithms.rules._
+import org.xalgorithms.rules.steps._
 import org.xalgorithms.rules.elements._
 import play.api.libs.json._
 import scala.collection.mutable
@@ -33,7 +35,7 @@ import scala.io.Source
 class LoadJsonFileTableSource(dn: Path) extends LoadJsonTableSource {
   def read(ptref: PackagedTableReference): JsValue = {
     val f = (dn.toString / "tables" / ptref.package_name / ptref.version / s"${ptref.id}.json")
-    println(s"# trying to read table (f=${f}; ptref=${ptref.package_name}:${ptref.id}:${ptref.version})")
+//    println(s"# trying to read table (f=${f}; ptref=${ptref.package_name}:${ptref.id}:${ptref.version})")
     try {
       Json.parse(f.contentAsString)
     } catch {
@@ -52,141 +54,272 @@ class LoadJsonFileTableSource(dn: Path) extends LoadJsonTableSource {
 
 class Times {
   val _times = mutable.Map[String, Long]()
+  val _order = mutable.ListBuffer[String]()
+  val _labels = mutable.Stack[String]()
+
+  private def keep(t: Long) = {
+    val k = top_key
+    _times.put(k, t)
+    k
+  }
+
+  private def top_key = _labels.reverse.mkString(" > ")
 
   def start(label: String) {
-    _times.put(label, System.nanoTime())
+    _labels.push(label)
+    _order += keep(System.nanoTime())
   }
 
-  def stop(label: String) {
+  def stop() {
     val now = System.nanoTime()
-    _times.put(label, now - _times.getOrElse(label, now))
+    keep(now - _times.getOrElse(top_key, now))
+    _labels.pop()
   }
 
-  def show() {
-    _times.foreach { case (label, t) =>
-      println(s"${label}: ${t / 1000000}ms (${t}ns)")
+  def show(prefix: String = "") {
+    _order.foreach { label =>
+      val t = _times(label)
+      println(s"${prefix}${label}: ${t / 1000000}ms (${t}ns)")
     }
   }
 }
 
 object Runner {
-  def internalize_object(o: JsObject): Map[String, IntrinsicValue] = {
-    o.fields.foldLeft(Map[String, IntrinsicValue]()) { (m, tup) =>
-      tup._2 match {
-        case (s: JsString)   => m ++ Map(tup._1 -> new StringValue(s.value))
-        case (n: JsNumber)   => m ++ Map(tup._1 -> new NumberValue(n.value))
-        case (cho: JsObject) => m ++ internalize_object(cho).map { case (k, v) => s"${tup._1}.${k}" -> v }
-        case _ => m
+  case class TestRun(dir_name: String, run_name: String) {
+    private val _times = new Times
+    private val _dir = File(dir_name)
+    private val _compiled_fn = s"${run_name}.rule.json"
+    private val _expect_fn = s"${run_name}.expected.json"
+    private val _context_fn = s"${run_name}.context.json"
+    private val _ctx = new GlobalContext(new LoadJsonFileTableSource(_dir.path))
+
+    private def warn(s: String) = Console.YELLOW + s + Console.RESET
+    private def error(s: String) = Console.RED + s + Console.RESET
+    private def ok(s: String) = Console.GREEN + s + Console.RESET
+    private def title(s: String) = Console.BOLD + s.toUpperCase + Console.RESET
+    private def subtitle(s: String) = Console.UNDERLINED + s + Console.RESET
+
+    private def load_steps = {
+      _times.start("load")
+      try {
+        Some(SyntaxFromRaw((_dir / _compiled_fn).contentAsString))
+      } catch {
+        case (th: Throwable) => {
+          println(s"! compiled rule does not exist (fn=${_compiled_fn})")
+          None
+        }
+      } finally {
+        _times.stop()
       }
     }
-  }
 
-  def internalize_array(a: JsArray): Seq[Map[String, IntrinsicValue]] = {
-    a.value.foldLeft(Seq[Map[String, IntrinsicValue]]()) { (seq, v) =>
-      v match {
-        case (o: JsObject) => seq :+ internalize_object(o)
-        case _ => seq
+    private def load_expected = {
+      _times.start("load_expected")
+      try {
+        Some(Json.parse((_dir / _expect_fn).contentAsString()))
+      } catch {
+        case (th: Throwable) => {
+          None
+        }
+      } finally {
+        _times.stop()
       }
     }
-  }
 
-  def populate_context(ctx: Context, dir: Path): Unit = {
-    try {
-      Json.parse((dir.toString / "context.json").contentAsString()) match {
-        case (o: JsObject) => {
-          o.fields.foreach { case (k, v) =>
-            v match {
-              case (cho: JsObject) => {
-                println(s"# adding map to context (k=${k})")
-                println(internalize_object(cho))
-                ctx.retain_map(k, internalize_object(cho))
+    private def internalize_object(o: JsObject): Map[String, IntrinsicValue] = {
+      o.fields.foldLeft(Map[String, IntrinsicValue]()) { (m, tup) =>
+        tup._2 match {
+          case (s: JsString)   => m ++ Map(tup._1 -> new StringValue(s.value))
+          case (n: JsNumber)   => m ++ Map(tup._1 -> new NumberValue(n.value))
+          case (cho: JsObject) => m ++ internalize_object(cho).map { case (k, v) => s"${tup._1}.${k}" -> v }
+          case _ => m
+        }
+      }
+    }
+
+    private def internalize_array(a: JsArray): Seq[Map[String, IntrinsicValue]] = {
+      a.value.foldLeft(Seq[Map[String, IntrinsicValue]]()) { (seq, v) =>
+        v match {
+          case (o: JsObject) => seq :+ internalize_object(o)
+          case _ => seq
+        }
+      }
+    }
+
+    def populate_context = {
+      _times.start("populate_context")
+      try {
+        Json.parse((_dir / _context_fn).contentAsString()) match {
+          case (o: JsObject) => {
+            o.fields.foreach { case (k, v) =>
+              v match {
+                case (cho: JsObject) => {
+//                  println(s"# adding map to context (k=${k})")
+//                  println(internalize_object(cho))
+                  _ctx.retain_map(k, internalize_object(cho))
+                }
+
+                case (cha: JsArray) => {
+//                  println(s"# adding table to context (k=${k})")
+                  _ctx.retain_table("table", k, internalize_array(cha))
+                }
+
+                case _ => println(s"? in context, key is neither array nor object (k=${k})")
               }
-
-              case (cha: JsArray) => {
-                println(s"# adding table to context (k=${k})")
-                ctx.retain_table("table", k, internalize_array(cha))
-              }
-
-              case _ => println(s"? in context, key is neither array nor object (k=${k})")
             }
+          }
+
+          case _ => {
+          }
+        }
+      } catch {
+        case (e: NoSuchFileException) => {
+          // nothing
+        }
+      } finally {
+        _times.stop()
+      }
+    }
+
+    private def execute_all_steps(steps: Seq[Step]) = {
+      _times.start("execute")
+      steps.zipWithIndex.foreach { case (step, i) =>
+        _times.start(s"step${i}")
+        step.execute(_ctx)
+        _times.stop()
+      }
+      _times.stop()
+    }
+
+    def execute() {
+      println(title(s"execute: ${run_name}"))
+      load_steps match {
+        case Some(steps) => {
+          populate_context
+          execute_all_steps(steps)
+        }
+
+        case None => {
+          println("? no steps to execute")
+        }
+      }
+    }
+
+    private def show_table(tbl: Seq[Map[String, IntrinsicValue]]): Unit = {
+      tbl.zipWithIndex.foreach { case (row, i) =>
+        val initial = ("%6s").format(i.toString())
+        val vals = row.foldLeft(Seq[String]()) { case (seq, (k, v)) =>
+          val vs = ("%14s").format(v match {
+            case (sv: StringValue) => sv.value
+            case (nv: NumberValue) => nv.value.toString
+            case _ => "?"
+          })
+
+          seq :+ s"${k}: ${vs}"
+        }.mkString(s"${initial} | ", " | ", " |")
+        println(vals)
+      }
+    }
+
+    def find_mismatches(ex: Map[String, IntrinsicValue], ac: Map[String, IntrinsicValue]) = {
+      ex.foldLeft(Seq[String]()) { (seq, kv) =>
+        ac.get(kv._1) match {
+          case Some(v) => {
+            if (kv._2.exactly_equals(v)) {
+              seq
+            } else {
+              seq :+ s"(${kv._1}): expected ${kv._2}, got ${v}"
+            }
+          }
+
+          case None => seq :+ s"(${kv._1}): missing value"
+        }
+      }
+    }
+
+    def compare_and_show(
+      section: String,
+      name: String,
+      ex_tbl: Seq[Map[String, IntrinsicValue]],
+      ac_tbl: Seq[Map[String, IntrinsicValue]]
+    ) {
+      if (ex_tbl.size == ac_tbl.size) {
+        val diffs = ex_tbl.zip(ac_tbl).zipWithIndex.foldLeft(Seq[(Int, Seq[String])]()) { (seq, tup) =>
+          val mismatches = find_mismatches(tup._1._1, tup._1._2)
+          if (mismatches.size > 0) {
+            seq :+ (tup._2, mismatches)
+          } else {
+            seq
+          }
+        }
+        if (diffs.size > 0) {
+          println(error(s"! ${section}:${name} => FAIL"))
+          diffs.foreach { case (ri, problems) =>
+            problems.foreach { problem =>
+              println(warn(s"  [${ri}]: ${problem}"))
+            }
+          }
+        } else {
+          println(ok(s"> ${section}:${name} => OK"))
+        }
+      } else {
+        println(error(s"! ${section}:${name} => FAIL"))
+        println(warn(s"  tables are different sizes (ex=${ex_tbl.size}; ac=${ac_tbl.size})"))
+      }
+    }
+
+    def show() {
+      load_expected match {
+        case Some(v) => v match {
+          case (o: JsObject) => {
+            println(subtitle("expectations"))
+            _ctx.enumerate_tables((section: String, name: String, tbl: Seq[Map[String, IntrinsicValue]]) => {
+              (o \ "tables" \ section \ name).asOpt[JsArray].map(internalize_array(_)) match {
+                case Some(ex_tbl) => {
+                  compare_and_show(section, name, ex_tbl, tbl)
+                }
+                case None => {}
+              }
+            })
+          }
+          case _ => {
+            println("? expectations exist in the wrong format")
           }
         }
 
-        case _ => {
+        case None => {
+          println(warn("# no expectations exist, dumping tables"))
+          _ctx.enumerate_tables((section: String, name: String, tbl: Seq[Map[String, IntrinsicValue]]) => {
+            println(s"${section}:${name}")
+            show_table(tbl)
+          })
         }
       }
-    } catch {
-      case (e: NoSuchFileException) => {
-        // nothing
-      }
-    }
-  }
-
-  def execute_test_run(f: File): Unit = {
-    val times = new Times()
-    f.glob("*.rule.json").foreach { fn =>
-      println
-      println(s"TEST: ${fn}")
-
-      val ts = new LoadJsonFileTableSource(f.path)
-      val ctx = new GlobalContext(ts)
-
-      populate_context(ctx, f.path)
-
-      println(s"> loading rule (${fn})")
-      times.start("load")
-      val steps = SyntaxFromRaw(fn.contentAsString)
-      times.stop("load")
-      println("< loaded")
-
-      times.start("execute")
-      steps.zipWithIndex.foreach { case (step, i) =>
-        println(s"> step${i}")
-        times.start(s"step${i}")
-        step.execute(ctx)
-        times.stop(s"step${i}")
-        println(s"< step${i}")
-      }
-      times.stop("execute")
 
       println
-      println("ALL TABLES")
+      println(subtitle("timing"))
+      _times.show("> ")
       println
-
-      ctx.enumerate_tables((section: String, name: String, tbl: Seq[Map[String, IntrinsicValue]]) => {
-        println(s"${section}:${name}")
-        print_table(tbl)
-        println
-      })
-
-      println
-      println("TIMES")
-      times.show()
     }
   }
 
   def main(args: Array[String]): Unit = {
     try {
-      execute_test_run(File(args.head))
+      val runs = mutable.ListBuffer[TestRun]()
+      File(args.head).glob("*.rule").foreach { f =>
+        runs += TestRun(args.head, f.nameWithoutExtension)
+      }
+      println(s"# discovered ${runs.size} test runs in ${args.head}, executing all...")
+      runs.foreach { r =>
+        r.execute()
+        r.show()
+      }
     } catch {
       case (th: java.nio.file.NoSuchFileException) => println(s"! test run does not exist (${args.head})")
-      case (th: Throwable) => println(s"! error (${th})")
-    }
-  }
-
-  def print_table(tbl: Seq[Map[String, IntrinsicValue]]): Unit = {
-    tbl.zipWithIndex.foreach { case (row, i) =>
-      val initial = ("%6s").format(i.toString())
-      val vals = row.foldLeft(Seq[String]()) { case (seq, (k, v)) =>
-        val vs = ("%14s").format(v match {
-          case (sv: StringValue) => sv.value
-          case (nv: NumberValue) => nv.value.toString
-          case _ => "?"
-        })
-
-        seq :+ s"${k}: ${vs}"
-      }.mkString(s"${initial} | ", " | ", " |")
-      println(vals)
+      case (th: Throwable) => {
+        println(s"! error (${th})")
+        th.printStackTrace
+      }
     }
   }
 }
