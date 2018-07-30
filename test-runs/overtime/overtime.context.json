@@ -6,4 +6,5 @@
     [
       { "type" : "not_pay_request", "y" : "Item Y" }
     ]
+    }
 }
