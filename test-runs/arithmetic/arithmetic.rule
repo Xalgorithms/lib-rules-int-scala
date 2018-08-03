@@ -1,0 +1,13 @@
+REQUIRE test:origin:0.0.0 AS table_origin;
+
+ASSEMBLE t_add COLUMNS FROM table:table_origin;
+MAP table:t_add USING sum = add(@a, @b, @c);
+
+ASSEMBLE t_subtract COLUMNS FROM table:table_origin;
+MAP table:t_subtract USING difference = subtract(@a, @b, @c);
+
+ASSEMBLE t_multiply COLUMNS FROM table:table_origin;
+MAP table:t_multiply USING product = multiply(@a, @b, @c);
+
+ASSEMBLE t_divide COLUMNS FROM table:table_origin;
+MAP table:t_divide USING quotient = divide(@a, @b, @c);
