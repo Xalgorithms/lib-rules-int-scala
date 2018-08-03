@@ -1,0 +1,19 @@
+REQUIRE test:set2:0.0.1 as table;
+
+ASSEMBLE t_add COLUMNS FROM table:table;
+MAP table:t_add USING sum = add(@a, @b, @c, @d);
+
+ASSEMBLE t_subtract COLUMNS FROM table:table;
+MAP table:t_subtract USING difference = subtract(@a, @b, @c, @d);
+
+ASSEMBLE t_multiply COLUMNS FROM table:table;
+MAP table:t_multiply USING product = multiply(@a, @b, @c, @d);
+
+ASSEMBLE t_divide COLUMNS FROM table:table;
+MAP table:t_divide USING quotient = divide(@a, @b, @c, @d);
+
+
+
+
+
+

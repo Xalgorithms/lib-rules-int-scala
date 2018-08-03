@@ -13,18 +13,6 @@
       "name": "require"
     },
     {
-      "reference": {
-        "package": "test",
-        "id": "set2",
-        "version": "0.0.1",
-        "name": "table_two"
-      },
-      "indexes": [
-
-      ],
-      "name": "require"
-    },
-    {
       "table_name": "t_add",
       "columns": [
         {

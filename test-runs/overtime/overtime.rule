@@ -4,7 +4,6 @@ WHEN envelope:type == 'pay_request';
 
 REQUIRE test:employee_hours:0.0.1;
 REQUIRE test:employee_information:0.0.1;
-REQUIRE test:employee_information_mmc:0.0.1; #Mismatched id column.
 
 # Two different overtime pay formats:
 REQUIRE test:overtime_pay_before:0.0.1;
@@ -24,45 +23,10 @@ REQUIRE test:overtime_pay_after:0.0.1;
 # 3. Multiply pay by overtime multiplier
 
 #STEP 1:
-
-# 1.1 This runs correctly. 
-ASSEMBLE employee_hours_hardcoded_filter
-  COLUMNS FROM table:employee_hours WHEN employee_id == 3004
-  COLUMNS FROM table:employee_information WHEN employee_id == 3004;
-
-# 1.2 Fails. Matches the hours from employee 3001 to every other staff member.
-ASSEMBLE employee_hours_hardcoded_filter_2
-  COLUMNS FROM table:employee_hours WHEN employee_id == 3001 
-  COLUMNS FROM table:employee_information WHEN employee_id == @employee_id;
-
-# 1.3 This runs corectly, but relies on columns with identical data and
-#     different lables. (Cannot assume that this will be the case.)
-ASSEMBLE employee_hours_mismatched_column_label_filtering
+# Employee id can be grepped as envelope:id
+ASSEMBLE employee_data
   COLUMNS FROM table:employee_hours
-  COLUMNS FROM table:employee_information_mmc;
-FILTER table:employee_hours_mismatched_column_label_filtering
-  WHEN @employee_id_mmc == @employee_id;
-
-# 1.4 This fails to generate a table.
-ASSEMBLE employee_hours_mismatched_column_label_filtering_2
-  COLUMNS FROM table:employee_hours
-  COLUMNS FROM table:employee_information_mmc
-  WHEN employee_id_mmc == @employee_id;
-
-#STEP 2
-
-# 2.1 Run on hardcoded_filter table above with the single employee.
-#     functional and strips the correct upper pay brackets. 
-ASSEMBLE calculate_employee_pay
-  COLUMNS FROM table:employee_hours_hardcoded_filter
-  COLUMNS FROM table:overtime_pay_before;
-
-#FILTER table:calculate_employee_pay
-#  WHEN @hours_before > @overtime_hours;
-
-## Need subtract() for this.
-#MAP table:calculate_employee_pay
-#  USING determine_bracket = @hours_before - @overtime_hours;
+  COLUMN employee_name FROM table:employee_information WHEN employee_id == @employee_id;
 
 
-#Requires multiply() and to proceed with implementation.
+#STEP 2:

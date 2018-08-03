@@ -1,5 +1,4 @@
 REQUIRE test:set1:0.0.1 as table_one;
-REQUIRE test:set2:0.0.1 as table_two;
 
 ASSEMBLE t_add COLUMNS FROM table:table_one;
 MAP table:t_add USING c = add(@a, @b);
