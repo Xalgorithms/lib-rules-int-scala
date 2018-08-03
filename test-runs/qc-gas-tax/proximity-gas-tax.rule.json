@@ -113,6 +113,26 @@
 
       ],
       "name": "require"
+    },
+    {
+      "table_name": "env_cont",
+      "columns": [
+        {
+          "table": {
+            "section": "table",
+            "key": "items",
+            "type": "reference"
+          },
+          "sources": [
+            {
+              "columns": [
+
+              ]
+            }
+          ]
+        }
+      ],
+      "name": "assemble"
     }
   ]
 }

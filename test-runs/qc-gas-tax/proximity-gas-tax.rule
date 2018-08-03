@@ -59,8 +59,11 @@ REQUIRE ca.qc.tax:reductions_by_distance:0.0.1;
 #  { "distance" : 0,  "reduction" : 0.08, "seller_distance" : 1.7 }
 # ]
 
-#ASSEMBLE sellers_reductions
-  #COLUMN seller_distance FROM table:supplier_distances; #WHEN envelope:parties.suppler.id.value == @supplier_id;
+##ASSEMBLE env_cont FROM envelope:supplier.id;
+ASSEMBLE env_cont COLUMNS FROM table:items; 
+
+##ASSEMBLE sellers_reductions
+##  COLUMN seller_distance FROM table:supplier_distances WHEN table:envelope.supplier.id == @supplier_id;
 #  COLUMNS FROM table:reductions_by_distance
 #  COLUMNS FROM table:supplier_distances
   # This Column and next FILTER are stand-ins while WHILE is updated.

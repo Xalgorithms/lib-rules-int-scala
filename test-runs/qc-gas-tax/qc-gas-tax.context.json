@@ -2,6 +2,10 @@
   "envelope" : {
     "id" : 18,
     "type": "invoice",
+    "supplier" :
+    [
+      { "id" : "0002" }
+    ],
     "items" :
     [
       { "x" : "Item X", "y" : "Item Y" }

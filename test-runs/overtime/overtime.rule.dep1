@@ -1,5 +1,4 @@
 #Rule: Overtime pay based on hours worked.
-
 WHEN envelope:type == 'pay_request';
 
 REQUIRE test:employee_hours:0.0.1;
