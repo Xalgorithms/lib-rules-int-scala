@@ -4,3 +4,6 @@ project/target
 target
 *.swp
 *.rule.json
+
+#vim
+*.swp
