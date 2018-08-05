@@ -2,12 +2,21 @@ REQUIRE test:origin:0.0.0 AS table_origin;
 
 ASSEMBLE t_add COLUMNS FROM table:table_origin;
 MAP table:t_add USING sum = add(@a, @b, @c);
+MAP table:t_add USING maximum = max(@a, @b, @c, @sum);
+MAP table:t_add USING minimum = min(@a, @b, @c, @sum);
 
 ASSEMBLE t_subtract COLUMNS FROM table:table_origin;
 MAP table:t_subtract USING difference = subtract(@a, @b, @c);
+MAP table:t_subtract USING maximum = max(@a, @b, @c, @difference);
+MAP table:t_subtract USING minimum = min(@a, @b, @c, @difference);
 
 ASSEMBLE t_multiply COLUMNS FROM table:table_origin;
 MAP table:t_multiply USING product = multiply(@a, @b, @c);
+MAP table:t_multiply USING maximum = max(@a, @b, @c, @product);
+MAP table:t_multiply USING minimum = min(@a, @b, @c, @product);
 
 ASSEMBLE t_divide COLUMNS FROM table:table_origin;
 MAP table:t_divide USING quotient = divide(@a, @b, @c);
+MAP table:t_divide USING maximum = max(@a, @b, @c, @quotient);
+MAP table:t_divide USING minimum = min(@a, @b, @c, @quotient);
+

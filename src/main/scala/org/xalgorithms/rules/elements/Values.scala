@@ -139,8 +139,7 @@ class NumberValue(val value: BigDecimal) extends IntrinsicValue {
         case (nv: NumberValue) => (if (minimum < nv.value) minimum else nv.value) 
         case (sv: StringValue) => {
           try {
-            cv = BigDecimal(sv.value)
-            (if ( minimum < cv ) minimum else cv)
+            (if ( minimum < BigDecimal(sv.value) ) minimum else BigDecimal(sv.value))
           } catch {
             case _: Throwable => minimum 
           }
@@ -156,8 +155,7 @@ class NumberValue(val value: BigDecimal) extends IntrinsicValue {
         case (nv: NumberValue) => (if (maximum > nv.value) maximum else nv.value)
         case (sv: StringValue) => {
           try {
-            cv = BigDecimal(sv.value)
-            (if ( maximum > cv ) maximum else cv)
+            (if ( maximum > BigDecimal(sv.value) ) maximum else BigDecimal(sv.value))
           } catch {
             case _: Throwable => maximum 
           }
