@@ -57,6 +57,8 @@ class NumberValue(val value: BigDecimal) extends IntrinsicValue {
     case "subtract" => Some(difference(args))
     case "multiply" => Some(product(args))
     case "divide" => Some(quotient(args))
+    case "min" => Some(minimum(args))
+    case "max" => Some(maximum(args))
     case _ => None
   }
 
@@ -97,7 +99,6 @@ class NumberValue(val value: BigDecimal) extends IntrinsicValue {
     })
   }
 
-
   def quotient(args: Seq[Value]): IntrinsicValue = {
     new NumberValue(args.foldLeft(value) { (quotient, v) =>
       v match {
@@ -114,7 +115,6 @@ class NumberValue(val value: BigDecimal) extends IntrinsicValue {
     })
   }
 
-
   def difference(args: Seq[Value]): IntrinsicValue = {
     new NumberValue(args.foldLeft(value) { (difference, v) =>
       v match {
@@ -127,6 +127,40 @@ class NumberValue(val value: BigDecimal) extends IntrinsicValue {
           }
         }
         case _ => difference 
+      }
+    })
+  }
+
+  def minimum(args: Seq[Value]): IntrinsicValue = {
+    new NumberValue(args.foldLeft(value) { (minimum, v) =>
+      v match {
+        case (nv: NumberValue) => (if (minimum < nv.value) minimum else nv.value) 
+        case (sv: StringValue) => {
+          try {
+            cv = BigDecimal(sv.value)
+            (if ( minimum < cv ) minimum else cv)
+          } catch {
+            case _: Throwable => minimum 
+          }
+        }
+        case _ => minimum 
+      }
+    })
+  }
+
+  def maximum(args: Seq[Value]): IntrinsicValue = {
+    new NumberValue(args.foldLeft(value) { (maximum, v) =>
+      v match {
+        case (nv: NumberValue) => (if (maximum > nv.value) maximum else nv.value)
+        case (sv: StringValue) => {
+          try {
+            cv = BigDecimal(sv.value)
+            (if ( maximum > cv ) maximum else cv)
+          } catch {
+            case _: Throwable => maximum 
+          }
+        }
+        case _ => maximum 
       }
     })
   }
