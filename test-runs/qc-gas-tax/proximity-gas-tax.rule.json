@@ -115,12 +115,12 @@
       "name": "require"
     },
     {
-      "table_name": "env_cont",
+      "table_name": "sellers_reductions",
       "columns": [
         {
           "table": {
             "section": "table",
-            "key": "items",
+            "key": "reductions_by_distance",
             "type": "reference"
           },
           "sources": [
@@ -130,9 +130,87 @@
               ]
             }
           ]
+        },
+        {
+          "table": {
+            "section": "table",
+            "key": "supplier_distances",
+            "type": "reference"
+          },
+          "sources": [
+            {
+              "name": "seller_distance",
+              "source": "seller_distance",
+              "whens": [
+                {
+                  "left": {
+                    "type": "number",
+                    "value": "0004"
+                  },
+                  "right": {
+                    "section": "_context",
+                    "key": "supplier_id",
+                    "type": "reference"
+                  },
+                  "op": "eq"
+                }
+              ]
+            }
+          ]
         }
       ],
       "name": "assemble"
+    },
+    {
+      "table": {
+        "section": "table",
+        "key": "sellers_reductions",
+        "type": "reference"
+      },
+      "assignments": [
+        {
+          "source": {
+            "type": "function",
+            "name": "subtract",
+            "args": [
+              {
+                "section": "_context",
+                "key": "distance",
+                "type": "reference"
+              },
+              {
+                "section": "_context",
+                "key": "seller_distance",
+                "type": "reference"
+              }
+            ]
+          },
+          "target": "difference"
+        }
+      ],
+      "name": "map"
+    },
+    {
+      "table": {
+        "section": "table",
+        "key": "sellers_reductions",
+        "type": "reference"
+      },
+      "filters": [
+        {
+          "left": {
+            "section": "_context",
+            "key": "difference",
+            "type": "reference"
+          },
+          "right": {
+            "type": "number",
+            "value": "0"
+          },
+          "op": "gte"
+        }
+      ],
+      "name": "filter"
     }
   ]
 }
