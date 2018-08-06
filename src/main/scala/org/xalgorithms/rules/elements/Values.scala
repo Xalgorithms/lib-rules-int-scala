@@ -99,10 +99,6 @@ class NumberValue(val value: BigDecimal) extends IntrinsicValue {
     })
   }
 
-<<<<<<< HEAD
-=======
-
->>>>>>> basic-operations
   def quotient(args: Seq[Value]): IntrinsicValue = {
     new NumberValue(args.foldLeft(value) { (quotient, v) =>
       v match {
@@ -119,10 +115,6 @@ class NumberValue(val value: BigDecimal) extends IntrinsicValue {
     })
   }
 
-<<<<<<< HEAD
-=======
-
->>>>>>> basic-operations
   def difference(args: Seq[Value]): IntrinsicValue = {
     new NumberValue(args.foldLeft(value) { (difference, v) =>
       v match {
