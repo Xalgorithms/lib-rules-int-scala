@@ -25,8 +25,23 @@ REQUIRE test:overtime_pay_after:0.0.1;
 #STEP 1:
 # Employee id can be grepped as envelope:id
 ASSEMBLE employee_data
-  COLUMNS FROM table:employee_hours
-  COLUMN employee_name FROM table:employee_information WHEN employee_id == @employee_id;
+  COLUMNS FROM table:employee_hours WHEN envelope:id == @employee_id 
+  #Not the ideal way to match name with hours, but a good start.
+  COLUMN employee_name FROM table:employee_information WHEN envelope:id == @employee_id
+  COLUMNS FROM table:overtime_pay_before;
 
+#(nonfunctional) Attempts to match emp_id with @emp_id when adding name.
+## ASSEMBLE employee_data_correct
+##   COLUMNS FROM table:employee_hours WHEN envelope:id == @employee_id 
+##   COLUMN employee_name FROM table:employee_information WHEN employee_id == @employee_id;
 
 #STEP 2:
+#
+#Using pay-below-hrs method.
+
+FILTER table:employee_data
+  WHEN @hours_before > @overtime_hours;
+
+# Requires reduce methdod!
+
+#STEP 3

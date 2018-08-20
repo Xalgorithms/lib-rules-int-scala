@@ -1,10 +1,11 @@
 {
   "envelope" : {
-    "id" : 3001,
-    "type" : "not_pay_request",
+    "name": "Beth",
+    "id" : 3002,
+    "type" : "pay_request",
     "items" :
     [
-      { "type" : "not_pay_request", "y" : "Item Y" }
+      { "type" : "pay_request", "y" : "Item Y" }
     ]
     }
 }
