@@ -26,7 +26,7 @@ require 'xa/rules'
 
 include XA::Rules::Parse
 
-Dir.glob("test-runs/#{ARGV[0]}/*.rule") do |ifn|
+Dir.glob("#{ARGV[0]}/*.rule") do |ifn|
   ofn = "#{ifn}.json"
   puts "> compiling #{ifn} to #{ofn}"
   IO.write(ofn, MultiJson.dump(parse(IO.read(ifn)), pretty: true))
