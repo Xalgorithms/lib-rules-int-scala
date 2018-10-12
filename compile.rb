@@ -22,13 +22,18 @@
 # License along with this program. If not, see
 # <http://www.gnu.org/licenses/>.
 require 'multi_json'
-require 'xa/rules'
+require 'xa/rules/parse'
 
-include XA::Rules::Parse
+include XA::Rules::Parse::Content
 
 Dir.glob("#{ARGV[0]}/*.rule") do |ifn|
   ofn = "#{ifn}.json"
   puts "> compiling #{ifn} to #{ofn}"
-  IO.write(ofn, MultiJson.dump(parse(IO.read(ifn)), pretty: true))
+  IO.write(ofn, MultiJson.dump(parse_rule(IO.read(ifn)), pretty: true))
 end
 
+Dir.glob("#{ARGV[0]}/*.table") do |ifn|
+  ofn = "#{ifn}.json"
+  puts "> compiling #{ifn} to #{ofn}"
+  IO.write(ofn, MultiJson.dump(parse_table(IO.read(ifn)), pretty: true))
+end
