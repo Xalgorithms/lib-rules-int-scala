@@ -32,22 +32,29 @@ import play.api.libs.json._
 import scala.collection.mutable
 import scala.io.Source
 
-class LoadJsonFileTableSource(dn: Path) extends LoadJsonTableSource {
-  def read(ptref: PackagedTableReference): JsValue = {
-    val f = (dn.toString / "tables" / ptref.package_name / ptref.version / s"${ptref.id}.json")
-//    println(s"# trying to read table (f=${f}; ptref=${ptref.package_name}:${ptref.id}:${ptref.version})")
+class LoadJsonFileTableSource(dn: Path, tables_index: Map[String, Option[String]]) extends LoadJsonTableSource {
+  def read_json(fn: String): JsValue = {
     try {
-      Json.parse(f.contentAsString)
+      Json.parse((dn.toString / fn).contentAsString)
     } catch {
       case (th: NoSuchFileException) => {
-        println(s"! file not found (f=${f})")
+        println(s"! file not found (fn=${fn})")
         JsNull
       }
 
       case (th: Throwable) => {
-        println(s"unknown error (#{th})")
+        println(s"unknown error (${th})")
         JsNull
       }
+    }
+  }
+
+  def read(ptref: PackagedTableReference): JsValue = {
+    tables_index.get(s"${ptref.id}:${ptref.version}").flatMap { opt_data_fn =>
+      opt_data_fn.map(read_json(_))
+    } match {
+      case None => JsNull
+      case Some(v) => v
     }
   }
 }
@@ -85,13 +92,13 @@ class Times {
 }
 
 object Runner {
-  case class TestRun(dir_name: String, run_name: String) {
+  case class TestRun(dir_name: String, run_name: String, tables_index: Map[String, Option[String]]) {
     private val _times = new Times
     private val _dir = File(dir_name)
     private val _compiled_fn = s"${run_name}.rule.json"
     private val _expect_fn = s"${run_name}.expected.json"
     private val _context_fn = s"${run_name}.context.json"
-    private val _ctx = new GlobalContext(new LoadJsonFileTableSource(_dir.path))
+    private val _ctx = new GlobalContext(new LoadJsonFileTableSource(_dir.path, tables_index))
 
     private def warn(s: String) = Console.YELLOW + s + Console.RESET
     private def error(s: String) = Console.RED + s + Console.RESET
@@ -306,8 +313,25 @@ object Runner {
   def main(args: Array[String]): Unit = {
     try {
       val runs = mutable.ListBuffer[TestRun]()
+      val tables = File(args.head).glob("*.table.json").foldLeft(Map[String, Option[String]]()) { (m, f) =>
+        val jv = Json.parse(f.contentAsString)
+        jv match {
+          case (o: JsObject) => {
+            val opt_version = (o \ "meta" \ "version").asOpt[String]
+            val opt_data_fn = (o \ "data").asOpt[Seq[JsValue]].flatMap { seq =>
+              (seq.head \ "location").asOpt[String]
+            }
+
+            val k = (Some(f.nameWithoutExtension) ++ opt_version).mkString(":")
+            m ++ Map(k -> opt_data_fn)
+          }
+
+          case _ => m
+        }
+      }
+
       File(args.head).glob("*.rule").foreach { f =>
-        runs += TestRun(args.head, f.nameWithoutExtension)
+        runs += TestRun(args.head, f.nameWithoutExtension, tables)
       }
       println(s"# discovered ${runs.size} test runs in ${args.head}, executing all...")
       runs.foreach { r =>
