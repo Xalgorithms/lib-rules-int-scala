@@ -100,6 +100,118 @@ class ValuesSpec extends FlatSpec with Matchers with MockFactory with AppendedCl
     }
   }
 
+  it should "perform subtraction of basic Values as DIFFERENCE" in {
+    Seq(
+      Tuple3(1.0, Seq(new NumberValue(2.2), new NumberValue(3.3), new NumberValue(4.4)), -8.9),
+      Tuple3(1.0, Seq(new NumberValue(-2.0), new NumberValue(3.0)), 0.0),
+      Tuple3(11.0, Seq(new NumberValue(1.0), new NumberValue(2.0)), 8.0),
+      Tuple3(11.0, Seq(new StringValue("1.0"), new NumberValue(2.0)), 8.0),
+      Tuple3(11.0, Seq(new StringValue("1.0"), new StringValue("abc"), new StringValue("2.0")), 8.0)
+    ).foreach { case (bv, args, ex) =>
+      val v = new NumberValue(bv)
+      val sum = v.apply_func(args, "subtract")
+
+      sum match {
+        case Some(v) =>
+          v shouldBe a [NumberValue]
+          v.asInstanceOf[NumberValue].value shouldEqual(ex)
+        case None =>
+          true shouldEqual(false)
+      }
+    }
+  }
+
+  it should "perform multiplication of basic Values as PRODUCT" in {
+    Seq(
+      Tuple3(1.0, Seq(new NumberValue(2.2), new NumberValue(3.3), new NumberValue(4.4)), 31.944),
+      Tuple3(1.0, Seq(new NumberValue(-2.0), new NumberValue(3.0)), -6.0),
+      Tuple3(11.0, Seq(new NumberValue(1.0), new NumberValue(2.0)), 22.0),
+      Tuple3(11.0, Seq(new StringValue("1.0"), new NumberValue(2.0)), 22.0),
+      Tuple3(11.0, Seq(new StringValue("1.0"), new StringValue("abc"), new StringValue("2.0")), 22.0)
+    ).foreach { case (bv, args, ex) =>
+      val v = new NumberValue(bv)
+      val sum = v.apply_func(args, "multiply")
+
+      sum match {
+        case Some(v) =>
+          v shouldBe a [NumberValue]
+          v.asInstanceOf[NumberValue].value shouldEqual(ex)
+        case None =>
+          true shouldEqual(false)
+      }
+    }
+  }
+
+  /*
+  it should "perform division of basic Values as QUOTIENT" in {
+    Seq(
+      Tuple3(1.0, Seq(new NumberValue(2.2), new NumberValue(3.3), new NumberValue(4.4)),
+        new NumberValue(0.031304783370899073378412221387428)),
+      Tuple3(1.0, Seq(new NumberValue(-2.0), new NumberValue(3.0)),
+        new NumberValue(0.031304783370899073378412221387428)),
+      Tuple3(11.0, Seq(new NumberValue(1.0), new NumberValue(2.0)),
+        new NumberValue(0.031304783370899073378412221387428)),
+      Tuple3(11.0, Seq(new StringValue("1.0"), new NumberValue(2.0)),
+        new NumberValue(0.031304783370899073378412221387428)),
+      Tuple3(11.0, Seq(new StringValue("1.0"), new StringValue("abc"), new StringValue("2.0")),
+        new NumberValue(0.031304783370899073378412221387428))
+    ).foreach { case (bv, args, ex) =>
+      val v = new NumberValue(bv)
+      val sum = v.apply_func(args, "divide")
+
+      sum match {
+        case Some(v) =>
+          v shouldBe a [NumberValue]
+          v.asInstanceOf[NumberValue].value shouldEqual(ex)
+        case None =>
+          true shouldEqual(false)
+      }
+    }
+  }
+  */
+
+  it should "determine the minimum value in a set of basic Values as MINIMUM" in {
+    Seq(
+      Tuple3(1.0, Seq(new NumberValue(2.2), new NumberValue(3.3), new NumberValue(4.4)), 1.0),
+      Tuple3(1.0, Seq(new NumberValue(-2.0), new NumberValue(3.0)), -2.0),
+      Tuple3(11.0, Seq(new NumberValue(1.0), new NumberValue(2.0)), 1.0),
+      Tuple3(11.0, Seq(new StringValue("-31.0"), new NumberValue(2.0)), -31.0),
+      Tuple3(11.0, Seq(new StringValue("1.0"), new StringValue("abc"), new StringValue("2.0")), 1.0)
+    ).foreach { case (bv, args, ex) =>
+      val v = new NumberValue(bv)
+      val sum = v.apply_func(args, "min")
+
+      sum match {
+        case Some(v) =>
+          v shouldBe a [NumberValue]
+          v.asInstanceOf[NumberValue].value shouldEqual(ex)
+        case None =>
+          true shouldEqual(false)
+      }
+    }
+  }
+
+  it should "determine the maximum value in a set of basic Values as MAXIMUM" in {
+    Seq(
+      Tuple3(1.0, Seq(new NumberValue(2.2), new NumberValue(3.3), new NumberValue(4.4)), 4.4),
+      Tuple3(1.0, Seq(new NumberValue(-2.0), new NumberValue(3.0)), 3.0),
+      Tuple3(11.0, Seq(new NumberValue(1.0), new NumberValue(2.0)), 11.0),
+      Tuple3(11.0, Seq(new StringValue("14.0902"), new NumberValue(2.0)), 14.0902),
+      Tuple3(11.0, Seq(new StringValue("1.0"), new StringValue("abc"), new StringValue("2.0")), 11.0)
+    ).foreach { case (bv, args, ex) =>
+      val v = new NumberValue(bv)
+      val sum = v.apply_func(args, "max")
+
+      sum match {
+        case Some(v) =>
+          v shouldBe a [NumberValue]
+          v.asInstanceOf[NumberValue].value shouldEqual(ex)
+        case None =>
+          true shouldEqual(false)
+      }
+    }
+  }
+
   "StringValue" should "match or convert" in {
     Seq(
       Tuple4("bb", new StringValue("bb"), "eq", true),
