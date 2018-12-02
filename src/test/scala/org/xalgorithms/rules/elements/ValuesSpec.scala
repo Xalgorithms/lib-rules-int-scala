@@ -142,19 +142,13 @@ class ValuesSpec extends FlatSpec with Matchers with MockFactory with AppendedCl
     }
   }
 
-  /*
   it should "perform division of basic Values as QUOTIENT" in {
     Seq(
-      Tuple3(1.0, Seq(new NumberValue(2.2), new NumberValue(3.3), new NumberValue(4.4)),
-        new NumberValue(0.031304783370899073378412221387428)),
-      Tuple3(1.0, Seq(new NumberValue(-2.0), new NumberValue(3.0)),
-        new NumberValue(0.031304783370899073378412221387428)),
-      Tuple3(11.0, Seq(new NumberValue(1.0), new NumberValue(2.0)),
-        new NumberValue(0.031304783370899073378412221387428)),
-      Tuple3(11.0, Seq(new StringValue("1.0"), new NumberValue(2.0)),
-        new NumberValue(0.031304783370899073378412221387428)),
-      Tuple3(11.0, Seq(new StringValue("1.0"), new StringValue("abc"), new StringValue("2.0")),
-        new NumberValue(0.031304783370899073378412221387428))
+      Tuple3(1.0, Seq(new NumberValue(2.2), new NumberValue(3.3), new NumberValue(4.4)), new NumberValue(0.031304783370899073378412221387428)),
+      Tuple3(1.0, Seq(new NumberValue(-2.0), new NumberValue(3.0)), new NumberValue(-0.1666666666666666666666666666666667)),
+      Tuple3(11.0, Seq(new NumberValue(1.0), new NumberValue(2.0)), new NumberValue(5.5)),
+      Tuple3(11.0, Seq(new StringValue("1.0"), new NumberValue(2.0)), new NumberValue(5.5)),
+      Tuple3(11.0, Seq(new StringValue("1.0"), new StringValue("abc"), new StringValue("2.0")), new NumberValue(5.5))
     ).foreach { case (bv, args, ex) =>
       val v = new NumberValue(bv)
       val sum = v.apply_func(args, "divide")
@@ -162,13 +156,13 @@ class ValuesSpec extends FlatSpec with Matchers with MockFactory with AppendedCl
       sum match {
         case Some(v) =>
           v shouldBe a [NumberValue]
-          v.asInstanceOf[NumberValue].value shouldEqual(ex)
+          // TODO: Greater precision required in this match case. (.toDouble used in the meantime.)
+          v.asInstanceOf[NumberValue].value.toDouble shouldEqual(ex.value.toDouble)
         case None =>
           true shouldEqual(false)
       }
     }
   }
-  */
 
   it should "determine the minimum value in a set of basic Values as MINIMUM" in {
     Seq(
