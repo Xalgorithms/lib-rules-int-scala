@@ -95,7 +95,7 @@ object Runner {
   case class TestRun(dir_name: String, run_name: String, tables_index: Map[String, Option[String]]) {
     private val _times = new Times
     private val _dir = File(dir_name)
-    private val _compiled_fn = s"${run_name}.rule.json"
+//    private val _compiled_fn = s"${run_name}.rule.json"
     private val _expect_fn = s"${run_name}.expected.json"
     private val _context_fn = s"${run_name}.context.json"
     private val _ctx = new GlobalContext(new LoadJsonFileTableSource(_dir.path, tables_index))
@@ -107,21 +107,26 @@ object Runner {
     private def subtitle(s: String) = Console.UNDERLINED + s + Console.RESET
 
     private def load_steps = {
-      _times.start("load")
-      try {
-        Some(SyntaxFromRaw((_dir / _compiled_fn).contentAsString))
-      } catch {
-        case (th: Throwable) => {
-          println(s"! compiled rule does not exist (fn=${_compiled_fn})")
-          None
+      _dir.glob("*.rule").foldLeft(Map[String, Seq[Step]]()) { (m, f) =>
+        println(s"> loading ${f.name}")
+        val rule_name = f.name.stripSuffix(".rule")
+        val compiled_fn = s"${rule_name}.rule.json"
+        _times.start(s"load/${rule_name}")
+        try {
+          m + (rule_name -> SyntaxFromRaw((_dir / compiled_fn).contentAsString))
+        } catch {
+          case (th: Throwable) => {
+            println(s"! compiled rule does not exist (fn=${compiled_fn})")
+            m
+          }
+        } finally {
+          _times.stop()
         }
-      } finally {
-        _times.stop()
       }
     }
 
     private def load_expected = {
-      _times.start("load_expected")
+      _times.start("load/expected")
       try {
         Some(Json.parse((_dir / _expect_fn).contentAsString()))
       } catch {
@@ -200,16 +205,22 @@ object Runner {
 
     def execute() {
       println(title(s"execute: ${run_name}"))
-      load_steps match {
-        case Some(steps) => {
-          populate_context
-          execute_all_steps(steps)
-        }
+      _times.start("load")
+      load_steps.foreach { case (rule_name, steps) =>
+        println(subtitle(s"> evaluate: ${rule_name} (${steps.length} steps)"))
 
-        case None => {
-          println("? no steps to execute")
-        }
       }
+      // load_steps match {
+      //   case Some(compiled_rules) => {
+      //     populate_context
+      //     execute_all_steps(steps)
+      //   }
+
+      //   case None => {
+      //     println("? no steps to execute")
+      //   }
+      // }
+      _times.stop
     }
 
     private def show_table(tbl: Seq[Map[String, IntrinsicValue]]): Unit = {
