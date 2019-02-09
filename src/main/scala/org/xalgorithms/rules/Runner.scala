@@ -32,8 +32,9 @@ import play.api.libs.json._
 import scala.collection.mutable
 import scala.io.Source
 
-class LoadJsonFileTableSource(dn: Path, tables_index: Map[String, Option[String]]) extends LoadJsonTableSource {
+class LoadJsonFileTableSource(dn: Path, tables_index: Map[String, Option[String]], times: Times) extends LoadJsonTableSource {
   def read_json(fn: String): JsValue = {
+    times.start(s"load_json/${fn}")
     try {
       Json.parse((dn.toString / fn).contentAsString)
     } catch {
@@ -46,6 +47,8 @@ class LoadJsonFileTableSource(dn: Path, tables_index: Map[String, Option[String]
         println(s"unknown error (${th})")
         JsNull
       }
+    } finally {
+      times.stop
     }
   }
 
@@ -159,7 +162,7 @@ object Runner {
 
     def populate_context = {
       _times.start("populate_context")
-      val ctx = new GlobalContext(new LoadJsonFileTableSource(_dir.path, tables_index))
+      val ctx = new GlobalContext(new LoadJsonFileTableSource(_dir.path, tables_index, _times))
       try {
         Json.parse((_dir / _context_fn).contentAsString()) match {
           case (o: JsObject) => {
