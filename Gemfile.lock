@@ -1,6 +1,6 @@
 GIT
   remote: https://github.com/Xalgorithms/xa-rules.git
-  revision: 1e820269c656faef2ad49c11a6cbf97b1a5168ff
+  revision: 3b3ebc83c72b9a3ff1d4c95aba9380d22c83a660
   specs:
     xa-rules (0.4.0)
       parslet
@@ -22,4 +22,4 @@ RUBY VERSION
    ruby 2.4.2p198
 
 BUNDLED WITH
-   1.16.1
+   2.0.1
