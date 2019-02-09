@@ -98,7 +98,6 @@ object Runner {
 //    private val _compiled_fn = s"${run_name}.rule.json"
     private val _expect_fn = s"${run_name}.expected.json"
     private val _context_fn = s"${run_name}.context.json"
-    private val _ctx = new GlobalContext(new LoadJsonFileTableSource(_dir.path, tables_index))
 
     private def warn(s: String) = Console.YELLOW + s + Console.RESET
     private def error(s: String) = Console.RED + s + Console.RESET
@@ -160,6 +159,7 @@ object Runner {
 
     def populate_context = {
       _times.start("populate_context")
+      val ctx = new GlobalContext(new LoadJsonFileTableSource(_dir.path, tables_index))
       try {
         Json.parse((_dir / _context_fn).contentAsString()) match {
           case (o: JsObject) => {
@@ -168,12 +168,12 @@ object Runner {
                 case (cho: JsObject) => {
 //                  println(s"# adding map to context (k=${k})")
 //                  println(internalize_object(cho))
-                  _ctx.retain_map(k, internalize_object(cho))
+                  ctx.retain_map(k, internalize_object(cho))
                 }
 
                 case (cha: JsArray) => {
 //                  println(s"# adding table to context (k=${k})")
-                  _ctx.retain_table("table", k, internalize_array(cha))
+                  ctx.retain_table("table", k, internalize_array(cha))
                 }
 
                 case _ => println(s"? in context, key is neither array nor object (k=${k})")
@@ -191,13 +191,15 @@ object Runner {
       } finally {
         _times.stop()
       }
+
+      ctx
     }
 
-    private def execute_all_steps(steps: Seq[Step]) = {
+    private def execute_all_steps(ctx: Context, steps: Seq[Step]) = {
       _times.start("execute")
       steps.zipWithIndex.foreach { case (step, i) =>
         _times.start(s"step${i}")
-        step.execute(_ctx)
+        step.execute(ctx)
         _times.stop()
       }
       _times.stop()
@@ -206,21 +208,18 @@ object Runner {
     def execute() {
       println(title(s"execute: ${run_name}"))
       _times.start("load")
-      load_steps.foreach { case (rule_name, steps) =>
-        println(subtitle(s"> evaluate: ${rule_name} (${steps.length} steps)"))
-
-      }
-      // load_steps match {
-      //   case Some(compiled_rules) => {
-      //     populate_context
-      //     execute_all_steps(steps)
-      //   }
-
-      //   case None => {
-      //     println("? no steps to execute")
-      //   }
-      // }
+      val steps = load_steps
       _times.stop
+
+      steps.foreach { case (rule_name, steps) =>
+        println(subtitle(s"> evaluate: ${rule_name} (${steps.length} steps)"))
+        val ctx = populate_context
+        _times.start(s"execute/${rule_name}")
+        execute_all_steps(ctx, steps)
+        _times.stop
+
+        show(ctx)
+      }
     }
 
     private def show_table(tbl: Seq[Map[String, IntrinsicValue]]): Unit = {
@@ -286,12 +285,12 @@ object Runner {
       }
     }
 
-    def show() {
+    def show(ctx: GlobalContext) {
       load_expected match {
         case Some(v) => v match {
           case (o: JsObject) => {
             println(subtitle("expectations"))
-            _ctx.enumerate_tables((section: String, name: String, tbl: Seq[Map[String, IntrinsicValue]]) => {
+            ctx.enumerate_tables((section: String, name: String, tbl: Seq[Map[String, IntrinsicValue]]) => {
               (o \ "tables" \ section \ name).asOpt[JsArray].map(internalize_array(_)) match {
                 case Some(ex_tbl) => {
                   compare_and_show(section, name, ex_tbl, tbl)
@@ -307,7 +306,7 @@ object Runner {
 
         case None => {
           println(warn("# no expectations exist, dumping tables"))
-          _ctx.enumerate_tables((section: String, name: String, tbl: Seq[Map[String, IntrinsicValue]]) => {
+          ctx.enumerate_tables((section: String, name: String, tbl: Seq[Map[String, IntrinsicValue]]) => {
             println(s"${section}:${name}")
             show_table(tbl)
           })
@@ -345,10 +344,7 @@ object Runner {
         runs += TestRun(args.head, f.nameWithoutExtension, tables)
       }
       println(s"# discovered ${runs.size} test runs in ${args.head}, executing all...")
-      runs.foreach { r =>
-        r.execute()
-        r.show()
-      }
+      runs.foreach { r => r.execute() }
     } catch {
       case (th: java.nio.file.NoSuchFileException) => println(s"! test run does not exist (${args.head})")
       case (th: Throwable) => {
