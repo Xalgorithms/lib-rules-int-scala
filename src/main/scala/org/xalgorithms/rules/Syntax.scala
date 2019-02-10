@@ -247,9 +247,17 @@ object StepProduce {
     function_opt: Option[JsObject]
   ): TakeRefinement = {
     condition_opt match {
-      case Some(cond) => new ConditionalTakeRefinement
+      case Some(cond) => new ConditionalTakeRefinement(
+        Option(cond.validate[When].getOrElse(null))
+      )
       case None => function_opt match {
-        case Some(func) => new FunctionalTakeRefinement
+        case Some(func_content) => {
+          val fv = new FunctionValue(
+            stringOrNull(func_content, "name"),
+            (func_content \ "args").validate[Seq[Value]].getOrElse(Seq())
+          )
+          new FunctionalTakeRefinement(Some(fv))
+        }
         case None => null
       }
     }
@@ -261,8 +269,12 @@ object StepProduce {
     assignment_opt: Option[JsObject],
     function_opt: Option[JsObject]
   ): Refinement = name match {
-    case "filter" => new FilterRefinement
-    case "map"    => new MapRefinement
+    case "filter" => new FilterRefinement(
+      condition_opt.map { cond => cond.validate[When].getOrElse(null) }
+    )
+    case "map"    => new MapRefinement(
+      assignment_opt.map { ass => ass.validate[Assignment].getOrElse(null) }
+    )
     case "take"   => produce_take_refinement(condition_opt, function_opt)
     case _        => null
   }

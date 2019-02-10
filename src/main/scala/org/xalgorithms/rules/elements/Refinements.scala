@@ -26,17 +26,17 @@ package org.xalgorithms.rules.elements
 class Refinement {
 }
 
-class FilterRefinement extends Refinement {
+class FilterRefinement(val when: Option[When]) extends Refinement {
 }
 
-class MapRefinement extends Refinement {
+class MapRefinement(val assignment: Option[Assignment]) extends Refinement {
 }
 
 class TakeRefinement extends Refinement {
 }
 
-class ConditionalTakeRefinement extends TakeRefinement {
+class ConditionalTakeRefinement(val when: Option[When]) extends TakeRefinement {
 }
 
-class FunctionalTakeRefinement extends TakeRefinement {
+class FunctionalTakeRefinement(val func: Option[FunctionValue]) extends TakeRefinement {
 }

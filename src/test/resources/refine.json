@@ -23,7 +23,7 @@
         {
           "name" : "map",
           "assignment" : {
-            "target" : "a",
+            "target" : "x",
             "source" : {
               "type" : "function",
               "name" : "concat",

@@ -299,11 +299,66 @@ class SyntaxSpec extends FlatSpec with Matchers {
     o.refined_name shouldEqual("y")
 
     o.refinements.length shouldEqual(5)
+
     o.refinements(0) shouldBe a [FilterRefinement]
+    val when0 = o.refinements(0).asInstanceOf[FilterRefinement].when.getOrElse(null)
+    when0 should not be null
+    when0.left should not be null
+    when0.left shouldBe a [ReferenceValue]
+    when0.left.asInstanceOf[ReferenceValue].section shouldEqual("_local")
+    when0.left.asInstanceOf[ReferenceValue].key shouldEqual("a")
+    when0.right should not be null
+    when0.right shouldBe a [NumberValue]
+    when0.right.asInstanceOf[NumberValue].value shouldEqual(BigDecimal(3.0))
+    when0.op shouldEqual("lt")
+
     o.refinements(1) shouldBe a [MapRefinement]
+    val ass0 = o.refinements(1).asInstanceOf[MapRefinement].assignment.getOrElse(null)
+    ass0 should not be null
+    ass0.target shouldEqual("a")
+    ass0.source should not be null
+    ass0.source shouldBe a [ReferenceValue]
+    ass0.source.asInstanceOf[ReferenceValue].section shouldEqual("_local")
+    ass0.source.asInstanceOf[ReferenceValue].key shouldEqual("b")
+
     o.refinements(2) shouldBe a [MapRefinement]
+    val ass1 = o.refinements(2).asInstanceOf[MapRefinement].assignment.getOrElse(null)
+    ass1 should not be null
+    ass1.target shouldEqual("x")
+    ass1.source should not be null
+    ass1.source shouldBe a [FunctionValue]
+    ass1.source.asInstanceOf[FunctionValue].name shouldEqual("concat")
+    ass1.source.asInstanceOf[FunctionValue].args.length shouldEqual(2)
+    ass1.source.asInstanceOf[FunctionValue].args(0) shouldBe a [ReferenceValue]
+    ass1.source.asInstanceOf[FunctionValue].args(0).asInstanceOf[ReferenceValue].section shouldEqual("_local")
+    ass1.source.asInstanceOf[FunctionValue].args(0).asInstanceOf[ReferenceValue].key shouldEqual("b")
+    ass1.source.asInstanceOf[FunctionValue].args(1) shouldBe a [ReferenceValue]
+    ass1.source.asInstanceOf[FunctionValue].args(1).asInstanceOf[ReferenceValue]
+    ass1.source.asInstanceOf[FunctionValue].args(1).asInstanceOf[ReferenceValue].section shouldEqual("_local")
+    ass1.source.asInstanceOf[FunctionValue].args(1).asInstanceOf[ReferenceValue].key shouldEqual("c")
+
     o.refinements(3) shouldBe a [FunctionalTakeRefinement]
+    val fn0 = o.refinements(3).asInstanceOf[FunctionalTakeRefinement].func.getOrElse(null)
+    fn0 should not be null
+    fn0.name shouldEqual("nth")
+    fn0.args.length shouldEqual(2)
+    fn0.args(0) shouldBe a [NumberValue]
+    fn0.args(0).asInstanceOf[NumberValue].value shouldEqual(BigDecimal(1.0))
+    fn0.args(1) shouldBe a [NumberValue]
+    fn0.args(1).asInstanceOf[NumberValue].value shouldEqual(BigDecimal(3.0))
+
     o.refinements(4) shouldBe a [ConditionalTakeRefinement]
+    val when1 = o.refinements(4).asInstanceOf[ConditionalTakeRefinement].when.getOrElse(null)
+    when1 should not be null
+    when1.left should not be null
+    when1.left shouldBe a [ReferenceValue]
+    when1.left.asInstanceOf[ReferenceValue].section shouldEqual("_local")
+    when1.left.asInstanceOf[ReferenceValue].key shouldEqual("a")
+    when1.right should not be null
+    when1.right shouldBe a [ReferenceValue]
+    when1.right.asInstanceOf[ReferenceValue].section shouldEqual("_local")
+    when1.right.asInstanceOf[ReferenceValue].key shouldEqual("b")
+    when1.op shouldEqual("eq")
   }
 
   "AssembleStep" should "load from JSON" in {
