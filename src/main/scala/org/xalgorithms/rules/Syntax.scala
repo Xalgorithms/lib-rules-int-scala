@@ -139,21 +139,18 @@ object StepProduce {
       op)
   }
 
-  def produce_value(vt: String, content: JsObject): Value = {
-    if ("string" == vt) {
-      return new StringValue(stringOrNull(content, "value"))
-    } else if ("number" == vt) {
-      return new NumberValue(doubleOrNull(content, "value"))
-    } else if ("reference" == vt) {
-      return new DocumentReferenceValue(stringOrNull(content, "section"), stringOrNull(content, "key"))
-    } else if ("function" == vt) {
-      return new FunctionValue(
-        stringOrNull(content, "name"),
-        (content \ "args").validate[Seq[Value]].getOrElse(Seq())
-      )
-    }
-
-    return null
+  def produce_value(vt: String, content: JsObject): Value = vt match {
+    case "string"    => new StringValue(stringOrNull(content, "value"))
+    case "number"    => new NumberValue(doubleOrNull(content, "value"))
+    case "reference" => new DocumentReferenceValue(
+      stringOrNull(content, "section"),
+      stringOrNull(content, "key")
+    )
+    case "function"  => new FunctionValue(
+      stringOrNull(content, "name"),
+      (content \ "args").validate[Seq[Value]].getOrElse(Seq())
+    )
+    case _           => null
   }
 
   def produce_assignment(target: String, source: JsObject): Assignment = {
