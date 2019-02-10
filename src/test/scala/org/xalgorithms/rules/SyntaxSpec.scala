@@ -286,6 +286,19 @@ class SyntaxSpec extends FlatSpec with Matchers {
     o.sources(2).column shouldEqual("d")
   }
 
+  def validate_refine(steps: Seq[Step]) {
+    steps.length shouldBe 1
+    steps.head should not be null
+    steps.head shouldBe a [RefineStep]
+
+    val o = steps.head.asInstanceOf[RefineStep]
+
+    o.table should not be null
+    o.table.section shouldEqual("tables")
+    o.table.name shouldEqual("x")
+    o.refined_name shouldEqual("y")
+  }
+
   "AssembleStep" should "load from JSON" in {
     validate_assemble(syntax_from_source("assemble"))
   }
@@ -402,5 +415,13 @@ class SyntaxSpec extends FlatSpec with Matchers {
 
   it should "load from BsonDocument" in {
     validate_revise(syntax_from_bson("revise"))
+  }
+
+  "RefineStep" should "load from JSON" in {
+    validate_refine(syntax_from_source("refine"))
+  }
+
+  it should "load from BsonDocument" in {
+    validate_refine(syntax_from_bson("refine"))
   }
 }

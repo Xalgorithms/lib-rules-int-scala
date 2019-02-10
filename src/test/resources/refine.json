@@ -1,0 +1,58 @@
+{
+  "steps": [
+    {
+      "name" : "refine",
+      "table" : { "type" : "reference", "section" : "tables", "key" : "x" },
+      "refined_name" : "y",
+      "refinements" : [
+        {
+          "name" : "filter",
+          "condition" : {
+            "left"  : { "type" : "reference", "section" : "_local", "key" : "a" },
+            "right" : { "type" : "number", "value" : "3" },
+            "op"    : "lt"
+          }
+        },
+        {
+          "name" : "map",
+          "assignment" : {
+            "target" : "a",
+            "source" : { "type" : "reference", "section" : "_local", "key" : "b" }
+          }
+        },
+        {
+          "name" : "map",
+          "assignment" : {
+            "target" : "a",
+            "source" : {
+              "type" : "function",
+              "name" : "concat",
+              "args" : [
+                { "type" : "reference", "section" : "_local", "key" : "b" },
+                { "type" : "reference", "section" : "_local", "key" : "c" }
+              ]
+            }
+          }
+        },
+        {
+          "name" : "take",
+          "function" : {
+            "name" : "nth",
+            "args" : [
+              { "type" : "number", "value" : "1" },
+              { "type" : "number", "value" : "3" }
+            ]
+          }
+        },
+        {
+          "name" : "take",
+          "condition" : {
+            "left"  : { "type" : "reference", "section" : "_local", "key" : "a" },
+            "right" : { "type" : "reference", "section" : "_local", "key" : "b" },
+            "op"    : "eq"
+          }
+        }
+      ]
+    }
+  ]
+}

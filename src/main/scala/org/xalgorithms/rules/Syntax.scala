@@ -238,14 +238,22 @@ object StepProduce {
     )
   }
 
+  def produce_refine(content: JsObject): Step = {
+    return new RefineStep(
+      (content \ "table").validate[TableReference].getOrElse(null),
+      (content \ "refined_name").validate[String].getOrElse(null)
+    )
+  }
+
   val fns = Map[String, (JsObject) => Step](
     "assemble" -> produce_assemble,
-    "filter" -> produce_filter,
-    "keep" -> produce_keep,
-    "map" -> produce_map,
-    "reduce" -> produce_reduce,
-    "require" -> produce_require,
-    "revise" -> produce_revise
+    "filter"   -> produce_filter,
+    "keep"     -> produce_keep,
+    "map"      -> produce_map,
+    "reduce"   -> produce_reduce,
+    "require"  -> produce_require,
+    "revise"   -> produce_revise,
+    "refine"   -> produce_refine,
   )
 
   def apply(name: String, content: JsObject): Step = {
