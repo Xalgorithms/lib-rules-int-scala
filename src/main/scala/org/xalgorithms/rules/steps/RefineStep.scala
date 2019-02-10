@@ -26,7 +26,11 @@ package org.xalgorithms.rules.steps
 import org.xalgorithms.rules.{ Context }
 import org.xalgorithms.rules.elements._
 
-class RefineStep(val table: TableReference, val refined_name: String) extends Step {
+class RefineStep(
+  val table: TableReference,
+  val refined_name: String,
+  val refinements: Seq[Refinement]
+) extends Step {
   def execute(ctx: Context) {
   }
 }

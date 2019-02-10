@@ -23,11 +23,20 @@
 // <http://www.gnu.org/licenses/>.
 package org.xalgorithms.rules.elements
 
-class PackagedTableReference(val package_name: String, val id: String, val version: String, val name: String) {
+class Refinement {
 }
 
-class Column(val table: TableReference, val sources: Seq[TableSource]) {
+class FilterRefinement extends Refinement {
 }
 
-class Assignment(val target: String, val source: Value) {
+class MapRefinement extends Refinement {
+}
+
+class TakeRefinement extends Refinement {
+}
+
+class ConditionalTakeRefinement extends TakeRefinement {
+}
+
+class FunctionalTakeRefinement extends TakeRefinement {
 }

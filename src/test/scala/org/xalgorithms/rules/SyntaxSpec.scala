@@ -297,6 +297,13 @@ class SyntaxSpec extends FlatSpec with Matchers {
     o.table.section shouldEqual("tables")
     o.table.name shouldEqual("x")
     o.refined_name shouldEqual("y")
+
+    o.refinements.length shouldEqual(5)
+    o.refinements(0) shouldBe a [FilterRefinement]
+    o.refinements(1) shouldBe a [MapRefinement]
+    o.refinements(2) shouldBe a [MapRefinement]
+    o.refinements(3) shouldBe a [FunctionalTakeRefinement]
+    o.refinements(4) shouldBe a [ConditionalTakeRefinement]
   }
 
   "AssembleStep" should "load from JSON" in {

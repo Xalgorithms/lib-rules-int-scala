@@ -84,6 +84,13 @@ object StepProduce {
     (JsPath \ "table").read[JsObject]
   )(produce_update_revision_source _)
 
+  implicit val refinementReads: Reads[Refinement] = (
+    (JsPath \ "name").read[String] and
+    (JsPath \ "condition").readNullable[JsObject] and
+    (JsPath \ "assignment").readNullable[JsObject] and
+    (JsPath \ "function").readNullable[JsObject]
+  )(produce_refinement _)
+
   def stringOrNull(content: JsObject, k: String): String = {
     return (content \ k).validate[String].getOrElse(null)
   }
@@ -238,10 +245,36 @@ object StepProduce {
     )
   }
 
+  def produce_take_refinement(
+    condition_opt: Option[JsObject],
+    function_opt: Option[JsObject]
+  ): TakeRefinement = {
+    condition_opt match {
+      case Some(cond) => new ConditionalTakeRefinement
+      case None => function_opt match {
+        case Some(func) => new FunctionalTakeRefinement
+        case None => null
+      }
+    }
+  }
+
+  def produce_refinement(
+    name: String,
+    condition_opt: Option[JsObject],
+    assignment_opt: Option[JsObject],
+    function_opt: Option[JsObject]
+  ): Refinement = name match {
+    case "filter" => new FilterRefinement
+    case "map"    => new MapRefinement
+    case "take"   => produce_take_refinement(condition_opt, function_opt)
+    case _        => null
+  }
+
   def produce_refine(content: JsObject): Step = {
     return new RefineStep(
       (content \ "table").validate[TableReference].getOrElse(null),
-      (content \ "refined_name").validate[String].getOrElse(null)
+      (content \ "refined_name").validate[String].getOrElse(null),
+      (content \ "refinements").validate[Seq[Refinement]].getOrElse(Seq())
     )
   }
 
