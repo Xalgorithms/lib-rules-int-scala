@@ -23,20 +23,35 @@
 // <http://www.gnu.org/licenses/>.
 package org.xalgorithms.rules.elements
 
-class Refinement {
+import org.xalgorithms.rules.{ Context }
+
+abstract class Refinement {
+  def refine(ctx: Context, row: Map[String, IntrinsicValue]): Option[Map[String, IntrinsicValue]]
 }
 
 class FilterRefinement(val when: Option[When]) extends Refinement {
+  def refine(ctx: Context, row: Map[String, IntrinsicValue]): Option[Map[String, IntrinsicValue]] = {
+    None
+  }
 }
 
 class MapRefinement(val assignment: Option[Assignment]) extends Refinement {
+  def refine(ctx: Context, row: Map[String, IntrinsicValue]): Option[Map[String, IntrinsicValue]] = {
+    None
+  }
 }
 
-class TakeRefinement extends Refinement {
+abstract class TakeRefinement extends Refinement {
 }
 
 class ConditionalTakeRefinement(val when: Option[When]) extends TakeRefinement {
+  def refine(ctx: Context, row: Map[String, IntrinsicValue]): Option[Map[String, IntrinsicValue]] = {
+    None
+  }
 }
 
 class FunctionalTakeRefinement(val func: Option[FunctionValue]) extends TakeRefinement {
+  def refine(ctx: Context, row: Map[String, IntrinsicValue]): Option[Map[String, IntrinsicValue]] = {
+    None
+  }
 }

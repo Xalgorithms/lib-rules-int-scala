@@ -31,6 +31,44 @@ class RefineStep(
   val refined_name: String,
   val refinements: Seq[Refinement]
 ) extends Step {
+  val _grouped = refinements.groupBy[String] { r =>
+    r match {
+      case fr: FilterRefinement => "filter"
+      case mr: MapRefinement    => "map"
+      case tr: TakeRefinement   => "take"
+      case _                    => "unknown"
+    }
+  }
+
+  val _application_order = Seq("filter", "map", "take")
+
+  def apply_refinements(
+    ctx: Context,
+    k: String,
+    row_opt: Option[Map[String, IntrinsicValue]]
+  ): Option[Map[String, IntrinsicValue]] = {
+    _grouped.getOrElse(k, Seq()).foldLeft(row_opt) { case (refined_row_opt, refinement) =>
+      refined_row_opt match {
+        case Some(refined_row) => refinement.refine(ctx, refined_row)
+        case None => None
+      }
+    }
+  }
+
   def execute(ctx: Context) {
+    val ftbl = ctx.lookup_table(
+      table.section,
+      table.name
+    ).foldLeft(Seq[Map[String, IntrinsicValue]]()) { case (ntbl, row) =>
+        val original_row_opt: Option[Map[String, IntrinsicValue]] = Some(row)
+        _application_order.foldLeft(original_row_opt) { case (row_opt, k) =>
+          apply_refinements(ctx, k, row_opt)
+        } match {
+          case Some(final_row) => ntbl ++ Seq(final_row)
+          case None => ntbl
+        }
+    }
+
+    ctx.retain_table(table.section, refined_name, ftbl)
   }
 }
