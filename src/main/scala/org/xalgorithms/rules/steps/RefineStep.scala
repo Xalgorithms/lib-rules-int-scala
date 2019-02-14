@@ -60,6 +60,8 @@ class RefineStep(
       table.section,
       table.name
     ).foldLeft(Seq[Map[String, IntrinsicValue]]()) { case (ntbl, row) =>
+        // This should be a RowContext so that evaluations run correctly
+        // TODO: add a test for this in RefineStepSpec
         val original_row_opt: Option[Map[String, IntrinsicValue]] = Some(row)
         _application_order.foldLeft(original_row_opt) { case (row_opt, k) =>
           apply_refinements(ctx, k, row_opt)
