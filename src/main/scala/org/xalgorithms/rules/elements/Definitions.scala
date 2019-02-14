@@ -23,6 +23,8 @@
 // <http://www.gnu.org/licenses/>.
 package org.xalgorithms.rules.elements
 
+import org.xalgorithms.rules.{ Context }
+
 class PackagedTableReference(val package_name: String, val id: String, val version: String, val name: String) {
 }
 
@@ -30,4 +32,10 @@ class Column(val table: TableReference, val sources: Seq[TableSource]) {
 }
 
 class Assignment(val target: String, val source: Value) {
+  def evaluate(ctx: Context): Map[String, IntrinsicValue] = {
+    ResolveValue(source, ctx) match {
+      case Some(iv) => Map(target -> iv)
+      case None => Map()
+    }
+  }
 }
