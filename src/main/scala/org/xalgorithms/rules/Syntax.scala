@@ -252,7 +252,7 @@ object StepProduce {
       )
       case None => function_opt match {
         case Some(func_content) => {
-          val fv = new FunctionValue(
+          val fv = new TakeFunction(
             stringOrNull(func_content, "name"),
             (func_content \ "args").validate[Seq[Value]].getOrElse(Seq())
           )

@@ -55,6 +55,9 @@ class MapRefinement(val assignment: Option[Assignment]) extends Refinement {
 abstract class TakeRefinement extends Refinement {
 }
 
+class TakeFunction(val name: String, val args: Seq[Value]) {
+}
+
 class ConditionalTakeRefinement(val when: Option[When]) extends TakeRefinement {
   def refine(ctx: Context, row: Map[String, IntrinsicValue]): Option[Map[String, IntrinsicValue]] = {
     None
@@ -64,7 +67,7 @@ class ConditionalTakeRefinement(val when: Option[When]) extends TakeRefinement {
 // The FunctionValue should contain a function that is a predicate that tests
 // whether this row's index is within a range. This will require an init
 // function ONLY FOR THIS Refinement that hints at the size of the table.
-class FunctionalTakeRefinement(val func: Option[FunctionValue]) extends TakeRefinement {
+class FunctionalTakeRefinement(val func: Option[TakeFunction]) extends TakeRefinement {
   def refine(ctx: Context, row: Map[String, IntrinsicValue]): Option[Map[String, IntrinsicValue]] = {
     None
   }

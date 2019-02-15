@@ -340,6 +340,7 @@ class SyntaxSpec extends FlatSpec with Matchers {
     o.refinements(3) shouldBe a [FunctionalTakeRefinement]
     val fn0 = o.refinements(3).asInstanceOf[FunctionalTakeRefinement].func.getOrElse(null)
     fn0 should not be null
+    fn0 shouldBe a [TakeFunction]
     fn0.name shouldEqual("nth")
     fn0.args.length shouldEqual(2)
     fn0.args(0) shouldBe a [NumberValue]
