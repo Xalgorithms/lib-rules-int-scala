@@ -30,14 +30,25 @@ abstract class Refinement {
 }
 
 class FilterRefinement(val when: Option[When]) extends Refinement {
-  def refine(ctx: Context, row: Map[String, IntrinsicValue]): Option[Map[String, IntrinsicValue]] = {
-    None
+  def refine(
+    ctx: Context,
+    row: Map[String, IntrinsicValue]
+  ): Option[Map[String, IntrinsicValue]] = when match {
+    case Some(wh) => wh.evaluate(ctx) match {
+      case true => Some(row)
+      case false => None
+    }
+    case None => None
   }
 }
 
 class MapRefinement(val assignment: Option[Assignment]) extends Refinement {
-  def refine(ctx: Context, row: Map[String, IntrinsicValue]): Option[Map[String, IntrinsicValue]] = {
-    None
+  def refine(
+    ctx: Context,
+    row: Map[String, IntrinsicValue]
+  ): Option[Map[String, IntrinsicValue]] = assignment match {
+    case Some(a) => Some(row ++ a.evaluate(ctx))
+    case None => Some(row)
   }
 }
 
