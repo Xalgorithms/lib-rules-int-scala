@@ -253,3 +253,9 @@ object ResolveValue {
   }
 }
 
+object ResolveManyValues {
+  def apply(
+    vs: Seq[Value],
+    ctx: Context
+  ): Seq[Option[IntrinsicValue]] = vs.map(ResolveValue(_, ctx))
+}

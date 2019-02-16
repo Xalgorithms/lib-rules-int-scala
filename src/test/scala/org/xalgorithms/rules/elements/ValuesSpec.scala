@@ -297,4 +297,38 @@ class ValuesSpec extends FlatSpec with Matchers with MockFactory with AppendedCl
     ref0.matches(new DocumentReferenceValue("a", "y"), "gte") shouldEqual(false)
     ref0.matches(new DocumentReferenceValue("b", "x"), "gte") shouldEqual(false)
   }
+
+  "ResolveValue" should "resolve computed values" in {
+    val cv = mock[ComputedValue]
+    val iv = mock[IntrinsicValue]
+    val ctx = mock[Context]
+
+    (cv.resolve _).expects(ctx).returning(Some(iv))
+    ResolveValue(cv, ctx) shouldEqual(Some(iv))
+  }
+
+  it should "resolve intrinsic values" in {
+    val iv = mock[IntrinsicValue]
+    val ctx = mock[Context]
+
+    ResolveValue(iv, ctx) shouldEqual(Some(iv))
+  }
+
+  "ResolveManyValues" should "resolve many values, computed or intrinsic" in {
+    val cv0 = mock[ComputedValue]
+    val iv0 = mock[IntrinsicValue]
+    val iv1 = mock[IntrinsicValue]
+    val iv2 = mock[IntrinsicValue]
+    val cv3 = mock[ComputedValue]
+    val iv3 = mock[IntrinsicValue]
+    val ctx = mock[Context]
+
+    (cv0.resolve _).expects(ctx).returning(Some(iv0))
+    (cv3.resolve _).expects(ctx).returning(Some(iv3))
+
+    val vals = Seq(cv0, iv1, iv2, cv3)
+    val ex_vals = Seq(Some(iv0), Some(iv1), Some(iv2), Some(iv3))
+
+    ResolveManyValues(vals, ctx) shouldEqual(ex_vals)
+  }
 }
