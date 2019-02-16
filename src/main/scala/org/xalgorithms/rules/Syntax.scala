@@ -31,6 +31,8 @@ import scala.io.Source
 import org.xalgorithms.rules.steps._
 import org.xalgorithms.rules.elements._
 
+// TODO: This module stills uses null. Convert to Option.
+
 object StepProduce {
   implicit val columnReads: Reads[Column] = (
     (JsPath \ "table").read[JsObject] and
