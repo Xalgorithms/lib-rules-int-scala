@@ -63,35 +63,11 @@ class MapRefinement(val assignment: Option[Assignment]) extends Refinement {
 abstract class TakeRefinement extends Refinement {
 }
 
-class TakeFunction(val name: String, val args: Seq[Value] = Seq()) {
-}
+abstract class TakeFunctionApplication(val_args: Seq[Value]) {
+  private var _index = 0
 
-class ConditionalTakeRefinement(val when: Option[When]) extends TakeRefinement {
-  def refine(
-    ctx: Context,
-    row: Map[String, IntrinsicValue]
-  ) = Filter(ctx, row, when)
-}
-
-// The FunctionValue should contain a function that is a predicate that tests
-// whether this row's index is within a range. This will require an init
-// function ONLY FOR THIS Refinement that hints at the size of the table.
-class FunctionalTakeRefinement(val func: Option[TakeFunction]) extends TakeRefinement {
-  var _index = 0
-
-  def refine(ctx: Context, row: Map[String, IntrinsicValue]): Option[Map[String, IntrinsicValue]] = func match {
-    case Some(fn) => {
-      fn.name match {
-        case "first" => refine_first(ctx, row, fn.args)
-        case "nth" => refine_nth(ctx, row, fn.args)
-        case _ => Some(row)
-      }
-    }
-    case None => None
-  }
-
-  def args_as_ints(ctx: Context, args: Seq[Value]): Seq[Int] = {
-    ResolveManyValues(args, ctx).foldLeft(Seq(): Seq[Int]) { case (seq, iv_opt) =>
+  def resolve_args(ctx: Context): Seq[Int] = {
+    ResolveManyValues(val_args, ctx).foldLeft(Seq(): Seq[Int]) { case (seq, iv_opt) =>
       iv_opt match {
         case Some(iv) => {
           try {
@@ -109,43 +85,79 @@ class FunctionalTakeRefinement(val func: Option[TakeFunction]) extends TakeRefin
     }
   }
 
-  def refine_by_range(
-    range: Range,
+  def refine(
+    ctx: Context,
     row: Map[String, IntrinsicValue]
   ): Option[Map[String, IntrinsicValue]] = {
-    val rv = if (range.contains(_index)) {
-      Some(row)
-    } else {
-      None
-    }
+    val args = resolve_args(ctx)
+    val rv = range(args) match {
+      case Some(r) => if (r.contains(_index)) {
+        Some(row)
+      } else {
+        None
+      }
 
+      case None => None
+    }
     _index += 1
     rv
   }
 
-  def refine_first(
-    ctx: Context,
-    row: Map[String, IntrinsicValue],
-    args: Seq[Value]
-  ): Option[Map[String, IntrinsicValue]] = {
-    val iargs = args_as_ints(ctx, args)
-    if (iargs.length > 0) {
-      refine_by_range((0 to iargs(0) - 1), row)
+  def range(args: Seq[Int]): Option[Range]
+}
+
+class FirstFunctionApplication(val_args: Seq[Value]) extends TakeFunctionApplication(val_args) {
+  def range(args: Seq[Int]): Option[Range] = {
+    if (args.length > 0) {
+      Some((0 to args(0) - 1))
     } else {
       None
     }
   }
+}
 
-  def refine_nth(
-    ctx: Context,
-    row: Map[String, IntrinsicValue],
-    args: Seq[Value]
-  ): Option[Map[String, IntrinsicValue]] = {
-    val iargs = args_as_ints(ctx, args)
-    if (iargs.length > 1) {
-      refine_by_range((iargs(0) to iargs(0) + iargs(1) - 1), row)
+class NthFunctionApplication(val_args: Seq[Value]) extends TakeFunctionApplication(val_args) {
+  def range(args: Seq[Int]): Option[Range] = {
+    if (args.length > 1) {
+      Some((args(0) to args(0) + args(1) - 1))
     } else {
       None
     }
+  }
+}
+
+class TakeFunction(val name: String, val args: Seq[Value] = Seq()) {
+  val _app_opt = name match {
+    case "first" => Some(new FirstFunctionApplication(args))
+    case "nth" => Some(new NthFunctionApplication(args))
+    case _ => None
+  }
+
+  def refine(
+    ctx: Context,
+    row: Map[String, IntrinsicValue]
+  ): Option[Map[String, IntrinsicValue]] = _app_opt match {
+    case Some(app) => app.refine(ctx, row)
+    case None => None
+  }
+}
+
+class ConditionalTakeRefinement(val when: Option[When]) extends TakeRefinement {
+  def refine(
+    ctx: Context,
+    row: Map[String, IntrinsicValue]
+  ) = Filter(ctx, row, when)
+}
+
+// The FunctionValue should contain a function that is a predicate that tests
+// whether this row's index is within a range. This will require an init
+// function ONLY FOR THIS Refinement that hints at the size of the table.
+class FunctionalTakeRefinement(val func: Option[TakeFunction]) extends TakeRefinement {
+  def refine(
+    ctx: Context,
+    row: Map[String, IntrinsicValue]
+  ): Option[Map[String, IntrinsicValue]] = func match {
+    case Some(fn) => fn.refine(ctx, row)
+    case None => None
   }
 }

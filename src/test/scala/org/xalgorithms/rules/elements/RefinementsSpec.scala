@@ -124,7 +124,7 @@ class RefinementsSpec extends FlatSpec with Matchers with MockFactory with Befor
     (0 to _faker.number().numberBetween(2, 10)).foreach { _ =>
       val r = new FunctionalTakeRefinement(Some(new TakeFunction(_faker.lorem().word())))
       val row = Map("a" -> new StringValue("A"))
-      r.refine(_ctx, row) shouldEqual(Some(row))
+      r.refine(_ctx, row) shouldEqual(None)
     }
   }
 
