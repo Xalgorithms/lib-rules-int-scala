@@ -98,8 +98,6 @@ object Runner {
   case class TestRun(dir_name: String, run_name: String, tables_index: Map[String, Option[String]]) {
     private val _times = new Times
     private val _dir = File(dir_name)
-//    private val _compiled_fn = s"${run_name}.rule.json"
-    private val _expect_fn = s"${run_name}.expected.json"
     private val _context_fn = s"${run_name}.context.json"
 
     private def warn(s: String) = Console.YELLOW + s + Console.RESET
@@ -127,12 +125,14 @@ object Runner {
       }
     }
 
-    private def load_expected = {
-      _times.start("load/expected")
+    private def load_expected(rule_name: String) = {
+      val expect_fn = s"${rule_name}.expected.json"
+      _times.start(s"load/expected/${expect_fn}")
       try {
-        Some(Json.parse((_dir / _expect_fn).contentAsString()))
+        Some(Json.parse((_dir / expect_fn).contentAsString()))
       } catch {
         case (th: Throwable) => {
+          println(th)
           None
         }
       } finally {
@@ -221,7 +221,7 @@ object Runner {
         execute_all_steps(ctx, steps)
         _times.stop
 
-        show(ctx)
+        show(ctx, rule_name)
       }
     }
 
@@ -288,8 +288,8 @@ object Runner {
       }
     }
 
-    def show(ctx: GlobalContext) {
-      load_expected match {
+    def show(ctx: GlobalContext, rule_name: String) {
+      load_expected(rule_name) match {
         case Some(v) => v match {
           case (o: JsObject) => {
             println(subtitle("expectations"))
