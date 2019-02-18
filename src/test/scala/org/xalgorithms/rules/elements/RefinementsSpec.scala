@@ -32,6 +32,7 @@ import org.xalgorithms.rules.elements._
 
 class RefinementsSpec extends FlatSpec with Matchers with MockFactory with BeforeAndAfter {
   var _ctx: Context = null
+  val _faker = new Faker
 
   before {
     _ctx = mock[Context]
@@ -91,4 +92,131 @@ class RefinementsSpec extends FlatSpec with Matchers with MockFactory with Befor
     r.refine(rctx0, row0) shouldEqual(Some(ex0))
     r.refine(rctx1, row1) shouldEqual(Some(ex1))
   }
+
+  "ConditionalTakeRefinement" should "exclude rows when the condition is empty" in {
+    val r = new ConditionalTakeRefinement(None)
+    r.refine(_ctx, Map[String, IntrinsicValue]()) shouldEqual(None)
+  }
+
+  it should "exclude rows that do not pass the condition" in {
+    val wh = mock[When]
+    val r = new ConditionalTakeRefinement(Some(wh))
+
+    val row0 = Map("a" -> new StringValue("A"))
+    val row1 = Map("b" -> new StringValue("B"))
+
+    val rctx0 = new RowContext(_ctx, row0, null)
+    val rctx1 = new RowContext(_ctx, row1, null)
+
+    (wh.evaluate _).expects(rctx0).returning(false)
+    (wh.evaluate _).expects(rctx1).returning(true)
+
+    r.refine(rctx0, row0) shouldBe(None)
+    r.refine(rctx1, row1) shouldBe(Some(row1))
+  }
+
+  "FunctionalTakeRefinement" should "exclude rows when the condition is empty" in {
+    val r = new FunctionalTakeRefinement(None)
+    r.refine(_ctx, Map[String, IntrinsicValue]()) shouldEqual(None)
+  }
+
+  it should "exclude rows when an unknown function is used" in {
+    (0 to _faker.number().numberBetween(2, 10)).foreach { _ =>
+      val r = new FunctionalTakeRefinement(Some(new TakeFunction(_faker.lorem().word())))
+      val row = Map("a" -> new StringValue("A"))
+      r.refine(_ctx, row) shouldEqual(Some(row))
+    }
+  }
+
+  val _table = Seq(
+    Map("a" -> new StringValue("A")),
+    Map("b" -> new StringValue("B")),
+    Map("c" -> new StringValue("C")),
+    Map("d" -> new StringValue("D")),
+    Map("e" -> new StringValue("E"))
+  )
+
+  it should "include the first N rows using first()" in {
+    val count = _faker.number().numberBetween(1, _table.length)
+    val ex_range = (0 to count - 1)
+
+    val fn = new TakeFunction(
+      "first",
+      Seq(new NumberValue(BigDecimal(count)))
+    )
+    val r = new FunctionalTakeRefinement(Some(fn))
+
+    _table.zipWithIndex.foreach { case (row, i) =>
+      val rctx = new RowContext(_ctx, row, null)
+      val ex = if (ex_range.contains(i)) {
+        Some(row)
+      } else {
+        None
+      }
+
+      r.refine(rctx, row) shouldEqual(ex)
+    }
+  }
+
+  it should "refine nothing in failure cases for first" in {
+    val cases = Seq(
+      Seq(new StringValue("asdasdasd")),
+      Seq(): Seq[Value]
+    )
+
+    cases.foreach { c =>
+      val fn = new TakeFunction("first", c)
+      val r = new FunctionalTakeRefinement(Some(fn))
+      _table.foreach { row =>
+        r.refine(_ctx, row) shouldEqual(None)
+      }
+    }
+  }
+
+  it should "include a subset of rows using nth()" in {
+    val index = _faker.number().numberBetween(0, _table.length - 1)
+    val count = _faker.number().numberBetween(1, _table.length)
+    val ex_range = (index to index + count - 1)
+
+    val fn = new TakeFunction(
+      "nth",
+      Seq(
+        new NumberValue(BigDecimal(index)),
+        new StringValue(count.toString)
+      )
+    )
+    val r = new FunctionalTakeRefinement(Some(fn))
+
+    _table.zipWithIndex.foreach { case (row, i) =>
+      val rctx = new RowContext(_ctx, row, null)
+      val ex = if (ex_range.contains(i)) {
+        Some(row)
+      } else {
+        None
+      }
+
+      r.refine(rctx, row) shouldEqual(ex)
+    }
+  }
+
+  it should "refine nothing in failure cases for nth" in {
+    val cases = Seq(
+      Seq(new StringValue("asdasdasd")),
+      Seq(new NumberValue(1), new StringValue("asdasdasd")),
+      Seq(new NumberValue(1)),
+      Seq(): Seq[Value]
+    )
+
+    cases.foreach { c =>
+      val fn = new TakeFunction("nth", c)
+      val r = new FunctionalTakeRefinement(Some(fn))
+      _table.foreach { row =>
+        r.refine(_ctx, row) shouldEqual(None)
+      }
+    }
+  }
+
+  // TODO: test with non-numerical
+  // TODO: test with references
+  // TODO: test with other functions (like add)
 }
