@@ -66,24 +66,38 @@ class RefineStepSpec extends FlatSpec with Matchers with MockFactory {
       mapped_table(2)
     )
 
-    (fr0.refine _).expects(ctx, _table(0)).returning(None)
-    (fr0.refine _).expects(ctx, _table(1)).returning(Some(_table(1)))
-    (fr0.refine _).expects(ctx, _table(2)).returning(Some(_table(2)))
-    (fr0.refine _).expects(ctx, _table(3)).returning(Some(_table(3)))
-    (fr0.refine _).expects(ctx, _table(4)).returning(Some(_table(4)))
+    val verify_row = (row: Map[String, IntrinsicValue], ex: Option[Map[String, IntrinsicValue]]) => {
+      (ctx: Context, ac_row: Map[String, IntrinsicValue]) => {
+        ctx shouldBe a [RowContext]
+        ctx.asInstanceOf[RowContext].local_row shouldEqual(row)
+        ex
+      }
+    }
+    val verify_no_row = (row: Map[String, IntrinsicValue]) => verify_row(row, None)
+    val verify_a_row = (row: Map[String, IntrinsicValue]) => verify_row(row, Some(row))
+    val verify_a_new_row = (
+      local_row: Map[String, IntrinsicValue],
+      new_row: Map[String, IntrinsicValue]
+    ) => verify_row(local_row, Some(new_row))
 
-    (fr1.refine _).expects(ctx, _table(1)).returning(Some(_table(1)))
-    (fr1.refine _).expects(ctx, _table(2)).returning(Some(_table(2)))
-    (fr1.refine _).expects(ctx, _table(3)).returning(None)
-    (fr1.refine _).expects(ctx, _table(4)).returning(Some(_table(4)))
+    (fr0.refine _).expects(*, _table(0)) onCall verify_no_row(_table(0))
+    (fr0.refine _).expects(*, _table(1)) onCall verify_a_row(_table(1))
+    (fr0.refine _).expects(*, _table(2)) onCall verify_a_row(_table(2))
+    (fr0.refine _).expects(*, _table(3)) onCall verify_a_row(_table(3))
+    (fr0.refine _).expects(*, _table(4)) onCall verify_a_row(_table(4))
 
-    (mr.refine _).expects(ctx, filtered_table(0)).returning(Some(mapped_table(0)))
-    (mr.refine _).expects(ctx, filtered_table(1)).returning(Some(mapped_table(1)))
-    (mr.refine _).expects(ctx, filtered_table(2)).returning(Some(mapped_table(2)))
+    (fr1.refine _).expects(*, _table(1)) onCall verify_a_row(_table(1))
+    (fr1.refine _).expects(*, _table(2)) onCall verify_a_row(_table(2))
+    (fr1.refine _).expects(*, _table(3)) onCall verify_no_row(_table(3))
+    (fr1.refine _).expects(*, _table(4)) onCall verify_a_row(_table(4))
 
-    (tr.refine _).expects(ctx, mapped_table(0)).returning(Some(final_table(0)))
-    (tr.refine _).expects(ctx, mapped_table(1)).returning(None)
-    (tr.refine _).expects(ctx, mapped_table(2)).returning(Some(final_table(1)))
+    (mr.refine _).expects(*, filtered_table(0)) onCall verify_a_new_row(filtered_table(0), mapped_table(0))
+    (mr.refine _).expects(*, filtered_table(1)) onCall verify_a_new_row(filtered_table(1), mapped_table(1))
+    (mr.refine _).expects(*, filtered_table(2)) onCall verify_a_new_row(filtered_table(2), mapped_table(2))
+
+    (tr.refine _).expects(*, mapped_table(0)) onCall verify_a_new_row(mapped_table(0), final_table(0))
+    (tr.refine _).expects(*, mapped_table(1)) onCall verify_no_row(mapped_table(1))
+    (tr.refine _).expects(*, mapped_table(2)) onCall verify_a_new_row(mapped_table(2), final_table(1))
 
     (ctx.lookup_table _).expects(section, table_name).returning(_table)
     (ctx.retain_table _).expects(section, refined_table_name, *) onCall { (section, name, tbl) =>

@@ -23,7 +23,7 @@
 // <http://www.gnu.org/licenses/>.
 package org.xalgorithms.rules.steps
 
-import org.xalgorithms.rules.{ Context }
+import org.xalgorithms.rules.{ Context, RowContext }
 import org.xalgorithms.rules.elements._
 
 class RefineStep(
@@ -43,13 +43,14 @@ class RefineStep(
   val _application_order = Seq("filter", "map", "take")
 
   def apply_refinements(
-    ctx: Context,
     k: String,
-    row_opt: Option[Map[String, IntrinsicValue]]
-  ): Option[Map[String, IntrinsicValue]] = {
-    _grouped.getOrElse(k, Seq()).foldLeft(row_opt) { case (refined_row_opt, refinement) =>
-      refined_row_opt match {
-        case Some(refined_row) => refinement.refine(ctx, refined_row)
+    original_tup_opt: Option[Tuple2[RowContext, Map[String, IntrinsicValue]]]
+  ): Option[Tuple2[RowContext, Map[String, IntrinsicValue]]] = {
+    _grouped.getOrElse(k, Seq()).foldLeft(original_tup_opt) { case (tup_opt, refinement) =>
+      tup_opt match {
+        case Some(tup) => refinement.refine(tup._1, tup._2).map { r =>
+          (new RowContext(tup._1.ctx, r, null), r)
+        }
         case None => None
       }
     }
@@ -60,13 +61,12 @@ class RefineStep(
       table.section,
       table.name
     ).foldLeft(Seq[Map[String, IntrinsicValue]]()) { case (ntbl, row) =>
-        // This should be a RowContext so that evaluations run correctly
-        // TODO: add a test for this in RefineStepSpec
-        val original_row_opt: Option[Map[String, IntrinsicValue]] = Some(row)
-        _application_order.foldLeft(original_row_opt) { case (row_opt, k) =>
-          apply_refinements(ctx, k, row_opt)
+        val rctx = new RowContext(ctx, row, null)
+        val original_row_opt: Option[Tuple2[RowContext, Map[String, IntrinsicValue]]] = Some((rctx, row))
+        _application_order.foldLeft(original_row_opt) { case (tup, k) =>
+          apply_refinements(k, tup)
         } match {
-          case Some(final_row) => ntbl ++ Seq(final_row)
+          case Some(tup) => ntbl :+ tup._2
           case None => ntbl
         }
     }

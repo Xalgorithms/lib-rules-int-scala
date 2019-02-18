@@ -109,9 +109,9 @@ class GlobalContext(load: LoadTableSource) extends Context {
 }
 
 class RowContext(
-  ctx: Context,
-  local_row: Map[String, IntrinsicValue],
-  context_row: Map[String, IntrinsicValue]
+  val ctx: Context,
+  val local_row: Map[String, IntrinsicValue],
+  val context_row: Map[String, IntrinsicValue]
 ) extends Context {
   val _local = mutable.Map[String, IntrinsicValue]() ++ local_row
 
