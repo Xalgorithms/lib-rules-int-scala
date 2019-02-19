@@ -1,0 +1,53 @@
+{
+  "steps" : [
+    {
+      "name" : "arrange",
+      "table" : { "type" : "reference", "section" : "table", "key" : "x" },
+      "table_name" : "y",
+      "arrangements" : [
+        {
+          "type" : "function",
+          "name" : "invert",
+          "args" : []
+        }
+      ]
+    },
+    {
+      "name" : "arrange",
+      "table" : { "type" : "reference", "section" : "table", "key" : "a" },
+      "table_name" : "b",
+      "arrangements" : [
+        {
+          "type" : "function",
+          "name" : "shift",
+          "args" : [
+            { "type" : "number", "value" : "2" }
+          ]
+        },
+        {
+          "type" : "function",
+          "name" : "shift",
+          "args" : [
+            { "type" : "number", "value" : "-3" }
+          ]
+        }
+      ]
+    },
+    {
+      "name" : "arrange",
+      "table" : { "type" : "reference", "section" : "table", "key" : "p" },
+      "table_name" : "q",
+      "arrangements" : [
+        {
+          "type" : "function",
+          "name" : "sort",
+          "args" : [
+            { "type" : "reference", "section" : "_local", "key" : "a" },
+            { "type" : "string", "value" : "alpha" },
+            { "type" : "string", "value" : "descending" }
+          ]
+        }
+      ]
+    }
+  ]
+}

@@ -362,6 +362,62 @@ class SyntaxSpec extends FlatSpec with Matchers {
     when1.op shouldEqual("eq")
   }
 
+  def validate_arrange(steps: Seq[Step]) {
+    steps.length shouldBe 3
+
+    steps(0) should not be null
+    steps(0) shouldBe a [ArrangeStep]
+    steps(0).asInstanceOf[ArrangeStep].table.section shouldEqual("table")
+    steps(0).asInstanceOf[ArrangeStep].table.name shouldEqual("x")
+    steps(0).asInstanceOf[ArrangeStep].table_name shouldEqual("y")
+
+    steps(0).asInstanceOf[ArrangeStep].arrangements.length shouldEqual(1)
+
+    val arr00 = steps(0).asInstanceOf[ArrangeStep].arrangements(0)
+    arr00.func.name shouldEqual("invert")
+    arr00.func.args.length shouldEqual(0)
+
+    steps(1) should not be null
+    steps(1) shouldBe a [ArrangeStep]
+    steps(1).asInstanceOf[ArrangeStep].table.section shouldEqual("table")
+    steps(1).asInstanceOf[ArrangeStep].table.name shouldEqual("a")
+    steps(1).asInstanceOf[ArrangeStep].table_name shouldEqual("b")
+
+    steps(1).asInstanceOf[ArrangeStep].arrangements.length shouldEqual(2)
+
+    val arr10 = steps(1).asInstanceOf[ArrangeStep].arrangements(0)
+    val arr11 = steps(1).asInstanceOf[ArrangeStep].arrangements(1)
+
+    arr10.func.name shouldEqual("shift")
+    arr10.func.args.length shouldEqual(1)
+    arr10.func.args(0) shouldBe a [NumberValue]
+    arr10.func.args(0).asInstanceOf[NumberValue].value shouldEqual(2.0)
+
+    arr11.func.name shouldEqual("shift")
+    arr11.func.args.length shouldEqual(1)
+    arr11.func.args(0) shouldBe a [NumberValue]
+    arr11.func.args(0).asInstanceOf[NumberValue].value shouldEqual(-3.0)
+
+    steps(2) should not be null
+    steps(2) shouldBe a [ArrangeStep]
+    steps(2).asInstanceOf[ArrangeStep].table.section shouldEqual("table")
+    steps(2).asInstanceOf[ArrangeStep].table.name shouldEqual("p")
+    steps(2).asInstanceOf[ArrangeStep].table_name shouldEqual("q")
+
+    steps(2).asInstanceOf[ArrangeStep].arrangements.length shouldEqual(1)
+
+    val arr20 = steps(2).asInstanceOf[ArrangeStep].arrangements(0)
+    arr20.func.name shouldEqual("sort")
+    arr20.func.args.length shouldEqual(3)
+    arr20.func.args(0) shouldBe a [ReferenceValue]
+    arr20.func.args(0).asInstanceOf[ReferenceValue].section shouldEqual("_local")
+    arr20.func.args(0).asInstanceOf[ReferenceValue].key shouldEqual("a")
+    arr20.func.args(1) shouldBe a [StringValue]
+    arr20.func.args(1).asInstanceOf[StringValue].value shouldEqual("alpha")
+    arr20.func.args(2) shouldBe a [StringValue]
+    arr20.func.args(2).asInstanceOf[StringValue].value shouldEqual("descending")
+  }
+
   "AssembleStep" should "load from JSON" in {
     validate_assemble(syntax_from_source("assemble"))
   }
@@ -486,5 +542,13 @@ class SyntaxSpec extends FlatSpec with Matchers {
 
   it should "load from BsonDocument" in {
     validate_refine(syntax_from_bson("refine"))
+  }
+
+  "ArrangeStep" should "load from JSON" in {
+    validate_arrange(syntax_from_source("arrange"))
+  }
+
+  it should "load from BsonDocument" in {
+    validate_arrange(syntax_from_bson("arrange"))
   }
 }

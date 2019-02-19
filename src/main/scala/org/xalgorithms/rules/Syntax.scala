@@ -93,6 +93,12 @@ object StepProduce {
     (JsPath \ "function").readNullable[JsObject]
   )(produce_refinement _)
 
+  implicit val arrangementReads: Reads[Arrangement] = (
+    (JsPath \ "type").read[String] and
+    (JsPath \ "name").read[String] and
+    (JsPath \ "args").read[Seq[Value]]
+  )(produce_arrangement _)
+
   def stringOrNull(content: JsObject, k: String): String = {
     return (content \ k).validate[String].getOrElse(null)
   }
@@ -281,11 +287,28 @@ object StepProduce {
     case _        => null
   }
 
+  def produce_arrangement(
+    t: String,
+    name: String,
+    args: Seq[Value]
+  ): Arrangement = t match {
+    case "function" => new Arrangement(new ArrangeFunction(name, args))
+    case _ => null
+  }
+
   def produce_refine(content: JsObject): Step = {
     return new RefineStep(
       (content \ "table").validate[TableReference].getOrElse(null),
       (content \ "refined_name").validate[String].getOrElse(null),
       (content \ "refinements").validate[Seq[Refinement]].getOrElse(Seq())
+    )
+  }
+
+  def produce_arrange(content: JsObject): Step = {
+    return new ArrangeStep(
+      (content \ "table").validate[TableReference].getOrElse(null),
+      (content \ "table_name").validate[String].getOrElse(null),
+      (content \ "arrangements").validate[Seq[Arrangement]].getOrElse(Seq())
     )
   }
 
@@ -298,6 +321,7 @@ object StepProduce {
     "require"  -> produce_require,
     "revise"   -> produce_revise,
     "refine"   -> produce_refine,
+    "arrange"  -> produce_arrange,
   )
 
   def apply(name: String, content: JsObject): Step = {
