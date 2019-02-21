@@ -1,0 +1,142 @@
+// Copyright (C) 2018 Don Kelly <karfai@gmail.com>
+// Copyright (C) 2018 Hayk Pilosyan <hayk.pilos@gmail.com>
+
+// This file is part of Interlibr, a functional component of an
+// Internet of Rules (IoR).
+
+// ACKNOWLEDGEMENTS
+// Funds: Xalgorithms Foundation
+// Collaborators: Don Kelly, Joseph Potvin and Bill Olders.
+
+// This program is free software: you can redistribute it and/or
+// modify it under the terms of the GNU Affero General Public License
+// as published by the Free Software Foundation, either version 3 of
+// the License, or (at your option) any later version.
+
+// This program is distributed in the hope that it will be useful, but
+// WITHOUT ANY WARRANTY; without even the implied warranty of
+// MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU
+// Affero General Public License for more details.
+
+// You should have received a copy of the GNU Affero General Public
+// License along with this program. If not, see
+// <http://www.gnu.org/licenses/>.
+package org.xalgorithms.rules.steps
+
+import com.github.javafaker.Faker
+import org.scalamock.scalatest.MockFactory
+import org.scalatest._
+
+import org.xalgorithms.rules._
+import org.xalgorithms.rules.elements._
+import org.xalgorithms.rules.steps._
+
+class ArrangeStepSpec extends FlatSpec with Matchers with MockFactory with BeforeAndAfter {
+  var _table: Seq[Map[String, IntrinsicValue]] = null
+  var _ctx: Context = null
+
+  before {
+    _table = Seq(
+      Map("a" -> new NumberValue(2.0), "b" -> new StringValue("B")),
+      Map("a" -> new NumberValue(4.0), "b" -> new StringValue("C")),
+      Map("a" -> new NumberValue(1.0), "b" -> new StringValue("A")),
+      Map("a" -> new NumberValue(5.0), "b" -> new StringValue("E")),
+      Map("a" -> new NumberValue(3.0), "b" -> new StringValue("D"))
+    )
+  }
+
+  val _section = "table"
+  val _table_name = "table0"
+
+  def verify_table(ex: Seq[Map[String, IntrinsicValue]]) = {
+    (section: String, name: String, tbl: Seq[Map[String, IntrinsicValue]]) => {
+      tbl.size shouldEqual(ex.size)
+      (tbl, ex).zipped.foreach { case (rac, rex) =>
+        rac("a").asInstanceOf[NumberValue].value shouldEqual(rex("a").asInstanceOf[NumberValue].value)
+        rac("b").asInstanceOf[StringValue].value shouldEqual(rex("b").asInstanceOf[StringValue].value)
+      }
+    }
+  }
+
+  def verify_step(
+    ex_table_name: String,
+    ex_table: Seq[Map[String, IntrinsicValue]],
+    func: ArrangeFunction
+  ) = {
+    val ctx = mock[Context]
+
+    (ctx.lookup_table _).expects(_section, _table_name).returning(_table)
+    (ctx.retain_table _).expects(_section, ex_table_name, *) onCall verify_table(ex_table)
+
+    val step = new ArrangeStep(
+      new TableReference(_section, _table_name),
+      ex_table_name,
+      Seq(new Arrangement(func))
+    )
+
+    step.execute(ctx)
+  }
+
+
+  "ArrangeStep" should "shift rows in the table" in {
+    val ex_table0 = Seq(
+      _table(2),
+      _table(3),
+      _table(4),
+      _table(0),
+      _table(1),
+    )
+    val ex_table1 = Seq(
+      _table(4),
+      _table(0),
+      _table(1),
+      _table(2),
+      _table(3),
+    )
+
+    verify_step("table_ex0", ex_table0, new ArrangeFunction("shift", Seq(new NumberValue(-2.0))))
+    verify_step("table_ex1", ex_table1, new ArrangeFunction("shift", Seq(new NumberValue(1.0))))
+    // // no shift yields original
+    verify_step("table_ex2", _table, new ArrangeFunction("shift", Seq(new NumberValue(0.0))))
+    // // no args yields original
+    verify_step("table_ex3", _table, new ArrangeFunction("shift", Seq()))
+    verify_step("table_ex4", _table, new ArrangeFunction("shift", Seq(new StringValue("asdfg"))))
+  }
+
+  it should "invert the rows in the table" in {
+    val ex_table = Seq(
+      _table(4),
+      _table(3),
+      _table(2),
+      _table(1),
+      _table(0),
+    )
+  }
+
+  it should "sort the rows in the table" in {
+    // numeric, descending
+    val ex_table0 = Seq(
+      _table(3),
+      _table(1),
+      _table(4),
+      _table(0),
+      _table(2),
+    )
+    // numeric, ascending
+    val ex_table1 = Seq(
+      _table(2),
+      _table(0),
+      _table(4),
+      _table(1),
+      _table(3),
+    )
+    // alpha, ascending
+    val ex_table2 = Seq(
+      _table(2),
+      _table(0),
+      _table(1),
+      _table(4),
+      _table(3),
+    )
+  }
+}

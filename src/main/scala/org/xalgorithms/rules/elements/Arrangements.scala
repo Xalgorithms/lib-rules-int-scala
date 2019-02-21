@@ -25,30 +25,93 @@ package org.xalgorithms.rules.elements
 
 import org.xalgorithms.rules.{ Context }
 
-class ArrangeFunctionApplication(val val_args: Seq[Value]) {
+abstract class ArrangeFunctionApplication(val val_args: Seq[Value]) {
+  def resolve_args(ctx: Context): Seq[Int] = {
+    ResolveManyValues(val_args, ctx).foldLeft(Seq(): Seq[Int]) { case (seq, iv_opt) =>
+      iv_opt match {
+        case Some(iv) => {
+          try {
+            iv match {
+              case (sv: StringValue) => seq :+ sv.value.toInt
+              case (nv: NumberValue) => seq :+ nv.value.toInt
+              case _ => seq
+            }
+          } catch {
+            case _: Throwable => seq
+          }
+        }
+        case None => seq
+      }
+    }
+  }
+
   def arrange(
     ctx: Context,
     tbl: Seq[Map[String, IntrinsicValue]]
+  ): Seq[Map[String, IntrinsicValue]] = {
+    arrange(tbl, resolve_args(ctx))
+  }
+
+  def arrange(
+    tbl: Seq[Map[String, IntrinsicValue]],
+    args: Seq[Int]
+  ): Seq[Map[String, IntrinsicValue]]
+}
+
+class InvertFunctionApplication(val_args: Seq[Value]) extends ArrangeFunctionApplication(val_args) {
+  def arrange(
+    tbl: Seq[Map[String, IntrinsicValue]],
+    args: Seq[Int]
   ): Seq[Map[String, IntrinsicValue]] = {
     Seq()
   }
 }
 
-class InvertFunctionApplication(val_args: Seq[Value]) extends ArrangeFunctionApplication(val_args) {
-}
-
 class ShiftFunctionApplication(val_args: Seq[Value]) extends ArrangeFunctionApplication(val_args) {
+  def arrange(
+    tbl: Seq[Map[String, IntrinsicValue]],
+    args: Seq[Int]
+  ): Seq[Map[String, IntrinsicValue]] = {
+    if (args.length > 0 && args(0) != 0) {
+      val len = tbl.length
+      val dist = args(0)
+      if (dist > 0) {
+        // right
+        val (h, t) = tbl.splitAt(len - (dist % len))
+        t ++ h
+      } else {
+        // left
+        val (h, t) = tbl.splitAt(Math.abs(dist) % len)
+        t ++ h
+      }
+    } else {
+      tbl
+    }
+  }
 }
 
 class SortFunctionApplication(val_args: Seq[Value]) extends ArrangeFunctionApplication(val_args) {
+  def arrange(
+    tbl: Seq[Map[String, IntrinsicValue]],
+    args: Seq[Int]
+  ): Seq[Map[String, IntrinsicValue]] = {
+    Seq()
+  }
 }
 
 class ArrangeFunction(val name: String, val args: Seq[Value] = Seq()) {
+  val _app_opt = name match {
+    case "invert" => Some(new InvertFunctionApplication(args))
+    case "shift" => Some(new ShiftFunctionApplication(args))
+    case "sort" => Some(new SortFunctionApplication(args))
+    case _ => None
+  }
+
   def arrange(
     ctx: Context,
     tbl: Seq[Map[String, IntrinsicValue]]
   ): Seq[Map[String, IntrinsicValue]] = {
-    Seq()
+    _app_opt.map(_.arrange(ctx, tbl)).getOrElse(Seq[Map[String, IntrinsicValue]]())
   }
 }
 
@@ -57,6 +120,6 @@ class Arrangement(val func: ArrangeFunction) {
     ctx: Context,
     tbl: Seq[Map[String, IntrinsicValue]]
   ): Seq[Map[String, IntrinsicValue]] = {
-    Seq()
+    func.arrange(ctx, tbl)
   }
 }
