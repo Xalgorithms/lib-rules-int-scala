@@ -23,10 +23,23 @@
 // <http://www.gnu.org/licenses/>.
 package org.xalgorithms.rules.elements
 
-import org.xalgorithms.rules.{ Context }
+import org.xalgorithms.rules.{ Context, RowContext }
+import scala.collection.mutable.{ ListBuffer }
 
 abstract class Refinement {
-  def refine(ctx: Context, row: Map[String, IntrinsicValue]): Option[Map[String, IntrinsicValue]]
+  def refine(): Seq[Map[String, IntrinsicValue]]
+  def add(ctx: Context, row: Map[String, IntrinsicValue]): Unit
+}
+
+abstract class AccumulateRefinement extends Refinement {
+  val _rows = ListBuffer[Map[String, IntrinsicValue]]()
+
+  def add(
+    ctx: Context,
+    row: Map[String, IntrinsicValue]
+  ): Unit = { _rows += row }
+
+  def refine(): Seq[Map[String, IntrinsicValue]] = _rows.toSeq
 }
 
 object Filter {
@@ -43,121 +56,93 @@ object Filter {
   }
 }
 
-class FilterRefinement(val when: Option[When]) extends Refinement {
-  def refine(
+class FilterRefinement(val when: Option[When]) extends AccumulateRefinement {
+  override def add(
     ctx: Context,
     row: Map[String, IntrinsicValue]
-  ) = Filter(ctx, row, when)
-}
-
-class MapRefinement(val assignment: Option[Assignment]) extends Refinement {
-  def refine(
-    ctx: Context,
-    row: Map[String, IntrinsicValue]
-  ): Option[Map[String, IntrinsicValue]] = assignment match {
-    case Some(a) => Some(row ++ a.evaluate(ctx))
-    case None => Some(row)
+  ): Unit = Filter(ctx, row, when) match {
+    case Some(r) => super.add(ctx, row)
+    case None => {}
   }
 }
 
-abstract class TakeRefinement extends Refinement {
-}
-
-abstract class TakeFunctionApplication(val_args: Seq[Value]) {
-  private var _index = 0
-
-  def resolve_args(ctx: Context): Seq[Int] = {
-    ResolveManyValues(val_args, ctx).foldLeft(Seq(): Seq[Int]) { case (seq, iv_opt) =>
-      iv_opt match {
-        case Some(iv) => {
-          try {
-            iv match {
-              case (sv: StringValue) => seq :+ sv.value.toInt
-              case (nv: NumberValue) => seq :+ nv.value.toInt
-              case _ => seq
-            }
-          } catch {
-            case _: Throwable => seq
-          }
-        }
-        case None => seq
-      }
-    }
-  }
-
-  def refine(
-    ctx: Context,
-    row: Map[String, IntrinsicValue]
-  ): Option[Map[String, IntrinsicValue]] = {
-    val args = resolve_args(ctx)
-    val rv = range(args) match {
-      case Some(r) => if (r.contains(_index)) {
-        Some(row)
-      } else {
-        None
-      }
-
-      case None => None
-    }
-    _index += 1
-    rv
-  }
-
-  def range(args: Seq[Int]): Option[Range]
-}
-
-class FirstFunctionApplication(val_args: Seq[Value]) extends TakeFunctionApplication(val_args) {
-  def range(args: Seq[Int]): Option[Range] = {
-    if (args.length > 0) {
-      Some((0 to args(0) - 1))
-    } else {
-      None
-    }
+class MapRefinement(val assignment: Option[Assignment]) extends AccumulateRefinement {
+  override def add(ctx: Context, row: Map[String, IntrinsicValue]): Unit = {
+    super.add(ctx, assignment match {
+      case Some(ass) => row ++ ass.evaluate(ctx)
+      case None => row
+    })
   }
 }
 
-class NthFunctionApplication(val_args: Seq[Value]) extends TakeFunctionApplication(val_args) {
-  def range(args: Seq[Int]): Option[Range] = {
-    if (args.length > 1) {
-      Some((args(0) to args(0) + args(1) - 1))
-    } else {
-      None
-    }
-  }
+abstract class TakeRefinement extends AccumulateRefinement {
 }
 
 class TakeFunction(val name: String, val args: Seq[Value] = Seq()) {
-  val _app_opt = name match {
-    case "first" => Some(new FirstFunctionApplication(args))
-    case "nth" => Some(new NthFunctionApplication(args))
-    case _ => None
+  val _args = ResolveManyValues(args, null).foldLeft(Seq(): Seq[Int]) { case (seq, iv_opt) =>
+    iv_opt match {
+      case Some(iv) => {
+        try {
+          iv match {
+            case (sv: StringValue) => seq :+ sv.value.toInt
+            case (nv: NumberValue) => seq :+ nv.value.toInt
+            case _ => seq
+          }
+        } catch {
+          case _: Throwable => seq
+        }
+      }
+      case None => seq
+    }
   }
 
   def refine(
-    ctx: Context,
-    row: Map[String, IntrinsicValue]
-  ): Option[Map[String, IntrinsicValue]] = _app_opt match {
-    case Some(app) => app.refine(ctx, row)
-    case None => None
+    tbl: Seq[Map[String, IntrinsicValue]]
+  ): Seq[Map[String, IntrinsicValue]] = name match {
+    case "first" => refine_first(tbl)
+    case "last"  => refine_last(tbl)
+    case "nth"   => refine_nth(tbl)
+    case _       => Seq()
+  }
+
+  def refine_first(tbl: Seq[Map[String, IntrinsicValue]]): Seq[Map[String, IntrinsicValue]] = {
+    if (_args.length > 0) {
+      tbl.slice(0, _args(0))
+    } else {
+      Seq()
+    }
+  }
+
+  def refine_last(tbl: Seq[Map[String, IntrinsicValue]]): Seq[Map[String, IntrinsicValue]] = {
+    if (_args.length > 0) {
+      tbl.slice(tbl.length - _args(0), tbl.length)
+    } else {
+      Seq()
+    }
+  }
+
+  def refine_nth(tbl: Seq[Map[String, IntrinsicValue]]): Seq[Map[String, IntrinsicValue]] = {
+    if (_args.length > 1) {
+      tbl.slice(_args(0), _args(1) + 1)
+    } else {
+      Seq()
+    }
   }
 }
 
 class ConditionalTakeRefinement(val when: Option[When]) extends TakeRefinement {
-  def refine(
+  override def add(
     ctx: Context,
     row: Map[String, IntrinsicValue]
-  ) = Filter(ctx, row, when)
+  ): Unit = Filter(ctx, row, when) match {
+    case Some(r) => super.add(ctx, row)
+    case None => {}
+  }
 }
 
-// The FunctionValue should contain a function that is a predicate that tests
-// whether this row's index is within a range. This will require an init
-// function ONLY FOR THIS Refinement that hints at the size of the table.
 class FunctionalTakeRefinement(val func: Option[TakeFunction]) extends TakeRefinement {
-  def refine(
-    ctx: Context,
-    row: Map[String, IntrinsicValue]
-  ): Option[Map[String, IntrinsicValue]] = func match {
-    case Some(fn) => fn.refine(ctx, row)
-    case None => None
+  override def refine(): Seq[Map[String, IntrinsicValue]] = func match {
+    case Some(fn) => fn.refine(_rows)
+    case None => Seq()
   }
 }

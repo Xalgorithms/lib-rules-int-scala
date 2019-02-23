@@ -38,7 +38,7 @@ abstract class Context {
   def serialize: JsValue
 }
 
-class GlobalContext(load: LoadTableSource) extends Context {
+class GlobalContext(load: LoadTableSource = null) extends Context {
   var _tables = mutable.Map[String, mutable.Map[String, Seq[Map[String, IntrinsicValue]]]]()
   var _maps = mutable.Map[String, Map[String, IntrinsicValue]]()
   var _revisions = mutable.Map[TableReference, Seq[Revision]]()

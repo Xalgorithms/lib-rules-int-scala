@@ -42,33 +42,15 @@ class RefineStep(
 
   val _application_order = Seq("filter", "map", "take")
 
-  def apply_refinements(
-    k: String,
-    original_tup_opt: Option[Tuple2[RowContext, Map[String, IntrinsicValue]]]
-  ): Option[Tuple2[RowContext, Map[String, IntrinsicValue]]] = {
-    _grouped.getOrElse(k, Seq()).foldLeft(original_tup_opt) { case (tup_opt, refinement) =>
-      tup_opt match {
-        case Some(tup) => refinement.refine(tup._1, tup._2).map { r =>
-          (new RowContext(tup._1.ctx, r, null), r)
-        }
-        case None => None
-      }
-    }
-  }
-
   def execute(ctx: Context) {
-    val ftbl = ctx.lookup_table(
-      table.section,
-      table.name
-    ).foldLeft(Seq[Map[String, IntrinsicValue]]()) { case (ntbl, row) =>
-        val rctx = new RowContext(ctx, row, null)
-        val original_row_opt: Option[Tuple2[RowContext, Map[String, IntrinsicValue]]] = Some((rctx, row))
-        _application_order.foldLeft(original_row_opt) { case (tup, k) =>
-          apply_refinements(k, tup)
-        } match {
-          case Some(tup) => ntbl :+ tup._2
-          case None => ntbl
-        }
+    val otbl = ctx.lookup_table(table.section, table.name)
+    val ftbl = _application_order.foldLeft(otbl) { case (tbl, k) =>
+      _grouped.getOrElse(k, Seq()).foldLeft(tbl) { case (gtbl, r) =>
+        // TODO: this isn't great... but we have to iterate the rows to
+        // establish the RowContext
+        gtbl.foreach { row => r.add(new RowContext(ctx, row, null), row) }
+        r.refine()
+      }
     }
 
     ctx.retain_table(table.section, refined_name, ftbl)

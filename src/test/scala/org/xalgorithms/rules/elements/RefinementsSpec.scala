@@ -34,128 +34,167 @@ class RefinementsSpec extends FlatSpec with Matchers with MockFactory with Befor
   var _ctx: Context = null
   val _faker = new Faker
 
+  val _table = Seq(
+    Map("a" -> new NumberValue(2.0), "b" -> new StringValue("B")),
+    Map("a" -> new NumberValue(4.0), "b" -> new StringValue("C")),
+    Map("a" -> new NumberValue(1.0), "b" -> new StringValue("A")),
+    Map("a" -> new NumberValue(5.0), "b" -> new StringValue("E")),
+    Map("a" -> new NumberValue(3.0), "b" -> new StringValue("D"))
+  )
+
+  val _empty_table: Seq[Map[String, IntrinsicValue]] = Seq()
+
   before {
     _ctx = mock[Context]
   }
 
   "FilterRefinement" should "exclude rows when the condition is empty" in {
     val r = new FilterRefinement(None)
-    r.refine(_ctx, Map[String, IntrinsicValue]()) shouldEqual(None)
+    _table.foreach(r.add(new RowContext(_ctx, Map[String, IntrinsicValue](), null), _))
+    r.refine() shouldEqual(_empty_table)
   }
 
   it should "exclude rows that do not pass the condition" in {
     val wh = mock[When]
     val r = new FilterRefinement(Some(wh))
+    val ex_table = Seq(
+      _table(0),
+      _table(2),
+      _table(3)
+    )
 
-    val row0 = Map("a" -> new StringValue("A"))
-    val row1 = Map("b" -> new StringValue("B"))
+    val rctxs = _table.map(new RowContext(_ctx, _, null))
+    val when_rets = Seq(
+      true,
+      false,
+      true,
+      true,
+      false
+    )
+    val verify_when_context = (rctx: RowContext, row: Map[String, IntrinsicValue], ret: Boolean) => {
+      (call_ctx: Context) => {
+        call_ctx shouldBe a [RowContext]
+        call_ctx.asInstanceOf[RowContext].local_row shouldEqual(row)
+        ret
+      }
+    }
 
-    val rctx0 = new RowContext(_ctx, row0, null)
-    val rctx1 = new RowContext(_ctx, row1, null)
+    rctxs.zipWithIndex.foreach { case (rctx, i) =>
+      (wh.evaluate _).expects(*) onCall verify_when_context(rctx, _table(i), when_rets(i))
+    }
 
-    (wh.evaluate _).expects(rctx0).returning(false)
-    (wh.evaluate _).expects(rctx1).returning(true)
-
-    r.refine(rctx0, row0) shouldBe(None)
-    r.refine(rctx1, row1) shouldBe(Some(row1))
+    _table.zip(rctxs).foreach { case (row, rctx) => r.add(rctx, row) }
+    r.refine() shouldEqual(ex_table)
   }
 
   "MapRefinement" should "yield the original if the assignment is None" in {
     val r = new MapRefinement(None)
 
-    val row0 = Map("a" -> new StringValue("A"))
-    val row1 = Map("b" -> new StringValue("B"))
-
-    r.refine(_ctx, row0) shouldEqual(Some(row0))
-    r.refine(_ctx, row1) shouldEqual(Some(row1))
+    _table.foreach(r.add(new RowContext(_ctx, Map[String, IntrinsicValue](), null), _))
+    r.refine() shouldEqual(_table)
   }
 
   it should "update the row" in {
     val ass = mock[Assignment]
     val r = new MapRefinement(Some(ass))
+    val rctxs = _table.map(new RowContext(_ctx, _, null))
 
-    val row0 = Map("a" -> new StringValue("A"))
-    val row1 = Map("b" -> new StringValue("B"))
+    val elems = Seq("00", "11", "22", "33", "44").map { v => Map("c" -> new StringValue(v)) }
+    val ex_table = elems.zip(_table).map { case (elem, row) =>
+      row ++ elem
+    }
 
-    val rctx0 = new RowContext(_ctx, row0, null)
-    val rctx1 = new RowContext(_ctx, row1, null)
+    val verify_assignment_context = (
+      rctx: RowContext,
+      row: Map[String, IntrinsicValue],
+      elem: Map[String, IntrinsicValue]
+    ) => {
+      (call_ctx: Context) => {
+        call_ctx shouldBe a [RowContext]
+        call_ctx.asInstanceOf[RowContext].local_row shouldEqual(row)
 
-    val change0 = Map("a" -> new StringValue("AA"))
-    val change1 = Map("c" -> new StringValue("C"))
+        elem
+      }
+    }
 
-    val ex0 = row0 ++ change0
-    val ex1 = row1 ++ change1
+    rctxs.zipWithIndex.foreach { case (rctx, i) =>
+      (ass.evaluate _).expects(*) onCall verify_assignment_context(rctx, _table(i), elems(i))
+    }
 
-    (ass.evaluate _).expects(rctx0).returning(change0)
-    (ass.evaluate _).expects(rctx1).returning(change1)
-
-    r.refine(rctx0, row0) shouldEqual(Some(ex0))
-    r.refine(rctx1, row1) shouldEqual(Some(ex1))
+    _table.zip(rctxs).foreach { case (row, rctx) => r.add(rctx, row) }
+    r.refine() shouldEqual(ex_table)
   }
 
   "ConditionalTakeRefinement" should "exclude rows when the condition is empty" in {
     val r = new ConditionalTakeRefinement(None)
-    r.refine(_ctx, Map[String, IntrinsicValue]()) shouldEqual(None)
+    _table.foreach(r.add(new RowContext(_ctx, Map[String, IntrinsicValue](), null), _))
+    r.refine() shouldEqual(_empty_table)
   }
 
   it should "exclude rows that do not pass the condition" in {
     val wh = mock[When]
     val r = new ConditionalTakeRefinement(Some(wh))
 
-    val row0 = Map("a" -> new StringValue("A"))
-    val row1 = Map("b" -> new StringValue("B"))
+    val ex_table = Seq(
+      _table(1),
+      _table(3),
+      _table(4)
+    )
 
-    val rctx0 = new RowContext(_ctx, row0, null)
-    val rctx1 = new RowContext(_ctx, row1, null)
+    val rctxs = _table.map(new RowContext(_ctx, _, null))
+    val when_rets = Seq(
+      false,
+      true,
+      false,
+      true,
+      true
+    )
+    val verify_when_context = (rctx: RowContext, row: Map[String, IntrinsicValue], ret: Boolean) => {
+      (call_ctx: Context) => {
+        call_ctx shouldBe a [RowContext]
+        call_ctx.asInstanceOf[RowContext].local_row shouldEqual(row)
+        ret
+      }
+    }
 
-    (wh.evaluate _).expects(rctx0).returning(false)
-    (wh.evaluate _).expects(rctx1).returning(true)
+    rctxs.zipWithIndex.foreach { case (rctx, i) =>
+      (wh.evaluate _).expects(*) onCall verify_when_context(rctx, _table(i), when_rets(i))
+    }
 
-    r.refine(rctx0, row0) shouldBe(None)
-    r.refine(rctx1, row1) shouldBe(Some(row1))
+    _table.zip(rctxs).foreach { case (row, rctx) => r.add(rctx, row) }
+    r.refine() shouldEqual(ex_table)
   }
 
   "FunctionalTakeRefinement" should "exclude rows when the condition is empty" in {
     val r = new FunctionalTakeRefinement(None)
-    r.refine(_ctx, Map[String, IntrinsicValue]()) shouldEqual(None)
+    _table.foreach(r.add(new RowContext(_ctx, Map[String, IntrinsicValue](), null), _))
+    r.refine() shouldEqual(_empty_table)
   }
 
   it should "exclude rows when an unknown function is used" in {
     (0 to _faker.number().numberBetween(2, 10)).foreach { _ =>
       val r = new FunctionalTakeRefinement(Some(new TakeFunction(_faker.lorem().word())))
-      val row = Map("a" -> new StringValue("A"))
-      r.refine(_ctx, row) shouldEqual(None)
+      _table.foreach(r.add(new RowContext(_ctx, Map[String, IntrinsicValue](), null), _))
+      r.refine() shouldEqual(_empty_table)
     }
   }
 
-  val _table = Seq(
-    Map("a" -> new StringValue("A")),
-    Map("b" -> new StringValue("B")),
-    Map("c" -> new StringValue("C")),
-    Map("d" -> new StringValue("D")),
-    Map("e" -> new StringValue("E"))
-  )
+  def verify_take_functional(index: Int, count: Int, fn: TakeFunction) = {
+    val ex_table = _table.slice(index, count)
+    val r = new FunctionalTakeRefinement(Some(fn))
 
-  it should "include the first N rows using first()" in {
+    _table.foreach { row => r.add(new RowContext(_ctx, row, null), row) }
+    r.refine() shouldEqual(ex_table)
+  }
+
+  it should "include the first N rows using first(N)" in {
     val count = _faker.number().numberBetween(1, _table.length)
-    val ex_range = (0 to count - 1)
-
     val fn = new TakeFunction(
       "first",
       Seq(new NumberValue(BigDecimal(count)))
     )
-    val r = new FunctionalTakeRefinement(Some(fn))
 
-    _table.zipWithIndex.foreach { case (row, i) =>
-      val rctx = new RowContext(_ctx, row, null)
-      val ex = if (ex_range.contains(i)) {
-        Some(row)
-      } else {
-        None
-      }
-
-      r.refine(rctx, row) shouldEqual(ex)
-    }
+    verify_take_functional(0, count, fn)
   }
 
   it should "refine nothing in failure cases for first" in {
@@ -167,16 +206,14 @@ class RefinementsSpec extends FlatSpec with Matchers with MockFactory with Befor
     cases.foreach { c =>
       val fn = new TakeFunction("first", c)
       val r = new FunctionalTakeRefinement(Some(fn))
-      _table.foreach { row =>
-        r.refine(_ctx, row) shouldEqual(None)
-      }
+      _table.foreach { row => r.add(new RowContext(_ctx, row, null), row) }
+      r.refine() shouldEqual(_empty_table)
     }
   }
 
-  it should "include a subset of rows using nth()" in {
+  it should "include a subset of N rows using nth(index, N)" in {
     val index = _faker.number().numberBetween(0, _table.length - 1)
     val count = _faker.number().numberBetween(1, _table.length)
-    val ex_range = (index to index + count - 1)
 
     val fn = new TakeFunction(
       "nth",
@@ -185,18 +222,8 @@ class RefinementsSpec extends FlatSpec with Matchers with MockFactory with Befor
         new StringValue(count.toString)
       )
     )
-    val r = new FunctionalTakeRefinement(Some(fn))
 
-    _table.zipWithIndex.foreach { case (row, i) =>
-      val rctx = new RowContext(_ctx, row, null)
-      val ex = if (ex_range.contains(i)) {
-        Some(row)
-      } else {
-        None
-      }
-
-      r.refine(rctx, row) shouldEqual(ex)
-    }
+    verify_take_functional(index, count + 1, fn)
   }
 
   it should "refine nothing in failure cases for nth" in {
@@ -210,10 +237,19 @@ class RefinementsSpec extends FlatSpec with Matchers with MockFactory with Befor
     cases.foreach { c =>
       val fn = new TakeFunction("nth", c)
       val r = new FunctionalTakeRefinement(Some(fn))
-      _table.foreach { row =>
-        r.refine(_ctx, row) shouldEqual(None)
-      }
+      _table.foreach { row => r.add(new RowContext(_ctx, row, null), row) }
+      r.refine() shouldEqual(Seq())
     }
+  }
+
+  it should "include the last N rows using last(N)" in {
+    val count = _faker.number().numberBetween(1, _table.length)
+    val fn = new TakeFunction(
+      "last",
+      Seq(new NumberValue(BigDecimal(count)))
+    )
+
+    verify_take_functional(_table.length - count, _table.length, fn)
   }
 
   // TODO: test with non-numerical
