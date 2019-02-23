@@ -77,6 +77,31 @@ class ArrangeStepSpec extends FlatSpec with Matchers with MockFactory with Befor
     step.execute(ctx)
   }
 
+  def verify_sort_step(
+    ex_table_name: String,
+    ex_table: Seq[Map[String, IntrinsicValue]],
+    col: String = null,
+    args: Seq[String] = Seq()
+  ) = {
+    val ctx = mock[Context]
+
+    (ctx.lookup_table _).expects(_section, _table_name).returning(_table)
+    (ctx.retain_table _).expects(_section, ex_table_name, *) onCall verify_table(ex_table)
+
+    val vargs = if (col != null) {
+      Seq(new DocumentReferenceValue("_local", col)) ++ args.map(new StringValue(_))
+    } else {
+      Seq()
+    }
+
+    val step = new ArrangeStep(
+      new TableReference(_section, _table_name),
+      ex_table_name,
+      Seq(new Arrangement(new ArrangeFunction("sort", vargs)))
+    )
+
+    step.execute(ctx)
+  }
 
   "ArrangeStep" should "shift rows in the table" in {
     val ex_table0 = Seq(
@@ -111,6 +136,8 @@ class ArrangeStepSpec extends FlatSpec with Matchers with MockFactory with Befor
       _table(1),
       _table(0),
     )
+
+    verify_step("table_ex0", ex_table, new ArrangeFunction("invert", Seq()))
   }
 
   it should "sort the rows in the table" in {
@@ -123,20 +150,39 @@ class ArrangeStepSpec extends FlatSpec with Matchers with MockFactory with Befor
       _table(2),
     )
     // numeric, ascending
-    val ex_table1 = Seq(
-      _table(2),
-      _table(0),
+    val ex_table1 = ex_table0.reverse
+
+    // alpha, descending
+    val ex_table2 = Seq(
+      _table(3),
       _table(4),
       _table(1),
-      _table(3),
+      _table(0),
+      _table(2),
     )
     // alpha, ascending
-    val ex_table2 = Seq(
-      _table(2),
-      _table(0),
-      _table(1),
-      _table(4),
-      _table(3),
-    )
+    val ex_table3 = ex_table2.reverse
+
+    verify_sort_step("table_ex0", ex_table0, "a", Seq("numeric", "descending"))
+    verify_sort_step("table_ex1", ex_table1, "a", Seq("numeric", "ascending"))
+    // default is ascending
+    verify_sort_step("table_ex1_default", ex_table1, "a", Seq("numeric"))
+
+    verify_sort_step("table_ex2", ex_table2, "b", Seq("alpha", "descending"))
+    verify_sort_step("table_ex3", ex_table3, "b", Seq("alpha", "ascending"))
+    // default is ascending
+    verify_sort_step("table_ex3_default", ex_table3, "b", Seq("alpha"))
+
+    // default is alpha, ascending
+    verify_sort_step("table_ex3_default", ex_table3, "b", Seq())
+
+    // unknown column
+    verify_sort_step("table_ex3_default", _table, "XX")
+
+    // no column
+    verify_sort_step("table_ex3_default", _table)
+
+    // // unknown sort type
+    verify_sort_step("table_ex1_default", _table, "a", Seq("random"))
   }
 }

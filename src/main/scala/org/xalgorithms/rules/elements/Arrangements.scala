@@ -23,9 +23,23 @@
 // <http://www.gnu.org/licenses/>.
 package org.xalgorithms.rules.elements
 
-import org.xalgorithms.rules.{ Context }
+import org.xalgorithms.rules.{ Context, RowContext }
 
 abstract class ArrangeFunctionApplication(val val_args: Seq[Value]) {
+  def arrange(
+    ctx: Context,
+    tbl: Seq[Map[String, IntrinsicValue]]
+  ): Seq[Map[String, IntrinsicValue]]
+}
+
+class InvertFunctionApplication(val_args: Seq[Value]) extends ArrangeFunctionApplication(val_args) {
+  def arrange(
+    ctx: Context,
+    tbl: Seq[Map[String, IntrinsicValue]]
+  ): Seq[Map[String, IntrinsicValue]] = tbl.reverse
+}
+
+class ShiftFunctionApplication(val_args: Seq[Value]) extends ArrangeFunctionApplication(val_args) {
   def resolve_args(ctx: Context): Seq[Int] = {
     ResolveManyValues(val_args, ctx).foldLeft(Seq(): Seq[Int]) { case (seq, iv_opt) =>
       iv_opt match {
@@ -55,22 +69,6 @@ abstract class ArrangeFunctionApplication(val val_args: Seq[Value]) {
   def arrange(
     tbl: Seq[Map[String, IntrinsicValue]],
     args: Seq[Int]
-  ): Seq[Map[String, IntrinsicValue]]
-}
-
-class InvertFunctionApplication(val_args: Seq[Value]) extends ArrangeFunctionApplication(val_args) {
-  def arrange(
-    tbl: Seq[Map[String, IntrinsicValue]],
-    args: Seq[Int]
-  ): Seq[Map[String, IntrinsicValue]] = {
-    Seq()
-  }
-}
-
-class ShiftFunctionApplication(val_args: Seq[Value]) extends ArrangeFunctionApplication(val_args) {
-  def arrange(
-    tbl: Seq[Map[String, IntrinsicValue]],
-    args: Seq[Int]
   ): Seq[Map[String, IntrinsicValue]] = {
     if (args.length > 0 && args(0) != 0) {
       val len = tbl.length
@@ -90,12 +88,148 @@ class ShiftFunctionApplication(val_args: Seq[Value]) extends ArrangeFunctionAppl
   }
 }
 
+abstract class Comparator {
+  def compare(a: Option[IntrinsicValue], b: Option[IntrinsicValue]): Boolean
+}
+
+abstract class AlphaComparator extends Comparator {
+  def compare(a: Option[IntrinsicValue], b: Option[IntrinsicValue]): Boolean = {
+    compare_vals(string(a), string(b))
+  }
+
+  def string(iv_opt: Option[IntrinsicValue]): Option[String] = iv_opt.map { iv =>
+    iv match {
+      case (sv: StringValue) => sv.value
+      case (nv: NumberValue) => nv.value.toString
+      case _ => ""
+    }
+  }
+
+  def compare_vals(a: Option[String], b: Option[String]): Boolean
+}
+
+class AscendingAlphaComparator extends AlphaComparator {
+  def compare_vals(a: Option[String], b: Option[String]): Boolean = a match {
+    case Some(av) => b match {
+      case Some(bv) => av < bv
+      case None => false
+    }
+    case None => false
+  }
+}
+
+class DescendingAlphaComparator extends AlphaComparator {
+  def compare_vals(a: Option[String], b: Option[String]): Boolean = a match {
+    case Some(av) => b match {
+      case Some(bv) => av > bv
+      case None => true
+    }
+    case None => true
+  }
+}
+
+abstract class NumericComparator extends Comparator {
+  def compare(a: Option[IntrinsicValue], b: Option[IntrinsicValue]): Boolean = {
+    compare_vals(number(a), number(b))
+  }
+
+  def number(iv_opt: Option[IntrinsicValue]): Option[BigDecimal] = iv_opt.map { iv =>
+    iv match {
+      case (sv: StringValue) => sv.value.toDouble
+      case (nv: NumberValue) => nv.value
+      case _ => BigDecimal(0.0)
+    }
+  }
+
+  def compare_vals(a: Option[BigDecimal], b: Option[BigDecimal]): Boolean
+}
+
+class AscendingNumericComparator extends NumericComparator {
+  def compare_vals(a: Option[BigDecimal], b: Option[BigDecimal]): Boolean = a match {
+    case Some(av) => b match {
+      case Some(bv) => av < bv
+      case None => false
+    }
+    case None => false
+  }
+}
+
+class DescendingNumericComparator extends NumericComparator {
+  def compare_vals(a: Option[BigDecimal], b: Option[BigDecimal]): Boolean = a match {
+    case Some(av) => b match {
+      case Some(bv) => av > bv
+      case None => true
+    }
+    case None => true
+  }
+}
+
 class SortFunctionApplication(val_args: Seq[Value]) extends ArrangeFunctionApplication(val_args) {
   def arrange(
-    tbl: Seq[Map[String, IntrinsicValue]],
-    args: Seq[Int]
+    ctx: Context,
+    tbl: Seq[Map[String, IntrinsicValue]]
   ): Seq[Map[String, IntrinsicValue]] = {
-    Seq()
+    // val_args: (doc_ref, string, string)
+    if (val_args.length > 0) {
+      val col_ref = val_args(0)
+      val style = if (val_args.length > 1) {
+        resolve_string(ctx, val_args(1), "alpha")
+      } else {
+        "alpha"
+      }
+      val order = if (val_args.length > 2) {
+        resolve_string(ctx, val_args(2), "ascending")
+      } else {
+        "ascending"
+      }
+      apply_sort(ctx, tbl, col_ref, lookup_comparator(style, order))
+    } else {
+      tbl
+    }
+  }
+
+  def lookup_comparator(
+    style: String,
+    order: String
+  ): Option[Comparator] = style match {
+    case "alpha" => order match {
+      case "descending" => Some(new DescendingAlphaComparator())
+      case _ => Some(new AscendingAlphaComparator())
+    }
+    case "numeric" => order match {
+      case "descending" => Some(new DescendingNumericComparator())
+      case _ => Some(new AscendingNumericComparator())
+    }
+    case _ => None
+  }
+
+  def resolve_string(ctx: Context, v: Value, dflt: String): String = {
+    ResolveValue(v, ctx) match {
+      case Some(iv) => iv match {
+        case (sv: StringValue) => sv.value
+        case _ => dflt
+      }
+      case None => dflt
+    }
+  }
+
+  def apply_sort(
+    ctx: Context,
+    tbl: Seq[Map[String, IntrinsicValue]],
+    ref: Value,
+    comparator_opt: Option[Comparator]
+  ): Seq[Map[String, IntrinsicValue]] = comparator_opt match {
+    case Some(comparator) => {
+      val fn = (a: Map[String, IntrinsicValue], b: Map[String, IntrinsicValue]) => {
+        comparator.compare(
+          ResolveValue(ref, new RowContext(ctx, a, null)),
+          ResolveValue(ref, new RowContext(ctx, b, null))
+        )
+      }
+
+      tbl.sortWith(fn)
+    }
+    case None => tbl
   }
 }
 
