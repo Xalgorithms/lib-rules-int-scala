@@ -1,6 +1,6 @@
 GIT
   remote: https://github.com/Xalgorithms/xa-rules.git
-  revision: 567c6ed957279f6ea6aa24a02033a96b63b97b58
+  revision: 132cbb8bb64e193c81bd39120b279115820401d7
   specs:
     xa-rules (0.4.0)
       parslet
