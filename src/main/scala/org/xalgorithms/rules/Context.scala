@@ -39,38 +39,40 @@ abstract class Context {
 }
 
 class GlobalContext(load: LoadTableSource) extends Context {
-  var _tables = mutable.Map[String, mutable.Map[String, Seq[Map[String, IntrinsicValue]]]]()
-  var _maps = mutable.Map[String, Map[String, IntrinsicValue]]()
+  val _sections = new Sections(Some(load))
   var _revisions = mutable.Map[TableReference, Seq[Revision]]()
 
   def enumerate_tables(fn: (String, String, Seq[Map[String, IntrinsicValue]]) => Unit): Unit = {
-    _tables.foreach { case (section, tables) =>
-      tables.foreach { case (name, table) =>
-        fn(section, name, table)
-      }
-    }
+    // _tables.foreach { case (section, tables) =>
+    //   tables.foreach { case (name, table) =>
+    //     fn(section, name, table)
+    //   }
+    // }
   }
 
   def load(ptref: PackagedTableReference) {
-    retain_table("table", ptref.name, load.load(ptref))
+    _sections.tables.remember(ptref)
   }
 
   def retain_map(section: String, m: Map[String, IntrinsicValue]) {
-    _maps(section) = m
+    _sections.retain_values(section, m)
   }
 
   def retain_table(section: String, key: String, t: Seq[Map[String, IntrinsicValue]]) {
-    val sm = _tables.getOrElse(section, mutable.Map[String, Seq[Map[String, IntrinsicValue]]]())
-    sm.put(key, t)
-    _tables(section) = sm
+    // section is ignored
+    _sections.tables.retain(key, t)
   }
 
   def lookup_in_map(section: String, key: String): Option[IntrinsicValue] = {
-    _maps.getOrElse(section, Map[String, IntrinsicValue]()).get(key)
+    _sections.values(section) match {
+      case Some(vals) => vals.lookup(key)
+      case None => None
+    }
   }
 
   def lookup_table(section: String, table_name: String): Seq[Map[String, IntrinsicValue]] = {
-    _tables.getOrElse(section, mutable.Map[String, Seq[Map[String, IntrinsicValue]]]()).getOrElse(table_name, null)
+    // section is ignored
+    _sections.tables.lookup(table_name).getOrElse(null)
   }
 
   def revisions(): Map[TableReference, Seq[Revision]] = {
@@ -100,11 +102,13 @@ class GlobalContext(load: LoadTableSource) extends Context {
   }
 
   private def serialize_maps: JsValue = {
-    Json.toJson(_maps)
+    JsString("")
+    //Json.toJson(_maps)
   }
 
   private def serialize_tables: JsValue = {
-    Json.toJson(_tables)
+    JsString("")
+    // Json.toJson(_tables)
   }
 }
 

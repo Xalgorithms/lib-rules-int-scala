@@ -74,15 +74,9 @@ class ContextSpec extends FlatSpec with Matchers with MockFactory {
 
     tables.foreach { case (name, table) =>
       ctx.lookup_table("tables0", name) shouldEqual(null)
-      ctx.lookup_table("tables1", name) shouldEqual(null)
 
       ctx.retain_table("tables0", name, table)
       ctx.lookup_table("tables0", name) shouldEqual(table)
-      ctx.lookup_table("tables1", name) shouldEqual(null)
-
-      ctx.retain_table("tables1", name, table)
-      ctx.lookup_table("tables0", name) shouldEqual(table)
-      ctx.lookup_table("tables1", name) shouldEqual(table)
     }
   }
 

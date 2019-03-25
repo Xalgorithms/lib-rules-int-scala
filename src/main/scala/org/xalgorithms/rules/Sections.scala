@@ -70,10 +70,13 @@ class ValuesSection(opt_vals: Option[Map[String, IntrinsicValue]] = None) {
   def retain(k: String, v: IntrinsicValue) = _values.put(k, v)
 }
 
-class Sections {
-  val _tables = new TableSection()
-  val _values = Map[String, ValuesSection]()
+class Sections(opt_src: Option[LoadTableSource] = None) {
+  val _tables = new TableSection(opt_src)
+  val _values = mutable.Map[String, ValuesSection]()
 
   def tables(): TableSection = _tables
   def values(k: String): Option[ValuesSection] = _values.get(k)
+  def retain_values(k: String, vals: Map[String, IntrinsicValue]) = {
+    _values.put(k, new ValuesSection(Some(vals)))
+  }
 }
