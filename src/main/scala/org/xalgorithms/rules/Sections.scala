@@ -26,12 +26,37 @@ package org.xalgorithms.rules
 import org.xalgorithms.rules.elements._
 import scala.collection.mutable
 
-class TableSection {
+class TableSection(val opt_src: Option[LoadTableSource] = None) {
   val _tables = mutable.Map[String, Seq[Map[String, IntrinsicValue]]]()
+  val _refs = mutable.Map[String, PackagedTableReference]()
 
-  def lookup(k: String): Option[Seq[Map[String, IntrinsicValue]]] = _tables.get(k)
+  def lookup(k: String): Option[Seq[Map[String, IntrinsicValue]]] = {
+    _tables.get(k) match {
+      case Some(tbl) => Some(tbl)
+      case None => maybe_load(k)
+    }
+  }
+
   def retain(k: String, tbl: Seq[Map[String, IntrinsicValue]]) = {
     _tables.put(k, tbl)
+  }
+
+  def remember(ptref: PackagedTableReference) = {
+    _refs.put(ptref.name, ptref)
+  }
+
+  private def maybe_load(k: String): Option[Seq[Map[String, IntrinsicValue]]] = _refs.get(k) match {
+    case Some(ptref) => {
+      opt_src match {
+        case Some(src) => {
+          retain(ptref.name, opt_src.get.load(ptref))
+          _tables.get(k)
+        }
+        case None => None
+      }
+    }
+
+    case None => None
   }
 }
 

@@ -110,4 +110,29 @@ class SectionsSpec extends FlatSpec with Matchers with MockFactory {
       }
     }
   }
+
+  it should "load tables on demand" in {
+    val source = mock[LoadTableSource]
+    val sec = new TableSection(Some(source))
+    val ptref = new PackagedTableReference("package", "id", "0.0.1", "a")
+
+    val table0 = Seq(
+      Map("x" -> "00", "y" -> "01"),
+      Map("x" -> "10", "y" -> "11")
+    ).map { r => r.mapValues(new StringValue(_)) }
+
+    (source.load _).expects(ptref).once.returning(table0)
+
+    sec.lookup(ptref.name) shouldEqual(None)
+
+    sec.remember(ptref)
+    sec.lookup(ptref.name) match {
+      case Some(ac_tbl) => verify_table(ac_tbl, table0)
+      case None => true shouldBe(false)
+    }
+    sec.lookup(ptref.name) match {
+      case Some(ac_tbl) => verify_table(ac_tbl, table0)
+      case None => true shouldBe(false)
+    }
+  }
 }
