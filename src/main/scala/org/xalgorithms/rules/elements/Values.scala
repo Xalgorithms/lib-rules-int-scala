@@ -24,6 +24,7 @@
 package org.xalgorithms.rules.elements
 
 import org.xalgorithms.rules.{ Context }
+import play.api.libs.json._
 
 abstract class Value {
   def matches(v: Value, op: String): Boolean
@@ -258,4 +259,16 @@ object ResolveManyValues {
     vs: Seq[Value],
     ctx: Context
   ): Seq[Option[IntrinsicValue]] = vs.map(ResolveValue(_, ctx))
+}
+
+object Implicits {
+  implicit val val_writes = new Writes[IntrinsicValue] {
+    def writes(v: IntrinsicValue) = v match {
+      case (sv: StringValue) => JsString(sv.value)
+      case (nv: NumberValue) => JsNumber(nv.value)
+      case _ => {
+        JsString("")
+      }
+    }
+  }
 }

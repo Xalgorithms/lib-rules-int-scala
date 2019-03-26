@@ -28,6 +28,7 @@ import org.scalatest._
 
 import org.xalgorithms.rules._
 import org.xalgorithms.rules.elements._
+import play.api.libs.json._
 
 class SectionsSpec extends FlatSpec with Matchers with MockFactory {
   "ValuesSection" should "contain nothing by default" in {
@@ -65,6 +66,13 @@ class SectionsSpec extends FlatSpec with Matchers with MockFactory {
         case None => true shouldEqual(false)
       }
     }
+  }
+
+  it should "serialize to JSON" in {
+    val vals = Map("a" -> 1, "a.b" -> 2, "a.c" -> 3)
+
+    val sec = new ValuesSection(Some(vals.mapValues(new NumberValue(_))))
+    sec.serialize shouldEqual(Json.toJson(vals))
   }
 
   def verify_table(
@@ -134,5 +142,46 @@ class SectionsSpec extends FlatSpec with Matchers with MockFactory {
       case Some(ac_tbl) => verify_table(ac_tbl, table0)
       case None => true shouldBe(false)
     }
+  }
+
+  it should "serialize to JSON" in {
+    val tables = Map(
+      "table0" -> Seq(
+        Map("x" -> "00", "y" -> "01"),
+        Map("x" -> "10", "y" -> "11")
+      ),
+      "table1" -> Seq(
+        Map("p" -> "00", "q" -> "01"),
+        Map("p" -> "10", "q" -> "11")
+      )
+    )
+
+    val sec = new TableSection
+    tables.foreach { case (k, tbl) =>
+      sec.retain(k, tbl.map { r => r.mapValues(new StringValue(_)) })
+    }
+
+    sec.serialize shouldEqual(Json.toJson(tables))
+  }
+
+  "Sections" should "serialize to JSON" in {
+    val secs = new Sections()
+    val values0 = Map("A" -> 100.0, "B" -> 333.0)
+    val table0 = Seq(
+        Map("A" -> 2.0, "B" -> 3.0),
+        Map("A" -> 4.0, "B" -> 6.0)
+    )
+
+    val expected = Json.obj(
+      "values" -> Json.obj(
+        "values0" -> values0,
+      ),
+      "tables" -> Json.obj("table0" -> table0),
+    )
+
+    secs.tables.retain("table0", table0.map { r => r.mapValues(new NumberValue(_)) })
+    secs.retain_values("values0", values0.mapValues(new NumberValue(_)))
+
+    secs.serialize shouldEqual(expected)
   }
 }

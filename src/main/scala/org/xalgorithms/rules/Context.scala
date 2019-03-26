@@ -40,15 +40,13 @@ abstract class Context {
 
 class GlobalContext(load: LoadTableSource) extends Context {
   val _sections = new Sections(Some(load))
-  var _revisions = mutable.Map[TableReference, Seq[Revision]]()
+  val _revisions = mutable.Map[TableReference, Seq[Revision]]()
 
-  def enumerate_tables(fn: (String, String, Seq[Map[String, IntrinsicValue]]) => Unit): Unit = {
-    // _tables.foreach { case (section, tables) =>
-    //   tables.foreach { case (name, table) =>
-    //     fn(section, name, table)
-    //   }
-    // }
-  }
+  def sections = _sections
+
+  def enumerate_tables(
+    fn: (String, String, Seq[Map[String, IntrinsicValue]]) => Unit
+  ) = _sections.enumerate_tables(fn)
 
   def load(ptref: PackagedTableReference) {
     _sections.tables.remember(ptref)
@@ -83,19 +81,13 @@ class GlobalContext(load: LoadTableSource) extends Context {
     _revisions.put(ref, _revisions.getOrElse(ref, mutable.Seq()) :+ rev)
   }
 
-  def serialize: JsValue = {
-    Json.obj(
-      "documents" -> serialize_maps,
-      "tables" -> serialize_tables
-    )
-  }
+  def serialize = _sections.serialize
 
   implicit val val_writes = new Writes[IntrinsicValue] {
     def writes(v: IntrinsicValue) = v match {
       case (sv: StringValue) => JsString(sv.value)
       case (nv: NumberValue) => JsNumber(nv.value)
       case _ => {
-        println(v)
         JsString("")
       }
     }

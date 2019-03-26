@@ -190,44 +190,22 @@ class ContextSpec extends FlatSpec with Matchers with MockFactory {
   }
 
   it should "serialize into JSON" in {
-    val tables = Map(
-      "table0" -> Seq(
-        Map("a" -> new StringValue("00"), "b" -> new StringValue("01")),
-        Map("a" -> new StringValue("10"), "b" -> new StringValue("11"))),
-      "table1" -> Seq(
-        Map("A" -> new NumberValue(2), "B" -> new NumberValue(3)),
-        Map("A" -> new NumberValue(4), "B" -> new NumberValue(6))))
-    val maps = Map(
-      "map0" -> Map("a" -> new StringValue("00"), "b" -> new StringValue("01")),
-      "map1" -> Map("A" -> new NumberValue(100), "B" -> new NumberValue(333)))
-
     val ctx = new GlobalContext(null)
-
-    tables.foreach { case (k, tbl) =>
-      ctx.retain_table("table", k, tbl)
-    }
-    maps.foreach { case (name, m) =>
-      ctx.retain_map(name, m)
-    }
+    val values0 = Map("A" -> 100.0, "B" -> 333.0)
+    val table0 = Seq(
+        Map("A" -> 2.0, "B" -> 3.0),
+        Map("A" -> 4.0, "B" -> 6.0)
+    )
 
     val expected = Json.obj(
-      "documents" -> Map(
-        "map1" -> Json.obj("A" -> 100.0, "B" -> 333.0),
-        "map0" -> Json.obj("a" -> "00", "b" -> "01")
+      "values" -> Json.obj(
+        "values0" -> values0,
       ),
-      "tables" -> Json.obj(
-        "table" -> Json.obj(
-          "table1" -> Seq(
-            Json.obj("A" -> 2.0, "B" -> 3.0),
-            Json.obj("A" -> 4.0, "B" -> 6.0)
-          ),
-          "table0" -> Seq(
-            Json.obj("a" -> "00", "b" -> "01"),
-            Json.obj("a" -> "10", "b" -> "11")
-          )
-        )
-      )
+      "tables" -> Json.obj("table0" -> table0),
     )
+
+    ctx.sections.tables.retain("table0", table0.map { r => r.mapValues(new NumberValue(_)) })
+    ctx.sections.retain_values("values0", values0.mapValues(new NumberValue(_)))
 
     ctx.serialize shouldEqual(expected)
   }
