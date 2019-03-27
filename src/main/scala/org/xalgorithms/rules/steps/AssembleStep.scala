@@ -35,7 +35,7 @@ class AssembleStep(val name: String, val columns: Seq[Column]) extends Step {
       }
     }
 
-    ctx.retain_table("table", name, combined_tbl)
+    ctx.sections.tables.retain(name, combined_tbl)
   }
 
   def combine(

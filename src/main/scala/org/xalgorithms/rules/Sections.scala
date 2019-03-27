@@ -46,11 +46,11 @@ class TableSection(val opt_src: Option[LoadTableSource] = None) {
     }
   }
 
-  def retain(k: String, tbl: Seq[Map[String, IntrinsicValue]]) = {
+  def retain(k: String, tbl: Seq[Map[String, IntrinsicValue]]): Unit = {
     _tables.put(k, tbl)
   }
 
-  def remember(ptref: PackagedTableReference) = {
+  def remember(ptref: PackagedTableReference): Unit = {
     _refs.put(ptref.name, ptref)
   }
 

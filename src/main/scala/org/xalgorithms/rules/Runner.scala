@@ -171,12 +171,12 @@ object Runner {
                 case (cho: JsObject) => {
 //                  println(s"# adding map to context (k=${k})")
 //                  println(internalize_object(cho))
-                  ctx.retain_map(k, internalize_object(cho))
+                  ctx.sections.retain_values(k, internalize_object(cho))
                 }
 
                 case (cha: JsArray) => {
 //                  println(s"# adding table to context (k=${k})")
-                  ctx.retain_table("table", k, internalize_array(cha))
+                  ctx.sections.tables.retain(k, internalize_array(cha))
                 }
 
                 case _ => println(s"? in context, key is neither array nor object (k=${k})")

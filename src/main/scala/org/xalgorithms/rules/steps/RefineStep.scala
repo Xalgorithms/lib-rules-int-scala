@@ -71,6 +71,6 @@ class RefineStep(
         }
     }
 
-    ctx.retain_table(table.section, refined_name, ftbl)
+    ctx.sections.tables.retain(refined_name, ftbl)
   }
 }

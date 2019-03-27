@@ -36,6 +36,6 @@ class ArrangeStep(
     val ftbl = arrangements.foldLeft(otbl) { case (tbl, arr) =>
       arr.arrange(ctx, tbl)
     }
-    ctx.retain_table(table.section, table_name, ftbl)
+    ctx.sections.tables.retain(table_name, ftbl)
   }
 }

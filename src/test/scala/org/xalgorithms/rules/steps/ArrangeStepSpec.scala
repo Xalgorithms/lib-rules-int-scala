@@ -34,6 +34,8 @@ import org.xalgorithms.rules.steps._
 class ArrangeStepSpec extends FlatSpec with Matchers with MockFactory with BeforeAndAfter {
   var _table: Seq[Map[String, IntrinsicValue]] = null
   var _ctx: Context = null
+  var _secs: Sections = null
+  var _tables: TableSection = null
 
   before {
     _table = Seq(
@@ -43,13 +45,17 @@ class ArrangeStepSpec extends FlatSpec with Matchers with MockFactory with Befor
       Map("a" -> new NumberValue(5.0), "b" -> new StringValue("E")),
       Map("a" -> new NumberValue(3.0), "b" -> new StringValue("D"))
     )
+    _ctx = mock[Context]
+    _secs = mock[Sections]
+    _tables = mock[TableSection]
   }
 
+  // TODO: eliminate sections with tables
   val _section = "table"
   val _table_name = "table0"
 
   def verify_table(ex: Seq[Map[String, IntrinsicValue]]) = {
-    (section: String, name: String, tbl: Seq[Map[String, IntrinsicValue]]) => {
+    (name: String, tbl: Seq[Map[String, IntrinsicValue]]) => {
       tbl.size shouldEqual(ex.size)
       (tbl, ex).zipped.foreach { case (rac, rex) =>
         rac("a").asInstanceOf[NumberValue].value shouldEqual(rex("a").asInstanceOf[NumberValue].value)
@@ -63,10 +69,8 @@ class ArrangeStepSpec extends FlatSpec with Matchers with MockFactory with Befor
     ex_table: Seq[Map[String, IntrinsicValue]],
     func: ArrangeFunction
   ) = {
-    val ctx = mock[Context]
-
-    (ctx.lookup_table _).expects(_section, _table_name).returning(_table)
-    (ctx.retain_table _).expects(_section, ex_table_name, *) onCall verify_table(ex_table)
+    (_ctx.lookup_table _).expects(_section, _table_name).returning(_table)
+    (_tables.retain _).expects(ex_table_name, *) onCall verify_table(ex_table)
 
     val step = new ArrangeStep(
       new TableReference(_section, _table_name),
@@ -74,7 +78,7 @@ class ArrangeStepSpec extends FlatSpec with Matchers with MockFactory with Befor
       Seq(new Arrangement(func))
     )
 
-    step.execute(ctx)
+    step.execute(_ctx)
   }
 
   def verify_sort_step(
@@ -83,10 +87,8 @@ class ArrangeStepSpec extends FlatSpec with Matchers with MockFactory with Befor
     col: String = null,
     args: Seq[String] = Seq()
   ) = {
-    val ctx = mock[Context]
-
-    (ctx.lookup_table _).expects(_section, _table_name).returning(_table)
-    (ctx.retain_table _).expects(_section, ex_table_name, *) onCall verify_table(ex_table)
+    (_ctx.lookup_table _).expects(_section, _table_name).returning(_table)
+    (_tables.retain _).expects(ex_table_name, *) onCall verify_table(ex_table)
 
     val vargs = if (col != null) {
       Seq(new DocumentReferenceValue("_local", col)) ++ args.map(new StringValue(_))
@@ -100,7 +102,7 @@ class ArrangeStepSpec extends FlatSpec with Matchers with MockFactory with Befor
       Seq(new Arrangement(new ArrangeFunction("sort", vargs)))
     )
 
-    step.execute(ctx)
+    step.execute(_ctx)
   }
 
   "ArrangeStep" should "shift rows in the table" in {
@@ -119,6 +121,9 @@ class ArrangeStepSpec extends FlatSpec with Matchers with MockFactory with Befor
       _table(3),
     )
 
+    (_ctx.sections _).expects().repeated(5).times.returning(_secs)
+    (_secs.tables _).expects().repeated(5).times.returning(_tables)
+
     verify_step("table_ex0", ex_table0, new ArrangeFunction("shift", Seq(new NumberValue(-2.0))))
     verify_step("table_ex1", ex_table1, new ArrangeFunction("shift", Seq(new NumberValue(1.0))))
     // // no shift yields original
@@ -136,6 +141,9 @@ class ArrangeStepSpec extends FlatSpec with Matchers with MockFactory with Befor
       _table(1),
       _table(0),
     )
+
+    (_ctx.sections _).expects().returning(_secs)
+    (_secs.tables _).expects().returning(_tables)
 
     verify_step("table_ex0", ex_table, new ArrangeFunction("invert", Seq()))
   }
@@ -162,6 +170,9 @@ class ArrangeStepSpec extends FlatSpec with Matchers with MockFactory with Befor
     )
     // alpha, ascending
     val ex_table3 = ex_table2.reverse
+
+    (_ctx.sections _).expects().repeated(10).times.returning(_secs)
+    (_secs.tables _).expects().repeated(10).times.returning(_tables)
 
     verify_sort_step("table_ex0", ex_table0, "a", Seq("numeric", "descending"))
     verify_sort_step("table_ex1", ex_table1, "a", Seq("numeric", "ascending"))

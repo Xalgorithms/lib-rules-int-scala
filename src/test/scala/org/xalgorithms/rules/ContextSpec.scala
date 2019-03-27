@@ -46,7 +46,7 @@ class ContextSpec extends FlatSpec with Matchers with MockFactory {
         ctx.lookup_in_map(name, k) shouldEqual(None)
       }
 
-      ctx.retain_map(name, m)
+      ctx.sections.retain_values(name, m)
       m.keySet.foreach { k =>
         val ov = ctx.lookup_in_map(name, k)
 
@@ -58,25 +58,6 @@ class ContextSpec extends FlatSpec with Matchers with MockFactory {
           case None => true shouldEqual(false)
         }
       }
-    }
-  }
-
-  it should "retain tables" in {
-    val tables = Map(
-      "map0" -> Seq(
-        Map("a" -> new StringValue("00"), "b" -> new StringValue("01")),
-        Map("a" -> new StringValue("10"), "b" -> new StringValue("11"))),
-      "map1" -> Seq(
-        Map("A" -> new StringValue("xx"), "B" -> new StringValue("yy")),
-        Map("A" -> new StringValue("yy"), "B" -> new StringValue("zz"))))
-
-    val ctx = new GlobalContext(null)
-
-    tables.foreach { case (name, table) =>
-      ctx.lookup_table("tables0", name) shouldEqual(null)
-
-      ctx.retain_table("tables0", name, table)
-      ctx.lookup_table("tables0", name) shouldEqual(table)
     }
   }
 
@@ -120,40 +101,40 @@ class ContextSpec extends FlatSpec with Matchers with MockFactory {
 
   it should "delegate to the contained Context" in {
     val ctx = mock[Context]
+    val secs = mock[Sections]
     val rctx = new RowContext(ctx, Map(), Map())
 
-    val ptref = new PackagedTableReference("", "", "", "")
-    (ctx.load _).expects(ptref).once
-    rctx.load(ptref)
+    (ctx.sections _).expects.returning(secs)
+    rctx.sections shouldEqual(secs)
 
-    val section = "section"
-    val m = Map("a" -> new StringValue("00"), "b" -> new StringValue("01"))
-    val tbl = Seq(m)
-    val tbl_key = "table0"
-    val map_key = "a.b.c"
-    val map_val = new StringValue("map_val")
+    // val section = "section"
+    // val m = Map("a" -> new StringValue("00"), "b" -> new StringValue("01"))
+    // val tbl = Seq(m)
+    // val tbl_key = "table0"
+    // val map_key = "a.b.c"
+    // val map_val = new StringValue("map_val")
 
-    (ctx.retain_map _).expects(section, m).once
-    rctx.retain_map(section, m)
+    // (secs.retain_values _).expects(section, m).once
+    // rctx.sections.retain_values(section, m)
 
-    (ctx.retain_table _).expects(section, tbl_key, tbl)
-    rctx.retain_table(section, tbl_key, tbl)
+    // (ctx.retain_table _).expects(section, tbl_key, tbl)
+    // rctx.retain_table(section, tbl_key, tbl)
 
-    (ctx.lookup_in_map _).expects(section, map_key).returning(Some(map_val))
-    val mov = rctx.lookup_in_map(section, map_key)
-    mov match {
-      case Some(mv) => {
-        mv shouldBe a [StringValue]
-        mv.asInstanceOf[StringValue].value shouldEqual(map_val.value)
-      }
-      case None => true shouldEqual(false)
-    }
+    // (ctx.lookup_in_map _).expects(section, map_key).returning(Some(map_val))
+    // val mov = rctx.lookup_in_map(section, map_key)
+    // mov match {
+    //   case Some(mv) => {
+    //     mv shouldBe a [StringValue]
+    //     mv.asInstanceOf[StringValue].value shouldEqual(map_val.value)
+    //   }
+    //   case None => true shouldEqual(false)
+    // }
 
-    (ctx.lookup_table _).expects(section, tbl_key).returning(tbl)
-    val t = rctx.lookup_table(section, tbl_key)
-    t.length shouldEqual(1)
-    t(0)("a") shouldBe a [StringValue]
-    t(0)("a").asInstanceOf[StringValue].value shouldEqual(m("a").value)
+    // (ctx.lookup_table _).expects(section, tbl_key).returning(tbl)
+    // val t = rctx.lookup_table(section, tbl_key)
+    // t.length shouldEqual(1)
+    // t(0)("a") shouldBe a [StringValue]
+    // t(0)("a").asInstanceOf[StringValue].value shouldEqual(m("a").value)
 
     val revisions = (0 to faker.number().numberBetween(2, 10)).map { i =>
       Tuple2(new TableReference("table", s"table${i}"), Seq(new Revision(Seq())))

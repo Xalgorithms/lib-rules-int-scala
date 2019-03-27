@@ -28,14 +28,13 @@ import play.api.libs.json._
 import scala.collection.mutable
 
 abstract class Context {
-  def load(ptref: PackagedTableReference)
-  def retain_map(section: String, m: Map[String, IntrinsicValue])
-  def retain_table(section: String, key: String, t: Seq[Map[String, IntrinsicValue]])
   def lookup_in_map(section: String, key: String): Option[IntrinsicValue]
   def lookup_table(section: String, table_name: String): Seq[Map[String, IntrinsicValue]]
   def revisions(): Map[TableReference, Seq[Revision]]
   def revise_table(ref: TableReference, rev: Revision)
   def serialize: JsValue
+
+  def sections: Sections
 }
 
 class GlobalContext(load: LoadTableSource) extends Context {
@@ -47,19 +46,6 @@ class GlobalContext(load: LoadTableSource) extends Context {
   def enumerate_tables(
     fn: (String, String, Seq[Map[String, IntrinsicValue]]) => Unit
   ) = _sections.enumerate_tables(fn)
-
-  def load(ptref: PackagedTableReference) {
-    _sections.tables.remember(ptref)
-  }
-
-  def retain_map(section: String, m: Map[String, IntrinsicValue]) {
-    _sections.retain_values(section, m)
-  }
-
-  def retain_table(section: String, key: String, t: Seq[Map[String, IntrinsicValue]]) {
-    // section is ignored
-    _sections.tables.retain(key, t)
-  }
 
   def lookup_in_map(section: String, key: String): Option[IntrinsicValue] = {
     _sections.values(section) match {
@@ -111,10 +97,7 @@ class RowContext(
 ) extends Context {
   val _local = mutable.Map[String, IntrinsicValue]() ++ local_row
 
-
-  def load(ptref: PackagedTableReference) = ctx.load(ptref)
-  def retain_map(section: String, m: Map[String, IntrinsicValue]) = ctx.retain_map(section, m)
-  def retain_table(section: String, key: String, t: Seq[Map[String, IntrinsicValue]]) = ctx.retain_table(section, key, t)
+  def sections = ctx.sections
 
   def update_local(ch: Map[String, IntrinsicValue]): Unit = {
     _local ++= ch

@@ -28,7 +28,7 @@ import org.xalgorithms.rules.elements.{ PackagedTableReference }
 
 class RequireStep(val table_reference: PackagedTableReference, val indexes: Seq[String]) extends Step {
   def execute(ctx: Context) {
-    ctx.load(table_reference)
+    ctx.sections.tables.remember(table_reference)
   }
 }
 

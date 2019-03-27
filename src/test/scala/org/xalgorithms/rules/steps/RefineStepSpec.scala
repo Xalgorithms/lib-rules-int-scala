@@ -42,6 +42,12 @@ class RefineStepSpec extends FlatSpec with Matchers with MockFactory {
 
   "RefineStep" should "first filter then process tables and finally take" in {
     val ctx = mock[Context]
+    val secs = mock[Sections]
+    val tables = mock[TableSection]
+
+    (ctx.sections _).expects.returning(secs)
+    (secs.tables _).expects.returning(tables)
+
     val section = "table"
     val table_name = "table0"
     val refined_table_name = "table_refined"
@@ -100,7 +106,7 @@ class RefineStepSpec extends FlatSpec with Matchers with MockFactory {
     (tr.refine _).expects(*, mapped_table(2)) onCall verify_a_new_row(mapped_table(2), final_table(1))
 
     (ctx.lookup_table _).expects(section, table_name).returning(_table)
-    (ctx.retain_table _).expects(section, refined_table_name, *) onCall { (section, name, tbl) =>
+    (tables.retain _).expects(refined_table_name, *) onCall { (name, tbl) =>
       tbl.size shouldEqual(final_table.size)
       (tbl, final_table).zipped.foreach { case (rac, rex) =>
         rex.foreach { case (k, v) =>
