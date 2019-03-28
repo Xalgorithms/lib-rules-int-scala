@@ -261,6 +261,27 @@ object ResolveManyValues {
   ): Seq[Option[IntrinsicValue]] = vs.map(ResolveValue(_, ctx))
 }
 
+object ResolveMapOfValues {
+  def apply(
+    movs: Map[String, Value],
+    ctx: Context
+  ): Map[String, IntrinsicValue] = {
+    movs.foldLeft(Map[String, IntrinsicValue]()) { case (m, (k, v)) =>
+      ResolveValue(v, ctx) match {
+        case Some(iv) => m + (k -> iv)
+        case None => m
+      }
+    }
+  }
+}
+
+object ResolveSeqMapOfValues {
+  def apply(
+    smovs: Seq[Map[String, Value]],
+    ctx: Context
+  ): Seq[Map[String, IntrinsicValue]] = smovs.map(ResolveMapOfValues(_, ctx))
+}
+
 object Implicits {
   implicit val val_writes = new Writes[IntrinsicValue] {
     def writes(v: IntrinsicValue) = v match {

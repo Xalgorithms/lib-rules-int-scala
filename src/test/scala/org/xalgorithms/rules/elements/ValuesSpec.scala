@@ -331,4 +331,32 @@ class ValuesSpec extends FlatSpec with Matchers with MockFactory with AppendedCl
 
     ResolveManyValues(vals, ctx) shouldEqual(ex_vals)
   }
+
+  "ResolveMapOfValues" should "resolve a Map[S, V] to Map[S, IV]" in {
+    val cv0 = mock[ComputedValue]
+    val iv0 = mock[IntrinsicValue]
+    val iv1 = mock[IntrinsicValue]
+    val iv2 = mock[IntrinsicValue]
+    val cv3 = mock[ComputedValue]
+    val iv3 = mock[IntrinsicValue]
+    val ctx = mock[Context]
+
+    (cv0.resolve _).expects(ctx).returning(Some(iv0))
+    (cv3.resolve _).expects(ctx).returning(Some(iv3))
+
+    val movs = Map(
+      "a" -> cv0,
+      "b" -> iv1,
+      "c" -> iv2,
+      "d" -> cv3
+    )
+    val ex = Map(
+      "a" -> iv0,
+      "b" -> iv1,
+      "c" -> iv2,
+      "d" -> iv3
+    )
+
+    ResolveMapOfValues(movs, ctx) shouldEqual(ex)
+  }
 }
