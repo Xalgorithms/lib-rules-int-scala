@@ -100,7 +100,6 @@ class AssembleStepSpec extends FlatSpec with Matchers with MockFactory with Befo
   }
 
   "AssembleStep" should "load all keys using COLUMNS" in {
-    val section = "table"
     val table_name = "table0"
     val final_table_name = "table_final"
     val table = Seq(
@@ -108,22 +107,20 @@ class AssembleStepSpec extends FlatSpec with Matchers with MockFactory with Befo
       Map("a" -> new StringValue("10"), "b" -> new StringValue("11")))
 
     val cols = new Column(
-      new TableReference(section, table_name),
+      new TableReference(table_name),
       Seq(new ColumnsTableSource(Seq(), Seq())))
 
     val step = new AssembleStep(final_table_name, Seq(cols))
 
-    (_ctx.sections _).expects().returning(_secs)
-    (_secs.tables _).expects().returning(_tables)
-
-    (_ctx.lookup_table _).expects(section, table_name).returning(table)
+    (_ctx.sections _).expects().anyNumberOfTimes.returning(_secs)
+    (_secs.tables _).expects().anyNumberOfTimes.returning(_tables)
+    (_tables.lookup _).expects(table_name).returning(Some(table))
     (_tables.retain _).expects(final_table_name, *) onCall verify_table(table)
 
     step.execute(_ctx)
   }
 
   it should "load specific keys using COLUMNS" in {
-    val section = "table"
     val table_name = "table0"
     val final_table_name = "table_final"
     val table = Seq(
@@ -133,22 +130,20 @@ class AssembleStepSpec extends FlatSpec with Matchers with MockFactory with Befo
     val skipped_keys = Seq("b")
 
     val cols = new Column(
-      new TableReference(section, table_name),
+      new TableReference(table_name),
       Seq(new ColumnsTableSource(keys, Seq())))
 
     val step = new AssembleStep(final_table_name, Seq(cols))
 
-    (_ctx.sections _).expects().returning(_secs)
-    (_secs.tables _).expects().returning(_tables)
-
-    (_ctx.lookup_table _).expects(section, table_name).returning(table)
+    (_ctx.sections _).expects().anyNumberOfTimes.returning(_secs)
+    (_secs.tables _).expects().anyNumberOfTimes.returning(_tables)
+    (_tables.lookup _).expects(table_name).returning(Some(table))
     (_tables.retain _).expects(final_table_name, *) onCall verify_table(table, keys, skipped_keys)
 
     step.execute(_ctx)
   }
 
   it should "be filtered by WHEN using COLUMNS" in {
-    val section = "table"
     val table_name = "table0"
     val final_table_name = "table_final"
     val table = Seq(
@@ -163,22 +158,20 @@ class AssembleStepSpec extends FlatSpec with Matchers with MockFactory with Befo
       new When(new StringValue("11"), new DocumentReferenceValue("_context", "b"), "eq"),
       new When(new StringValue("00"), new DocumentReferenceValue("_context", "a"), "eq"))
     val cols = new Column(
-      new TableReference(section, table_name),
+      new TableReference(table_name),
       Seq(new ColumnsTableSource(Seq(), whens)))
 
     val step = new AssembleStep(final_table_name, Seq(cols))
 
-    (_ctx.sections _).expects().returning(_secs)
-    (_secs.tables _).expects().returning(_tables)
-
-    (_ctx.lookup_table _).expects(section, table_name).returning(table)
+    (_ctx.sections _).expects().anyNumberOfTimes.returning(_secs)
+    (_secs.tables _).expects().anyNumberOfTimes.returning(_tables)
+    (_tables.lookup _).expects(table_name).returning(Some(table))
     (_tables.retain _).expects(final_table_name, *) onCall verify_table(table_expected)
 
     step.execute(_ctx)
   }
 
   it should "perform a cross-product of multiple COLUMNS from different tables" in {
-    val section = "table"
     val table0_name = "table0"
     val table1_name = "table1"
     val final_table_name = "table_final"
@@ -194,13 +187,13 @@ class AssembleStepSpec extends FlatSpec with Matchers with MockFactory with Befo
     val keys1 = Seq("c", "d")
 
     val cols0 = new Column(
-      new TableReference(section, table0_name),
+      new TableReference(table0_name),
       Seq(
         new ColumnsTableSource(keys0, Seq())
       )
     )
     val cols1 = new Column(
-      new TableReference(section, table1_name),
+      new TableReference(table1_name),
       Seq(
         new ColumnsTableSource(keys1, Seq())
       )
@@ -208,18 +201,17 @@ class AssembleStepSpec extends FlatSpec with Matchers with MockFactory with Befo
 
     val step = new AssembleStep(final_table_name, Seq(cols0, cols1))
 
-    (_ctx.sections _).expects().returning(_secs)
-    (_secs.tables _).expects().returning(_tables)
+    (_ctx.sections _).expects().anyNumberOfTimes.returning(_secs)
+    (_secs.tables _).expects().anyNumberOfTimes.returning(_tables)
 
-    (_ctx.lookup_table _).expects(section, table0_name).returning(table0)
-    (_ctx.lookup_table _).expects(section, table1_name).returning(table1)
+    (_tables.lookup _).expects(table0_name).returning(Some(table0))
+    (_tables.lookup _).expects(table1_name).returning(Some(table1))
     (_tables.retain _).expects(final_table_name, *) onCall verify_both_tables((table0, table1), (keys0, keys1))
 
     step.execute(_ctx)
   }
 
   it should "merge multiple COLUMNS from the same table" in {
-    val section = "table"
     val table_name = "table0"
     val final_table_name = "table_final"
     val table = Seq(
@@ -235,7 +227,7 @@ class AssembleStepSpec extends FlatSpec with Matchers with MockFactory with Befo
     val skipped_keys = Seq("b")
 
     val cols = new Column(
-      new TableReference(section, table_name),
+      new TableReference(table_name),
       Seq(
         new ColumnsTableSource(keys0, Seq()),
         new ColumnsTableSource(keys1, Seq())
@@ -244,17 +236,15 @@ class AssembleStepSpec extends FlatSpec with Matchers with MockFactory with Befo
 
     val step = new AssembleStep(final_table_name, Seq(cols))
 
-    (_ctx.sections _).expects().returning(_secs)
-    (_secs.tables _).expects().returning(_tables)
-
-    (_ctx.lookup_table _).expects(section, table_name).returning(table)
+    (_ctx.sections _).expects().anyNumberOfTimes.returning(_secs)
+    (_secs.tables _).expects().anyNumberOfTimes.returning(_tables)
+    (_tables.lookup _).expects(table_name).returning(Some(table))
     (_tables.retain _).expects(final_table_name, *) onCall verify_table(table, keys0 ++ keys1, skipped_keys)
 
     step.execute(_ctx)
   }
 
   it should "load a single column using COLUMN" in {
-    val section = "table"
     val table_name = "table0"
     val final_table_name = "table_final"
     val table = Seq(
@@ -264,15 +254,14 @@ class AssembleStepSpec extends FlatSpec with Matchers with MockFactory with Befo
     val tk = "bbb"
 
     val cols = new Column(
-      new TableReference(section, table_name),
+      new TableReference(table_name),
       Seq(new ColumnTableSource(tk, sk, Seq())))
 
     val step = new AssembleStep(final_table_name, Seq(cols))
 
-    (_ctx.sections _).expects().returning(_secs)
-    (_secs.tables _).expects().returning(_tables)
-
-    (_ctx.lookup_table _).expects(section, table_name).returning(table)
+    (_ctx.sections _).expects().anyNumberOfTimes.returning(_secs)
+    (_secs.tables _).expects().anyNumberOfTimes.returning(_tables)
+    (_tables.lookup _).expects(table_name).returning(Some(table))
     (_tables.retain _).expects(final_table_name, *) onCall verify_table_named_columns(table, Map(sk -> tk))
 
     step.execute(_ctx)
@@ -280,7 +269,6 @@ class AssembleStepSpec extends FlatSpec with Matchers with MockFactory with Befo
 
   it should "perform a cross-product of multiple COLUMN from different tables" in {
     val ctx = mock[Context]
-    val section = "table"
     val table0_name = "table0"
     val table1_name = "table1"
     val final_table_name = "table_final"
@@ -296,13 +284,13 @@ class AssembleStepSpec extends FlatSpec with Matchers with MockFactory with Befo
     val table1_key = "d"
 
     val cols0 = new Column(
-      new TableReference(section, table0_name),
+      new TableReference(table0_name),
       Seq(
         new ColumnTableSource(table0_key, table0_key, Seq())
       )
     )
     val cols1 = new Column(
-      new TableReference(section, table1_name),
+      new TableReference(table1_name),
       Seq(
         new ColumnTableSource(table1_key, table1_key, Seq())
       )
@@ -310,11 +298,10 @@ class AssembleStepSpec extends FlatSpec with Matchers with MockFactory with Befo
 
     val step = new AssembleStep(final_table_name, Seq(cols0, cols1))
 
-    (_ctx.sections _).expects().returning(_secs)
-    (_secs.tables _).expects().returning(_tables)
-
-    (_ctx.lookup_table _).expects(section, table0_name).returning(table0)
-    (_ctx.lookup_table _).expects(section, table1_name).returning(table1)
+    (_ctx.sections _).expects().anyNumberOfTimes.returning(_secs)
+    (_secs.tables _).expects().anyNumberOfTimes.returning(_tables)
+    (_tables.lookup _).expects(table0_name).returning(Some(table0))
+    (_tables.lookup _).expects(table1_name).returning(Some(table1))
     (_tables.retain _).expects(final_table_name, *) onCall verify_both_tables(
       (table0, table1), (Seq(table0_key), Seq(table1_key)))
 
@@ -322,7 +309,6 @@ class AssembleStepSpec extends FlatSpec with Matchers with MockFactory with Befo
   }
 
   it should "be filtered by WHEN using COLUMN" in {
-    val section = "table"
     val table_name = "table0"
     val final_table_name = "table_final"
     val table = Seq(
@@ -339,22 +325,21 @@ class AssembleStepSpec extends FlatSpec with Matchers with MockFactory with Befo
       new When(new StringValue("11"), new DocumentReferenceValue("_context", "b"), "eq"),
       new When(new StringValue("00"), new DocumentReferenceValue("_context", "a"), "eq"))
     val cols = new Column(
-      new TableReference(section, table_name),
+      new TableReference(table_name),
       Seq(new ColumnTableSource(tk, sk, whens)))
 
     val step = new AssembleStep(final_table_name, Seq(cols))
 
-    (_ctx.sections _).expects().returning(_secs)
-    (_secs.tables _).expects().returning(_tables)
+    (_ctx.sections _).expects().anyNumberOfTimes.returning(_secs)
+    (_secs.tables _).expects().anyNumberOfTimes.returning(_tables)
 
-    (_ctx.lookup_table _).expects(section, table_name).returning(table)
+    (_tables.lookup _).expects(table_name).returning(Some(table))
     (_tables.retain _).expects(final_table_name, *) onCall verify_table_named_columns(table_expected, Map(sk -> tk))
 
     step.execute(_ctx)
   }
 
   it should "combine COLUMNS with additional COLUMN using a merge" in {
-    val section = "table"
     val final_table_name = "table_final"
     val table0_name = "table0"
     val table0 = Seq(
@@ -371,11 +356,11 @@ class AssembleStepSpec extends FlatSpec with Matchers with MockFactory with Befo
     )
       
     val table0_col = new Column(
-      new TableReference(section, table0_name),
+      new TableReference(table0_name),
       Seq(new ColumnsTableSource(Seq(), Seq()))
     )
     val table1_col = new Column(
-      new TableReference(section, table1_name),
+      new TableReference(table1_name),
       Seq(
         new ColumnTableSource(t1k0, t1k0, Seq()),
         new ColumnTableSource(t1k1, t1k1, Seq())
@@ -384,11 +369,10 @@ class AssembleStepSpec extends FlatSpec with Matchers with MockFactory with Befo
 
     val step = new AssembleStep(final_table_name, Seq(table0_col, table1_col))
 
-    (_ctx.sections _).expects().returning(_secs)
-    (_secs.tables _).expects().returning(_tables)
-
-    (_ctx.lookup_table _).expects(section, table0_name).returning(table0)
-    (_ctx.lookup_table _).expects(section, table1_name).returning(table1)
+    (_ctx.sections _).expects().anyNumberOfTimes.returning(_secs)
+    (_secs.tables _).expects().anyNumberOfTimes.returning(_tables)
+    (_tables.lookup _).expects(table0_name).returning(Some(table0))
+    (_tables.lookup _).expects(table1_name).returning(Some(table1))
 
     (_tables.retain _).expects(final_table_name, *) onCall { (name, tbl) =>
       tbl.size shouldEqual(table0.size * table1.size)

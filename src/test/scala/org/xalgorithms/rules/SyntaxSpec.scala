@@ -51,7 +51,6 @@ class SyntaxSpec extends FlatSpec with Matchers {
     o.columns.length shouldBe 2
 
     o.columns(0).table should not be null
-    o.columns(0).table.section shouldEqual("tables")
     o.columns(0).table.name shouldEqual("table0")
     o.columns(0).sources.length shouldBe 1
     o.columns(0).sources(0) should not be null
@@ -69,7 +68,6 @@ class SyntaxSpec extends FlatSpec with Matchers {
     o.columns(0).sources(0).whens(0).op shouldEqual("eq")
 
     o.columns(1).table should not be null
-    o.columns(1).table.section shouldEqual("tables")
     o.columns(1).table.name shouldEqual("table1")
     o.columns(1).sources.length shouldBe 1
     o.columns(1).sources(0) should not be null
@@ -110,20 +108,17 @@ class SyntaxSpec extends FlatSpec with Matchers {
     val o = steps.head.asInstanceOf[ReviseStep]
 
     o.table should not be null
-    o.table.section shouldEqual("tables")
     o.table.name shouldEqual("items")
 
     o.sources.length shouldEqual(3)
     o.sources(0) should not be null
     o.sources(0) shouldBe a [AddRevisionSource]
     o.sources(0).column shouldEqual("a.b")
-    o.sources(0).asInstanceOf[TableRevisionSource].table.section shouldEqual("table")
     o.sources(0).asInstanceOf[TableRevisionSource].table.name shouldEqual("foo")
 
     o.sources(1) should not be null
     o.sources(1) shouldBe a [UpdateRevisionSource]
     o.sources(1).column shouldEqual("c")
-    o.sources(1).asInstanceOf[TableRevisionSource].table.section shouldEqual("table")
     o.sources(1).asInstanceOf[TableRevisionSource].table.name shouldEqual("bar")
 
     o.sources(2) should not be null
@@ -139,7 +134,6 @@ class SyntaxSpec extends FlatSpec with Matchers {
     val o = steps.head.asInstanceOf[RefineStep]
 
     o.table should not be null
-    o.table.section shouldEqual("tables")
     o.table.name shouldEqual("x")
     o.refined_name shouldEqual("y")
 
@@ -212,7 +206,6 @@ class SyntaxSpec extends FlatSpec with Matchers {
 
     steps(0) should not be null
     steps(0) shouldBe a [ArrangeStep]
-    steps(0).asInstanceOf[ArrangeStep].table.section shouldEqual("table")
     steps(0).asInstanceOf[ArrangeStep].table.name shouldEqual("x")
     steps(0).asInstanceOf[ArrangeStep].table_name shouldEqual("y")
 
@@ -224,7 +217,6 @@ class SyntaxSpec extends FlatSpec with Matchers {
 
     steps(1) should not be null
     steps(1) shouldBe a [ArrangeStep]
-    steps(1).asInstanceOf[ArrangeStep].table.section shouldEqual("table")
     steps(1).asInstanceOf[ArrangeStep].table.name shouldEqual("a")
     steps(1).asInstanceOf[ArrangeStep].table_name shouldEqual("b")
 
@@ -245,7 +237,6 @@ class SyntaxSpec extends FlatSpec with Matchers {
 
     steps(2) should not be null
     steps(2) shouldBe a [ArrangeStep]
-    steps(2).asInstanceOf[ArrangeStep].table.section shouldEqual("table")
     steps(2).asInstanceOf[ArrangeStep].table.name shouldEqual("p")
     steps(2).asInstanceOf[ArrangeStep].table_name shouldEqual("q")
 
@@ -255,7 +246,6 @@ class SyntaxSpec extends FlatSpec with Matchers {
     arr20.func.name shouldEqual("sort")
     arr20.func.args.length shouldEqual(3)
     arr20.func.args(0) shouldBe a [ReferenceValue]
-    arr20.func.args(0).asInstanceOf[ReferenceValue].section shouldEqual("_local")
     arr20.func.args(0).asInstanceOf[ReferenceValue].key shouldEqual("a")
     arr20.func.args(1) shouldBe a [StringValue]
     arr20.func.args(1).asInstanceOf[StringValue].value shouldEqual("alpha")
@@ -284,7 +274,6 @@ class SyntaxSpec extends FlatSpec with Matchers {
     o.columns.length shouldBe 2
 
     o.columns(0).table should not be null
-    o.columns(0).table.section shouldEqual("tables")
     o.columns(0).table.name shouldEqual("table0")
     o.columns(0).sources.length shouldBe 1
     o.columns(0).sources(0) should not be null
@@ -293,7 +282,6 @@ class SyntaxSpec extends FlatSpec with Matchers {
     o.columns(0).sources(0).whens.length shouldBe 0
 
     o.columns(1).table should not be null
-    o.columns(1).table.section shouldEqual("tables")
     o.columns(1).table.name shouldEqual("table1")
     o.columns(1).sources.length shouldBe 1
     o.columns(1).sources(0) should not be null
@@ -316,7 +304,6 @@ class SyntaxSpec extends FlatSpec with Matchers {
     o.columns.length shouldBe 1
 
     o.columns(0).table should not be null
-    o.columns(0).table.section shouldEqual("table")
     o.columns(0).table.name shouldEqual("table0")
     o.columns(0).sources.length shouldBe 1
     o.columns(0).sources(0) should not be null

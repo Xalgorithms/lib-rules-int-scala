@@ -43,13 +43,18 @@ class ReferencesSpec extends FlatSpec with Matchers with MockFactory {
         Map("A" -> "xx", "B" -> "yy"),
         Map("A" -> "yy", "B" -> "zz")))
     val ctx = mock[Context]
+    val secs = mock[Sections]
+    val tables_sec = mock[TableSection]
+
+    (ctx.sections _).expects().repeated(tables.size).times.returning(secs)
+    (secs.tables _).expects().repeated(tables.size).times.returning(tables_sec)
 
     tables.foreach { case (key, ex) =>
       val expected = ex.map(map_to_expected)
-      val ref = new TableReference("tables", key)
+      val ref = new TableReference(key)
 
-      (ctx.lookup_table _).expects("tables", key).returning(expected)
-      ref.get(ctx) shouldEqual(expected)
+      (tables_sec.lookup _).expects(key).returning(Some(expected))
+      ref.get(ctx) shouldEqual(Some(expected))
     }
   }
 }

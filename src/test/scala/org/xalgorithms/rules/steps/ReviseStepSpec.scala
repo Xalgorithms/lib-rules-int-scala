@@ -48,9 +48,11 @@ class ReviseStepSpec extends FlatSpec with Matchers with MockFactory {
     expected: Seq[Option[Map[String, String]]]
   ): Unit = {
     val ctx = mock[Context]
+    val secs = mock[Sections]
+    val tables = mock[TableSection]
 
-    val target_ref = new TableReference("table", faker.hacker().noun())
-    val source_ref = new TableReference("table", faker.hacker().noun())
+    val target_ref = new TableReference(faker.hacker().noun())
+    val source_ref = new TableReference(faker.hacker().noun())
 
     val source = mock[RevisionSource]
     val sources = Seq(source)
@@ -86,7 +88,10 @@ class ReviseStepSpec extends FlatSpec with Matchers with MockFactory {
         }
       }
     }
-    (ctx.lookup_table _).expects(target_ref.section, target_ref.name).returning(make_string_table(target_table))
+
+    (ctx.sections _).expects().returning(secs)
+    (secs.tables _).expects().returning(tables)
+    (tables.lookup _).expects(target_ref.name).returning(Some(make_string_table(target_table)))
 
     val step = new ReviseStep(target_ref, sources)
     step.execute(ctx)

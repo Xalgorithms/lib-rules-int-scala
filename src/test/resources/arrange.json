@@ -2,7 +2,7 @@
   "steps" : [
     {
       "name" : "arrange",
-      "table" : { "type" : "reference", "section" : "table", "key" : "x" },
+      "table" : "x",
       "table_name" : "y",
       "arrangements" : [
         {
@@ -14,7 +14,7 @@
     },
     {
       "name" : "arrange",
-      "table" : { "type" : "reference", "section" : "table", "key" : "a" },
+      "table" : "a",
       "table_name" : "b",
       "arrangements" : [
         {
@@ -35,7 +35,7 @@
     },
     {
       "name" : "arrange",
-      "table" : { "type" : "reference", "section" : "table", "key" : "p" },
+      "table" : "p",
       "table_name" : "q",
       "arrangements" : [
         {

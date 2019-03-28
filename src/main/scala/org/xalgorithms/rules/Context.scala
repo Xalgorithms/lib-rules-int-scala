@@ -29,7 +29,6 @@ import scala.collection.mutable
 
 abstract class Context {
   def lookup_in_map(section: String, key: String): Option[IntrinsicValue]
-  def lookup_table(section: String, table_name: String): Seq[Map[String, IntrinsicValue]]
   def revisions(): Map[TableReference, Seq[Revision]]
   def revise_table(ref: TableReference, rev: Revision)
   def serialize: JsValue
@@ -52,11 +51,6 @@ class GlobalContext(load: LoadTableSource) extends Context {
       case Some(vals) => vals.lookup(key)
       case None => None
     }
-  }
-
-  def lookup_table(section: String, table_name: String): Seq[Map[String, IntrinsicValue]] = {
-    // section is ignored
-    _sections.tables.lookup(table_name).getOrElse(null)
   }
 
   def revisions(): Map[TableReference, Seq[Revision]] = {
@@ -108,8 +102,6 @@ class RowContext(
     case "_context" => context_row.get(key)
     case _ => ctx.lookup_in_map(section, key)
   }
-
-  def lookup_table(section: String, table_name: String): Seq[Map[String, IntrinsicValue]] = ctx.lookup_table(section, table_name)
 
   def revisions(): Map[TableReference, Seq[Revision]] = ctx.revisions()
 

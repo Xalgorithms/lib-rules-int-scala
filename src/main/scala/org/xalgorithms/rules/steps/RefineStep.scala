@@ -57,20 +57,21 @@ class RefineStep(
   }
 
   def execute(ctx: Context) {
-    val ftbl = ctx.lookup_table(
-      table.section,
-      table.name
-    ).foldLeft(Seq[Map[String, IntrinsicValue]]()) { case (ntbl, row) =>
-        val rctx = new RowContext(ctx, row, null)
-        val original_row_opt: Option[Tuple2[RowContext, Map[String, IntrinsicValue]]] = Some((rctx, row))
-        _application_order.foldLeft(original_row_opt) { case (tup, k) =>
-          apply_refinements(k, tup)
-        } match {
-          case Some(tup) => ntbl :+ tup._2
-          case None => ntbl
+    table.get(ctx) match {
+      case Some(otbl) => {
+        val ftbl = otbl.foldLeft(Seq[Map[String, IntrinsicValue]]()) { case (ntbl, row) =>
+          val rctx = new RowContext(ctx, row, null)
+          val original_row_opt: Option[Tuple2[RowContext, Map[String, IntrinsicValue]]] = Some((rctx, row))
+          _application_order.foldLeft(original_row_opt) { case (tup, k) =>
+            apply_refinements(k, tup)
+          } match {
+            case Some(tup) => ntbl :+ tup._2
+            case None => ntbl
+          }
         }
+        ctx.sections.tables.retain(refined_name, ftbl)
+      }
+      case None => { }
     }
-
-    ctx.sections.tables.retain(refined_name, ftbl)
   }
 }

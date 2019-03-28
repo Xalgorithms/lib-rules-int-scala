@@ -45,8 +45,8 @@ class RefineStepSpec extends FlatSpec with Matchers with MockFactory {
     val secs = mock[Sections]
     val tables = mock[TableSection]
 
-    (ctx.sections _).expects.returning(secs)
-    (secs.tables _).expects.returning(tables)
+    (ctx.sections _).expects.anyNumberOfTimes.returning(secs)
+    (secs.tables _).expects.anyNumberOfTimes.returning(tables)
 
     val section = "table"
     val table_name = "table0"
@@ -75,7 +75,9 @@ class RefineStepSpec extends FlatSpec with Matchers with MockFactory {
     val verify_row = (row: Map[String, IntrinsicValue], ex: Option[Map[String, IntrinsicValue]]) => {
       (ctx: Context, ac_row: Map[String, IntrinsicValue]) => {
         ctx shouldBe a [RowContext]
-        ctx.asInstanceOf[RowContext].local_row shouldEqual(row)
+        val ac_as_strings = ctx.asInstanceOf[RowContext].local_row.mapValues(_.asInstanceOf[StringValue].value)
+        val ex_as_strings = row.mapValues(_.asInstanceOf[StringValue].value)
+        ac_as_strings shouldEqual(ex_as_strings)
         ex
       }
     }
@@ -86,26 +88,26 @@ class RefineStepSpec extends FlatSpec with Matchers with MockFactory {
       new_row: Map[String, IntrinsicValue]
     ) => verify_row(local_row, Some(new_row))
 
-    (fr0.refine _).expects(*, _table(0)) onCall verify_no_row(_table(0))
-    (fr0.refine _).expects(*, _table(1)) onCall verify_a_row(_table(1))
-    (fr0.refine _).expects(*, _table(2)) onCall verify_a_row(_table(2))
-    (fr0.refine _).expects(*, _table(3)) onCall verify_a_row(_table(3))
-    (fr0.refine _).expects(*, _table(4)) onCall verify_a_row(_table(4))
+    (fr0.refine _).expects(*, *) onCall verify_no_row(_table(0))
+    (fr0.refine _).expects(*, *) onCall verify_a_row(_table(1))
+    (fr0.refine _).expects(*, *) onCall verify_a_row(_table(2))
+    (fr0.refine _).expects(*, *) onCall verify_a_row(_table(3))
+    (fr0.refine _).expects(*, *) onCall verify_a_row(_table(4))
 
-    (fr1.refine _).expects(*, _table(1)) onCall verify_a_row(_table(1))
-    (fr1.refine _).expects(*, _table(2)) onCall verify_a_row(_table(2))
-    (fr1.refine _).expects(*, _table(3)) onCall verify_no_row(_table(3))
-    (fr1.refine _).expects(*, _table(4)) onCall verify_a_row(_table(4))
+    (fr1.refine _).expects(*, *) onCall verify_a_row(_table(1))
+    (fr1.refine _).expects(*, *) onCall verify_a_row(_table(2))
+    (fr1.refine _).expects(*, *) onCall verify_no_row(_table(3))
+    (fr1.refine _).expects(*, *) onCall verify_a_row(_table(4))
 
-    (mr.refine _).expects(*, filtered_table(0)) onCall verify_a_new_row(filtered_table(0), mapped_table(0))
-    (mr.refine _).expects(*, filtered_table(1)) onCall verify_a_new_row(filtered_table(1), mapped_table(1))
-    (mr.refine _).expects(*, filtered_table(2)) onCall verify_a_new_row(filtered_table(2), mapped_table(2))
+    (mr.refine _).expects(*, *) onCall verify_a_new_row(filtered_table(0), mapped_table(0))
+    (mr.refine _).expects(*, *) onCall verify_a_new_row(filtered_table(1), mapped_table(1))
+    (mr.refine _).expects(*, *) onCall verify_a_new_row(filtered_table(2), mapped_table(2))
 
-    (tr.refine _).expects(*, mapped_table(0)) onCall verify_a_new_row(mapped_table(0), final_table(0))
-    (tr.refine _).expects(*, mapped_table(1)) onCall verify_no_row(mapped_table(1))
-    (tr.refine _).expects(*, mapped_table(2)) onCall verify_a_new_row(mapped_table(2), final_table(1))
+    (tr.refine _).expects(*, *) onCall verify_a_new_row(mapped_table(0), final_table(0))
+    (tr.refine _).expects(*, *) onCall verify_no_row(mapped_table(1))
+    (tr.refine _).expects(*, *) onCall verify_a_new_row(mapped_table(2), final_table(1))
 
-    (ctx.lookup_table _).expects(section, table_name).returning(_table)
+    (tables.lookup _).expects(table_name).returning(Some(_table))
     (tables.retain _).expects(refined_table_name, *) onCall { (name, tbl) =>
       tbl.size shouldEqual(final_table.size)
       (tbl, final_table).zipped.foreach { case (rac, rex) =>
@@ -117,7 +119,7 @@ class RefineStepSpec extends FlatSpec with Matchers with MockFactory {
     }
 
     val step = new RefineStep(
-      new TableReference(section, table_name),
+      new TableReference(table_name),
       refined_table_name,
       Seq(fr0, mr, fr1, tr))
 

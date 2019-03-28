@@ -50,8 +50,6 @@ class ArrangeStepSpec extends FlatSpec with Matchers with MockFactory with Befor
     _tables = mock[TableSection]
   }
 
-  // TODO: eliminate sections with tables
-  val _section = "table"
   val _table_name = "table0"
 
   def verify_table(ex: Seq[Map[String, IntrinsicValue]]) = {
@@ -69,11 +67,13 @@ class ArrangeStepSpec extends FlatSpec with Matchers with MockFactory with Befor
     ex_table: Seq[Map[String, IntrinsicValue]],
     func: ArrangeFunction
   ) = {
-    (_ctx.lookup_table _).expects(_section, _table_name).returning(_table)
+    (_ctx.sections _).expects().returning(_secs)
+    (_secs.tables _).expects().returning(_tables)
+    (_tables.lookup _).expects(_table_name).returning(Some(_table))
     (_tables.retain _).expects(ex_table_name, *) onCall verify_table(ex_table)
 
     val step = new ArrangeStep(
-      new TableReference(_section, _table_name),
+      new TableReference(_table_name),
       ex_table_name,
       Seq(new Arrangement(func))
     )
@@ -87,7 +87,9 @@ class ArrangeStepSpec extends FlatSpec with Matchers with MockFactory with Befor
     col: String = null,
     args: Seq[String] = Seq()
   ) = {
-    (_ctx.lookup_table _).expects(_section, _table_name).returning(_table)
+    (_ctx.sections _).expects().returning(_secs)
+    (_secs.tables _).expects().returning(_tables)
+    (_tables.lookup _).expects(_table_name).returning(Some(_table))
     (_tables.retain _).expects(ex_table_name, *) onCall verify_table(ex_table)
 
     val vargs = if (col != null) {
@@ -97,7 +99,7 @@ class ArrangeStepSpec extends FlatSpec with Matchers with MockFactory with Befor
     }
 
     val step = new ArrangeStep(
-      new TableReference(_section, _table_name),
+      new TableReference(_table_name),
       ex_table_name,
       Seq(new Arrangement(new ArrangeFunction("sort", vargs)))
     )

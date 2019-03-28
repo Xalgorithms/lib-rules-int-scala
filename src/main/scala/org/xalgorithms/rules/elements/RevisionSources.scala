@@ -35,8 +35,9 @@ abstract class TableRevisionSource(
 ) extends RevisionSource(column) {
   def make(cols: Map[String, IntrinsicValue]): Change
   def evaluate(ctx: Context): Seq[Change] = {
-    ctx.lookup_table(table.section, table.name).map { r =>
-      make(Map(column -> r(column)))
+    table.get(ctx) match {
+      case Some(tbl) => tbl.map { r => make(Map(column -> r(column))) }
+      case None => Seq()
     }
   }
 }

@@ -2,7 +2,7 @@
   "steps": [
     {
       "name" : "refine",
-      "table" : { "type" : "reference", "section" : "tables", "key" : "x" },
+      "table" : "x",
       "refined_name" : "y",
       "refinements" : [
         {

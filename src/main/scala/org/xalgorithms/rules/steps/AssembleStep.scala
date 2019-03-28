@@ -85,13 +85,17 @@ class AssembleStep(val name: String, val columns: Seq[Column]) extends Step {
   def build_table_from_sources(
     ctx: Context, tr: TableReference, srcs: Seq[TableSource]
   ): Seq[Map[String, IntrinsicValue]] = {
-    val src_tbl = ctx.lookup_table(tr.section, tr.name)
-    srcs.foldLeft(Seq[Map[String, IntrinsicValue]]()) { (tbl, src) =>
-      // sources are within the SAME table and are the same size, so we zip/merge them together
-      // as if this were an append
-      val ntbl = apply_whens(ctx, build_tuple_from_source(src_tbl, src), src.whens)
+    tr.get(ctx) match {
+      case Some(src_tbl) => {
+        srcs.foldLeft(Seq[Map[String, IntrinsicValue]]()) { (tbl, src) =>
+          // sources are within the SAME table and are the same size, so we zip/merge them together
+          // as if this were an append
+          val ntbl = apply_whens(ctx, build_tuple_from_source(src_tbl, src), src.whens)
 
-      merge(tbl, ntbl)
+          merge(tbl, ntbl)
+        }
+      }
+      case None => Seq()
     }
   }
 }

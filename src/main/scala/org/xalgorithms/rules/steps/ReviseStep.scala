@@ -155,13 +155,19 @@ class ReviseStep(val table: TableReference, val sources: Seq[RevisionSource]) ex
       }
     }
 
-    val table_changes = ctx.lookup_table(table.section, table.name).indices.map { i =>
-      if (i < all_changes.size) {
-        all_changes(i)
-      } else {
-        Seq(None)
+    val table_changes = table.get(ctx) match {
+      case Some(tbl) => {
+        tbl.indices.map { i =>
+          if (i < all_changes.size) {
+            all_changes(i)
+          } else {
+            Seq(None)
+          }
+        }
       }
+      case None => Seq(Seq(None))
     }
+
     ctx.revise_table(table, new Revision(table_changes))
   }
 }

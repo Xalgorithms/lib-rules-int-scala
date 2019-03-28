@@ -64,7 +64,7 @@ class ContextSpec extends FlatSpec with Matchers with MockFactory {
   it should "record revisions to a table" in {
     val ctx = new GlobalContext(null)
     val tables = (0 to faker.number().numberBetween(2, 10)).map { i =>
-      new TableReference("table", s"table${i}")
+      new TableReference(s"table${i}")
     }
 
     tables.foreach { table => ctx.revise_table(table, new Revision(Seq())) }
@@ -137,7 +137,7 @@ class ContextSpec extends FlatSpec with Matchers with MockFactory {
     // t(0)("a").asInstanceOf[StringValue].value shouldEqual(m("a").value)
 
     val revisions = (0 to faker.number().numberBetween(2, 10)).map { i =>
-      Tuple2(new TableReference("table", s"table${i}"), Seq(new Revision(Seq())))
+      Tuple2(new TableReference(s"table${i}"), Seq(new Revision(Seq())))
     }.toMap
 
     (ctx.revisions _).expects().returning(revisions)

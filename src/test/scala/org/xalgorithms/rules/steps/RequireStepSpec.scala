@@ -37,7 +37,7 @@ class RequireSpec extends FlatSpec with Matchers {
 
     step.execute(ctx)
 
-    val tbl = ctx.lookup_table("table", "table0")
+    val tbl = ctx.sections.tables.lookup("table0").getOrElse(null)
 
     tbl should not be null
     tbl.length shouldEqual(3)
@@ -63,7 +63,7 @@ class RequireSpec extends FlatSpec with Matchers {
 
     step.execute(ctx)
 
-    val tbl = ctx.lookup_table("table", "table_hier")
+    val tbl = ctx.sections.tables.lookup("table_hier").getOrElse(null)
 
     tbl should not be null
     tbl.length shouldEqual(2)

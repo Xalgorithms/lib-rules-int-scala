@@ -35,14 +35,9 @@ import org.xalgorithms.rules.elements._
 
 object StepProduce {
   implicit val columnReads: Reads[Column] = (
-    (JsPath \ "table").read[JsObject] and
+    (JsPath \ "table").read[String] and
     (JsPath \ "sources").read[JsArray]
   )(produce_column _)
-
-  implicit val tableReferenceReads: Reads[TableReference] = (
-    (JsPath \ "section").read[String] and
-    (JsPath \ "key").read[String]
-  )(produce_table_reference _)
 
   implicit val colsSourceReads: Reads[ColumnsTableSource] = (
     (JsPath \ "columns").read[JsArray] and
@@ -78,12 +73,12 @@ object StepProduce {
 
   implicit val addRevisionSourceReads : Reads[AddRevisionSource] = (
     (JsPath \ "column").read[String] and
-    (JsPath \ "table").read[JsObject]
+    (JsPath \ "table").read[String]
   )(produce_add_revision_source _)
   
   implicit val updateRevisionSourceReads : Reads[UpdateRevisionSource] = (
     (JsPath \ "column").read[String] and
-    (JsPath \ "table").read[JsObject]
+    (JsPath \ "table").read[String]
   )(produce_update_revision_source _)
 
   implicit val refinementReads: Reads[Refinement] = (
@@ -99,6 +94,7 @@ object StepProduce {
     (JsPath \ "args").read[Seq[Value]]
   )(produce_arrangement _)
 
+  // TODO: eliminate *OrNull in favour of Option[*]
   def stringOrNull(content: JsObject, k: String): String = {
     return (content \ k).validate[String].getOrElse(null)
   }
@@ -174,17 +170,17 @@ object StepProduce {
     case _ => null
   }
 
-  def produce_add_revision_source(column: String, table: JsObject): AddRevisionSource = {
+  def produce_add_revision_source(column: String, table: String): AddRevisionSource = {
     return new AddRevisionSource(
       column,
-      table.validate[TableReference].getOrElse(null)
+      new TableReference(table)
     )
   }
 
-  def produce_update_revision_source(column: String, table: JsObject): UpdateRevisionSource = {
+  def produce_update_revision_source(column: String, table: String): UpdateRevisionSource = {
     return new UpdateRevisionSource(
       column,
-      table.validate[TableReference].getOrElse(null)
+      new TableReference(table)
     )
   }
 
@@ -192,16 +188,12 @@ object StepProduce {
     return new RemoveRevisionSource(column)
   }
 
-  def produce_column(table_reference: JsObject, sources: JsArray): Column = {
+  def produce_column(table: String, sources: JsArray): Column = {
     return new Column(
-      table_reference.validate[TableReference].getOrElse(null),
+      new TableReference(table),
       sources.validate[Seq[ColumnsTableSource]].getOrElse(Seq()) ++
         sources.validate[Seq[ColumnTableSource]].getOrElse(Seq())
     )
-  }
-
-  def produce_table_reference(section: String, key: String): TableReference = {
-    return new TableReference(section, key)
   }
 
   def produce_assemble(content: JsObject): Step = {
@@ -219,7 +211,7 @@ object StepProduce {
 
   def produce_revise(content: JsObject): Step = {
     return new ReviseStep(
-      (content \ "table").validate[TableReference].getOrElse(null),
+      new TableReference(stringOrNull(content, "table")),
       (content \ "revisions").validate[Seq[RevisionSource]].getOrElse(Seq())
     )
   }
@@ -272,7 +264,7 @@ object StepProduce {
 
   def produce_refine(content: JsObject): Step = {
     return new RefineStep(
-      (content \ "table").validate[TableReference].getOrElse(null),
+      new TableReference(stringOrNull(content, "table")),
       (content \ "refined_name").validate[String].getOrElse(null),
       (content \ "refinements").validate[Seq[Refinement]].getOrElse(Seq())
     )
@@ -280,7 +272,7 @@ object StepProduce {
 
   def produce_arrange(content: JsObject): Step = {
     return new ArrangeStep(
-      (content \ "table").validate[TableReference].getOrElse(null),
+      new TableReference(stringOrNull(content, "table")),
       (content \ "table_name").validate[String].getOrElse(null),
       (content \ "arrangements").validate[Seq[Arrangement]].getOrElse(Seq())
     )

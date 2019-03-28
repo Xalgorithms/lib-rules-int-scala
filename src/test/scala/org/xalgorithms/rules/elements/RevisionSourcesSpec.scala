@@ -27,7 +27,7 @@ import com.github.javafaker.Faker
 import org.scalamock.scalatest.MockFactory
 import org.scalatest._
 
-import org.xalgorithms.rules.{ Change, Addition, Update, Removal, Context }
+import org.xalgorithms.rules._
 
 class RevisionSourcesSpec extends FlatSpec with Matchers with MockFactory {
   val faker = new Faker()
@@ -45,16 +45,27 @@ class RevisionSourcesSpec extends FlatSpec with Matchers with MockFactory {
     scala.util.Random.shuffle(it).take(1).head
   }
 
+  def mock_context(name: String, table: Seq[Map[String, IntrinsicValue]]): Context = {
+    val ctx = mock[Context]
+    val secs = mock[Sections]
+    val tables = mock[TableSection]
+
+    (ctx.sections _).expects().returning(secs)
+    (secs.tables _).expects().returning(tables)
+    (tables.lookup _).expects(name).returning(Some(table))
+
+    ctx
+  }
+
   "UpdateRevisionSource" should "produce a list of updates to a table" in {
     val table = new TestTable()
-    val table_ref = new TableReference(faker.lorem.word(), faker.lorem.word())
+    val table_ref = new TableReference(faker.lorem.word())
 
     (0 to faker.number().numberBetween(2, 10)).foreach { _ =>
-      val ctx = mock[Context]
+      val ctx = mock_context(table_ref.name, table.tbl)
       val column_name = sample(table.cols)
       val src = new UpdateRevisionSource(column_name, table_ref)
 
-      (ctx.lookup_table _).expects(table_ref.section, table_ref.name).returning(table.tbl)
       val changes = src.evaluate(ctx)
 
       changes.size shouldEqual(table.tbl.size)
@@ -72,14 +83,13 @@ class RevisionSourcesSpec extends FlatSpec with Matchers with MockFactory {
 
   "AddRevisionSource" should "produce a list of updates to a table" in {
     val table = new TestTable()
-    val table_ref = new TableReference(faker.lorem.word(), faker.lorem.word())
+    val table_ref = new TableReference(faker.lorem.word())
 
     (0 to faker.number().numberBetween(2, 10)).foreach { _ =>
-      val ctx = mock[Context]
+      val ctx = mock_context(table_ref.name, table.tbl)
       val column_name = sample(table.cols)
       val src = new AddRevisionSource(column_name, table_ref)
 
-      (ctx.lookup_table _).expects(table_ref.section, table_ref.name).returning(table.tbl)
       val changes = src.evaluate(ctx)
 
       changes.size shouldEqual(table.tbl.size)
@@ -97,7 +107,7 @@ class RevisionSourcesSpec extends FlatSpec with Matchers with MockFactory {
 
   "RemoveRevisionSource" should "produce a list of changes referencing a column" in {
     val table = new TestTable()
-    val table_ref = new TableReference(faker.lorem.word(), faker.lorem.word())
+    val table_ref = new TableReference(faker.lorem.word())
 
     (0 to faker.number().numberBetween(2, 10)).foreach { _ =>
       val ctx = mock[Context]

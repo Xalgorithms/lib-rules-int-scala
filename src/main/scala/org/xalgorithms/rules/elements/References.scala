@@ -25,8 +25,8 @@ package org.xalgorithms.rules.elements
 
 import org.xalgorithms.rules.{ Context }
 
-class TableReference(val section: String, val name: String) {
-  def get(ctx: Context): Seq[Map[String, Value]] = {
-    ctx.lookup_table(section, name)
+class TableReference(val name: String) {
+  def get(ctx: Context): Option[Seq[Map[String, IntrinsicValue]]] = {
+    ctx.sections.tables.lookup(name).map(ResolveSeqMapOfValues(_, ctx))
   }
 }

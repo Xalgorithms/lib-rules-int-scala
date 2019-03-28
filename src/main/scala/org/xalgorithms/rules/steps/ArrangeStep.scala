@@ -32,10 +32,14 @@ class ArrangeStep(
   val arrangements: Seq[Arrangement]
 ) extends Step {
   def execute(ctx: Context) {
-    val otbl = ctx.lookup_table(table.section, table.name)
-    val ftbl = arrangements.foldLeft(otbl) { case (tbl, arr) =>
-      arr.arrange(ctx, tbl)
+    table.get(ctx) match {
+      case Some(otbl) => {
+        val ftbl = arrangements.foldLeft(otbl) { case (tbl, arr) =>
+          arr.arrange(ctx, tbl)
+        }
+        ctx.sections.tables.retain(table_name, ftbl)
+      }
+      case None => {}
     }
-    ctx.sections.tables.retain(table_name, ftbl)
   }
 }

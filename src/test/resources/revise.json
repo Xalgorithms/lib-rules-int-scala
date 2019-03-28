@@ -2,20 +2,20 @@
   "steps" : [
     {
       "name" : "revise",
-      "table" : { "type" : "reference", "section" : "tables", "key" : "items" },
+      "table" : "items",
       "revisions" : [
         {
           "op" : "add",
           "source" : {
             "column" : "a.b",
-            "table" : { "type" : "reference", "section" : "table", "key" : "foo" }
+            "table" : "foo"
           }
         },
         {
           "op" : "update",
           "source" : {
             "column" : "c",
-            "table" : { "type" : "reference", "section" : "table", "key" : "bar" }
+            "table" : "bar"
           }
         },
         {

@@ -4,7 +4,7 @@
       "table_name": "table_final",
       "columns": [
         {
-          "table": {"section": "tables", "key": "table0", "type": "reference"},
+          "table": "table0",
           "sources": [
             {
               "columns": ["c0", "c1", "c2"],
@@ -19,7 +19,7 @@
           ]
         },
         {
-          "table": {"section": "tables", "key": "table1", "type": "reference"},
+          "table": "table1",
           "sources": [
             {
               "name": "y",

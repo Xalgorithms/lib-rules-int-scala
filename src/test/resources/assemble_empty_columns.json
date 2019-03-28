@@ -4,11 +4,7 @@
       "table_name": "table_final",
       "columns": [
         {
-          "table": {
-            "section": "table",
-            "key": "table0",
-            "type": "reference"
-          },
+          "table": "table0",
           "sources": [
             {
               "columns": [
