@@ -211,32 +211,6 @@ object StepProduce {
     )
   }
 
-  def produce_filter(content: JsObject): Step = {
-    return new FilterStep(
-      (content \ "table").validate[TableReference].getOrElse(null),
-      (content \ "filters").validate[Seq[When]].getOrElse(Seq())
-    )
-  }
-
-  def produce_keep(content: JsObject): Step = {
-    return new KeepStep(stringOrNull(content, "name"), stringOrNull(content, "table_name"))
-  }
-
-  def produce_map(content: JsObject): Step = {
-    return new MapStep(
-      (content \ "table").validate[TableReference].getOrElse(null),
-      (content \ "assignments").validate[Seq[Assignment]].getOrElse(Seq())
-    )
-  }
-
-  def produce_reduce(content: JsObject): Step = {
-    return new ReduceStep(
-      (content \ "filters").validate[Seq[When]].getOrElse(Seq()),
-      (content \ "table").validate[TableReference].getOrElse(null),
-      (content \ "assignments").validate[Seq[Assignment]].getOrElse(Seq())
-    )
-  }
-
   def produce_require(content: JsObject): Step = {
     return new RequireStep(
       produce_packaged_table_reference((content \ "reference").as[JsObject]),
@@ -314,10 +288,6 @@ object StepProduce {
 
   val fns = Map[String, (JsObject) => Step](
     "assemble" -> produce_assemble,
-    "filter"   -> produce_filter,
-    "keep"     -> produce_keep,
-    "map"      -> produce_map,
-    "reduce"   -> produce_reduce,
     "require"  -> produce_require,
     "revise"   -> produce_revise,
     "refine"   -> produce_refine,
