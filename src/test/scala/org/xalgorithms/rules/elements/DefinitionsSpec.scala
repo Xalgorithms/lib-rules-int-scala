@@ -51,7 +51,8 @@ class DefinitionsSpec extends FlatSpec with Matchers with MockFactory with Befor
     (cv.resolve _).expects(_ctx).returning(Some(iv))
 
     vals.foreach { case (k, v) =>
-      val ass = new Assignment(k, v)
+      val rv = new SectionReferenceValue("_local", k)
+      val ass = new Assignment(rv, v)
       val m = ass.evaluate(_ctx)
 
       m.contains(k) shouldBe(true)
@@ -64,7 +65,7 @@ class DefinitionsSpec extends FlatSpec with Matchers with MockFactory with Befor
 
     (cv.resolve _).expects(_ctx).returning(None)
 
-    val ass = new Assignment("x", cv)
+    val ass = new Assignment(new SectionReferenceValue("_local", "x"), cv)
     ass.evaluate(_ctx) shouldEqual(Map[String, IntrinsicValue]())
   }
 }

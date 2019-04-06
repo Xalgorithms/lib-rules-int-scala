@@ -31,10 +31,11 @@ class PackagedTableReference(val package_name: String, val id: String, val versi
 class Column(val table: TableReference, val sources: Seq[TableSource]) {
 }
 
-class Assignment(val target: String, val source: Value) {
+class Assignment(val target: ReferenceValue, val source: Value) {
   def evaluate(ctx: Context): Map[String, IntrinsicValue] = {
+    // TODO: update in the sections
     ResolveValue(source, ctx) match {
-      case Some(iv) => Map(target -> iv)
+      case Some(iv) => Map(target.key -> iv)
       case None => Map()
     }
   }

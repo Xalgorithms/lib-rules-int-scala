@@ -126,6 +126,19 @@ class SyntaxSpec extends FlatSpec with Matchers {
     o.sources(2).column shouldEqual("d")
   }
 
+  def validate_reference_value(v: Value, ex_section: String, ex_key: String) = {
+    v should not be null
+    v shouldBe a [ReferenceValue]
+    v.asInstanceOf[ReferenceValue].section shouldEqual(ex_section)
+    v.asInstanceOf[ReferenceValue].key shouldEqual(ex_key)
+  }
+
+  def validate_number_value(v: Value, ex_v: BigDecimal) = {
+    v should not be null
+    v shouldBe a [NumberValue]
+    v.asInstanceOf[NumberValue].value shouldEqual(ex_v)
+  }
+
   def validate_refine(steps: Seq[Step]) {
     steps.length shouldBe 1
     steps.head should not be null
@@ -137,47 +150,48 @@ class SyntaxSpec extends FlatSpec with Matchers {
     o.table.name shouldEqual("x")
     o.refined_name shouldEqual("y")
 
-    o.refinements.length shouldEqual(5)
+    o.refinements.length shouldEqual(7)
 
     o.refinements(0) shouldBe a [FilterRefinement]
     val when0 = o.refinements(0).asInstanceOf[FilterRefinement].when.getOrElse(null)
     when0 should not be null
-    when0.left should not be null
-    when0.left shouldBe a [ReferenceValue]
-    when0.left.asInstanceOf[ReferenceValue].section shouldEqual("_local")
-    when0.left.asInstanceOf[ReferenceValue].key shouldEqual("a")
-    when0.right should not be null
-    when0.right shouldBe a [NumberValue]
-    when0.right.asInstanceOf[NumberValue].value shouldEqual(BigDecimal(3.0))
+    validate_reference_value(when0.left, "_column", "a")
+    validate_number_value(when0.right, 3.0)
     when0.op shouldEqual("lt")
 
     o.refinements(1) shouldBe a [MapRefinement]
     val ass0 = o.refinements(1).asInstanceOf[MapRefinement].assignment.getOrElse(null)
     ass0 should not be null
-    ass0.target shouldEqual("a")
-    ass0.source should not be null
-    ass0.source shouldBe a [ReferenceValue]
-    ass0.source.asInstanceOf[ReferenceValue].section shouldEqual("_local")
-    ass0.source.asInstanceOf[ReferenceValue].key shouldEqual("b")
+    validate_reference_value(ass0.target, "_column", "a")
+    validate_reference_value(ass0.source, "_column", "b")
 
     o.refinements(2) shouldBe a [MapRefinement]
     val ass1 = o.refinements(2).asInstanceOf[MapRefinement].assignment.getOrElse(null)
     ass1 should not be null
-    ass1.target shouldEqual("x")
-    ass1.source should not be null
-    ass1.source shouldBe a [FunctionValue]
-    ass1.source.asInstanceOf[FunctionValue].name shouldEqual("concat")
-    ass1.source.asInstanceOf[FunctionValue].args.length shouldEqual(2)
-    ass1.source.asInstanceOf[FunctionValue].args(0) shouldBe a [ReferenceValue]
-    ass1.source.asInstanceOf[FunctionValue].args(0).asInstanceOf[ReferenceValue].section shouldEqual("_local")
-    ass1.source.asInstanceOf[FunctionValue].args(0).asInstanceOf[ReferenceValue].key shouldEqual("b")
-    ass1.source.asInstanceOf[FunctionValue].args(1) shouldBe a [ReferenceValue]
-    ass1.source.asInstanceOf[FunctionValue].args(1).asInstanceOf[ReferenceValue]
-    ass1.source.asInstanceOf[FunctionValue].args(1).asInstanceOf[ReferenceValue].section shouldEqual("_local")
-    ass1.source.asInstanceOf[FunctionValue].args(1).asInstanceOf[ReferenceValue].key shouldEqual("c")
+    validate_reference_value(ass1.target, "_local", "a")
+    validate_reference_value(ass1.source, "_column", "b")
 
-    o.refinements(3) shouldBe a [FunctionalTakeRefinement]
-    val fn0 = o.refinements(3).asInstanceOf[FunctionalTakeRefinement].func.getOrElse(null)
+    o.refinements(3) shouldBe a [MapRefinement]
+    val ass2 = o.refinements(3).asInstanceOf[MapRefinement].assignment.getOrElse(null)
+    ass2 should not be null
+    validate_reference_value(ass2.target, "_local", "a")
+    validate_reference_value(ass2.source, "_local", "b")
+
+    o.refinements(4) shouldBe a [MapRefinement]
+    val ass3 = o.refinements(4).asInstanceOf[MapRefinement].assignment.getOrElse(null)
+    ass3 should not be null
+    validate_reference_value(ass3.target, "_local", "a")
+    ass3.source should not be null
+    ass3.source shouldBe a [FunctionValue]
+    ass3.source.asInstanceOf[FunctionValue].name shouldEqual("concat")
+    ass3.source.asInstanceOf[FunctionValue].args.length shouldEqual(2)
+    validate_reference_value(
+      ass3.source.asInstanceOf[FunctionValue].args(0), "_column", "b")
+    validate_reference_value(
+      ass3.source.asInstanceOf[FunctionValue].args(1), "_column", "c")
+
+    o.refinements(5) shouldBe a [FunctionalTakeRefinement]
+    val fn0 = o.refinements(5).asInstanceOf[FunctionalTakeRefinement].func.getOrElse(null)
     fn0 should not be null
     fn0 shouldBe a [TakeFunction]
     fn0.name shouldEqual("nth")
@@ -187,17 +201,11 @@ class SyntaxSpec extends FlatSpec with Matchers {
     fn0.args(1) shouldBe a [NumberValue]
     fn0.args(1).asInstanceOf[NumberValue].value shouldEqual(BigDecimal(3.0))
 
-    o.refinements(4) shouldBe a [ConditionalTakeRefinement]
-    val when1 = o.refinements(4).asInstanceOf[ConditionalTakeRefinement].when.getOrElse(null)
+    o.refinements(6) shouldBe a [ConditionalTakeRefinement]
+    val when1 = o.refinements(6).asInstanceOf[ConditionalTakeRefinement].when.getOrElse(null)
     when1 should not be null
-    when1.left should not be null
-    when1.left shouldBe a [ReferenceValue]
-    when1.left.asInstanceOf[ReferenceValue].section shouldEqual("_local")
-    when1.left.asInstanceOf[ReferenceValue].key shouldEqual("a")
-    when1.right should not be null
-    when1.right shouldBe a [ReferenceValue]
-    when1.right.asInstanceOf[ReferenceValue].section shouldEqual("_local")
-    when1.right.asInstanceOf[ReferenceValue].key shouldEqual("b")
+    validate_reference_value(when1.left, "_column", "a")
+    validate_reference_value(when1.right, "_column", "b")
     when1.op shouldEqual("eq")
   }
 

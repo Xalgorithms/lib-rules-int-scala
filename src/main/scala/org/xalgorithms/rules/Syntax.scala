@@ -32,6 +32,7 @@ import org.xalgorithms.rules.steps._
 import org.xalgorithms.rules.elements._
 
 // TODO: This module stills uses null. Convert to Option.
+// TODO: remove explicit returns
 
 object StepProduce {
   implicit val columnReads: Reads[Column] = (
@@ -62,7 +63,7 @@ object StepProduce {
   )(produce_value _)
 
   implicit val assignmentReads: Reads[Assignment] = (
-    (JsPath \ "target").read[String] and
+    (JsPath \ "target").read[JsObject] and
     (JsPath \ "source").read[JsObject]
   )(produce_assignment _)
 
@@ -157,10 +158,17 @@ object StepProduce {
     case _           => null
   }
 
-  def produce_assignment(target: String, source: JsObject): Assignment = {
-    return new Assignment(
-      target, source.validate[Value].getOrElse(null)
-    )
+  // TODO: this is junky... fix it.. the nested matches just look wrong
+  def produce_assignment(target: JsObject, source: JsObject): Assignment = {
+    val sv = source.validate[Value].getOrElse(null)
+    target.validate[Value] match {
+      case JsSuccess(v, _) => v match {
+        case (rv: ReferenceValue) => new Assignment(rv, sv)
+        case _ => new Assignment(null, sv)
+      }
+
+      case _ => new Assignment(null, sv)
+    }
   }
 
   def produce_revision_source(op: String, source: JsObject): RevisionSource = op match {
