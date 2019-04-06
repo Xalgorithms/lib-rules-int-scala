@@ -34,34 +34,7 @@ import org.xalgorithms.rules.elements._
 class ContextSpec extends FlatSpec with Matchers with MockFactory {
   val faker = new Faker()
 
-  "GlobalContext" should "retain maps" in {
-    val maps = Map(
-      "map0" -> Map("a" -> new StringValue("00"), "b" -> new StringValue("01")),
-      "map1" -> Map("A" -> new StringValue("xx"), "B" -> new StringValue("yy")))
-
-    val ctx = new GlobalContext(null)
-
-    maps.foreach { case (name, m) =>
-      m.keySet.foreach { k =>
-        ctx.lookup_in_map(name, k) shouldEqual(None)
-      }
-
-      ctx.sections.retain_values(name, m)
-      m.keySet.foreach { k =>
-        val ov = ctx.lookup_in_map(name, k)
-
-        ov match {
-          case Some(v) => {
-            v shouldBe a [StringValue]
-            v.asInstanceOf[StringValue].value shouldEqual(m(k).value)
-          }
-          case None => true shouldEqual(false)
-        }
-      }
-    }
-  }
-
-  it should "record revisions to a table" in {
+  "GlobalContext" should "record revisions to a table" in {
     val ctx = new GlobalContext(null)
     val tables = (0 to faker.number().numberBetween(2, 10)).map { i =>
       new TableReference(s"table${i}")
@@ -77,35 +50,13 @@ class ContextSpec extends FlatSpec with Matchers with MockFactory {
     }
   }
 
-  "RowContext" should "evaluate _local and _context map lookups" in {
-    val local_row = Map("a" -> new StringValue("00"), "b" -> new StringValue("01"))
-    val context_row = Map("a" -> new StringValue("10"), "b" -> new StringValue("11"))
+  "RowContext" should "delegate to the contained Context" in {
+    // val ctx = mock[Context]
+    // val secs = mock[Sections]
+    // val rctx = new RowContext(ctx, Map(), Map())
 
-    val rows = Map("_local" -> local_row, "_context" -> context_row)
-    val ctx = new RowContext(null, local_row, context_row)
-
-    rows.foreach { case (section, row) =>
-      row.foreach { case (key, v) =>
-        val cov = ctx.lookup_in_map(section, key)
-
-        cov match {
-          case Some(cv) => {
-            cv shouldBe a [StringValue]
-            cv.asInstanceOf[StringValue].value shouldEqual(row(key).value)
-          }
-          case None => true shouldEqual(false)
-        }
-      }
-    }
-  }
-
-  it should "delegate to the contained Context" in {
-    val ctx = mock[Context]
-    val secs = mock[Sections]
-    val rctx = new RowContext(ctx, Map(), Map())
-
-    (ctx.sections _).expects.returning(secs)
-    rctx.sections shouldEqual(secs)
+    // (ctx.sections _).expects.returning(secs)
+    // rctx.sections shouldEqual(secs)
 
     // val section = "section"
     // val m = Map("a" -> new StringValue("00"), "b" -> new StringValue("01"))
@@ -136,39 +87,39 @@ class ContextSpec extends FlatSpec with Matchers with MockFactory {
     // t(0)("a") shouldBe a [StringValue]
     // t(0)("a").asInstanceOf[StringValue].value shouldEqual(m("a").value)
 
-    val revisions = (0 to faker.number().numberBetween(2, 10)).map { i =>
-      Tuple2(new TableReference(s"table${i}"), Seq(new Revision(Seq())))
-    }.toMap
+    // val revisions = (0 to faker.number().numberBetween(2, 10)).map { i =>
+    //   Tuple2(new TableReference(s"table${i}"), Seq(new Revision(Seq())))
+    // }.toMap
 
-    (ctx.revisions _).expects().returning(revisions)
+    // (ctx.revisions _).expects().returning(revisions)
 
-    rctx.revisions() shouldEqual(revisions)
+    // rctx.revisions() shouldEqual(revisions)
   }
 
-  it should "allow local modification without affecting the original source" in {
-    val ctx = mock[Context]
-    val keys = Seq("a", "b", "c")
-    val new_keys = Seq("d", "e")
-    val original = keys.map { k => (k, new StringValue(k)) }.toMap
-    val original_size = original.size
-    val rctx = new RowContext(ctx, original, Map())
+  // it should "allow local modification without affecting the original source" in {
+  //   val ctx = mock[Context]
+  //   val keys = Seq("a", "b", "c")
+  //   val new_keys = Seq("d", "e")
+  //   val original = keys.map { k => (k, new StringValue(k)) }.toMap
+  //   val original_size = original.size
+  //   val rctx = new RowContext(ctx, original, Map())
 
-    new_keys.foreach { k =>
-      rctx.update_local(Map(k -> new StringValue(k)))
+  //   new_keys.foreach { k =>
+  //     rctx.update_local(Map(k -> new StringValue(k)))
 
-      original.size shouldEqual(original_size)
-      original.contains(k) shouldEqual(false)
+  //     original.size shouldEqual(original_size)
+  //     original.contains(k) shouldEqual(false)
 
-      val vo = rctx.lookup_in_map("_local", k)
-      vo match {
-        case Some(v) => {
-          v shouldBe a [StringValue]
-          v.asInstanceOf[StringValue].value shouldEqual(k)
-        }
-        case None => true shouldBe false
-      }
-    }
-  }
+  //     val vo = rctx.lookup_in_map("_local", k)
+  //     vo match {
+  //       case Some(v) => {
+  //         v shouldBe a [StringValue]
+  //         v.asInstanceOf[StringValue].value shouldEqual(k)
+  //       }
+  //       case None => true shouldBe false
+  //     }
+  //   }
+  // }
 
   it should "serialize into JSON" in {
     val ctx = new GlobalContext(null)

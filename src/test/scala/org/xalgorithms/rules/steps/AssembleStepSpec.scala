@@ -37,16 +37,17 @@ class AssembleStepSpec extends FlatSpec with Matchers with MockFactory with Befo
 
   before {
     _ctx = mock[Context]
-    _secs = mock[Sections]
-    _tables = mock[TableSection]
+    _secs = new Sections
+    _tables = _secs.tables()
   }
 
   def verify_table_named_columns(
+    name: String,
     ex: Seq[Map[String, IntrinsicValue]],
     keys: Map[String, String] = Map(),
     skipped_keys: Seq[String] = Seq()
-  ) = {
-    (name: String, tbl: Seq[Map[String, IntrinsicValue]]) => {
+  ) = _tables.lookup(name) match {
+    case Some(tbl) => {
       tbl.size shouldEqual(ex.size)
       (tbl, ex).zipped.foreach { case (rac, rex) =>
         val key_checks = if (keys.isEmpty) {
@@ -62,24 +63,29 @@ class AssembleStepSpec extends FlatSpec with Matchers with MockFactory with Befo
         skipped_keys.foreach { k => rac.contains(k) shouldEqual(false) }
       }
     }
+
+    case None => true shouldBe(false)
   }
 
   def verify_table(
+    name: String,
     ex: Seq[Map[String, IntrinsicValue]],
     keys: Seq[String] = Seq(),
     skipped_keys: Seq[String] = Seq()
   ) = {
     verify_table_named_columns(
+      name,
       ex,
       keys.foldLeft(Map[String, String]()) { case (m, k) => m + (k -> k) },
       skipped_keys)
   }
 
   def verify_both_tables(
+    name: String,
     tables: Tuple2[Seq[Map[String, IntrinsicValue]], Seq[Map[String, IntrinsicValue]]],
     keys: Tuple2[Seq[String], Seq[String]] = (Seq(), Seq())
-  ) = {
-    (name: String, tbl: Seq[Map[String, IntrinsicValue]]) => {
+  ) = _tables.lookup(name) match {
+    case Some (tbl) => {
       tbl.size shouldEqual(tables._1.size * tables._2.size)
       tables._1.indices.foreach { i0 =>
         tables._2.indices.foreach { i1 =>
@@ -97,6 +103,8 @@ class AssembleStepSpec extends FlatSpec with Matchers with MockFactory with Befo
         }
       }
     }
+
+    case None => true shouldEqual(false)
   }
 
   "AssembleStep" should "load all keys using COLUMNS" in {
@@ -113,11 +121,10 @@ class AssembleStepSpec extends FlatSpec with Matchers with MockFactory with Befo
     val step = new AssembleStep(final_table_name, Seq(cols))
 
     (_ctx.sections _).expects().anyNumberOfTimes.returning(_secs)
-    (_secs.tables _).expects().anyNumberOfTimes.returning(_tables)
-    (_tables.lookup _).expects(table_name).returning(Some(table))
-    (_tables.retain _).expects(final_table_name, *) onCall verify_table(table)
+    _tables.retain(table_name, table)
 
     step.execute(_ctx)
+    verify_table(final_table_name, table)
   }
 
   it should "load specific keys using COLUMNS" in {
@@ -136,11 +143,10 @@ class AssembleStepSpec extends FlatSpec with Matchers with MockFactory with Befo
     val step = new AssembleStep(final_table_name, Seq(cols))
 
     (_ctx.sections _).expects().anyNumberOfTimes.returning(_secs)
-    (_secs.tables _).expects().anyNumberOfTimes.returning(_tables)
-    (_tables.lookup _).expects(table_name).returning(Some(table))
-    (_tables.retain _).expects(final_table_name, *) onCall verify_table(table, keys, skipped_keys)
+    _tables.retain(table_name, table)
 
     step.execute(_ctx)
+    verify_table(final_table_name, table, keys, skipped_keys)
   }
 
   it should "be filtered by WHEN using COLUMNS" in {
@@ -164,11 +170,10 @@ class AssembleStepSpec extends FlatSpec with Matchers with MockFactory with Befo
     val step = new AssembleStep(final_table_name, Seq(cols))
 
     (_ctx.sections _).expects().anyNumberOfTimes.returning(_secs)
-    (_secs.tables _).expects().anyNumberOfTimes.returning(_tables)
-    (_tables.lookup _).expects(table_name).returning(Some(table))
-    (_tables.retain _).expects(final_table_name, *) onCall verify_table(table_expected)
+    _tables.retain(table_name, table)
 
     step.execute(_ctx)
+    verify_table(final_table_name, table_expected)
   }
 
   it should "perform a cross-product of multiple COLUMNS from different tables" in {
@@ -202,13 +207,12 @@ class AssembleStepSpec extends FlatSpec with Matchers with MockFactory with Befo
     val step = new AssembleStep(final_table_name, Seq(cols0, cols1))
 
     (_ctx.sections _).expects().anyNumberOfTimes.returning(_secs)
-    (_secs.tables _).expects().anyNumberOfTimes.returning(_tables)
 
-    (_tables.lookup _).expects(table0_name).returning(Some(table0))
-    (_tables.lookup _).expects(table1_name).returning(Some(table1))
-    (_tables.retain _).expects(final_table_name, *) onCall verify_both_tables((table0, table1), (keys0, keys1))
+    _tables.retain(table0_name, table0)
+    _tables.retain(table1_name, table1)
 
     step.execute(_ctx)
+    verify_both_tables(final_table_name, (table0, table1), (keys0, keys1))
   }
 
   it should "merge multiple COLUMNS from the same table" in {
@@ -237,11 +241,10 @@ class AssembleStepSpec extends FlatSpec with Matchers with MockFactory with Befo
     val step = new AssembleStep(final_table_name, Seq(cols))
 
     (_ctx.sections _).expects().anyNumberOfTimes.returning(_secs)
-    (_secs.tables _).expects().anyNumberOfTimes.returning(_tables)
-    (_tables.lookup _).expects(table_name).returning(Some(table))
-    (_tables.retain _).expects(final_table_name, *) onCall verify_table(table, keys0 ++ keys1, skipped_keys)
+    _tables.retain(table_name, table)
 
     step.execute(_ctx)
+    verify_table(final_table_name, table, keys0 ++ keys1, skipped_keys)
   }
 
   it should "load a single column using COLUMN" in {
@@ -260,11 +263,10 @@ class AssembleStepSpec extends FlatSpec with Matchers with MockFactory with Befo
     val step = new AssembleStep(final_table_name, Seq(cols))
 
     (_ctx.sections _).expects().anyNumberOfTimes.returning(_secs)
-    (_secs.tables _).expects().anyNumberOfTimes.returning(_tables)
-    (_tables.lookup _).expects(table_name).returning(Some(table))
-    (_tables.retain _).expects(final_table_name, *) onCall verify_table_named_columns(table, Map(sk -> tk))
+    _tables.retain(table_name, table)
 
     step.execute(_ctx)
+    verify_table_named_columns(final_table_name, table, Map(sk -> tk))
   }
 
   it should "perform a cross-product of multiple COLUMN from different tables" in {
@@ -299,13 +301,12 @@ class AssembleStepSpec extends FlatSpec with Matchers with MockFactory with Befo
     val step = new AssembleStep(final_table_name, Seq(cols0, cols1))
 
     (_ctx.sections _).expects().anyNumberOfTimes.returning(_secs)
-    (_secs.tables _).expects().anyNumberOfTimes.returning(_tables)
-    (_tables.lookup _).expects(table0_name).returning(Some(table0))
-    (_tables.lookup _).expects(table1_name).returning(Some(table1))
-    (_tables.retain _).expects(final_table_name, *) onCall verify_both_tables(
-      (table0, table1), (Seq(table0_key), Seq(table1_key)))
+    _tables.retain(table0_name, table0)
+    _tables.retain(table1_name, table1)
 
     step.execute(_ctx)
+    verify_both_tables(
+      final_table_name, (table0, table1), (Seq(table0_key), Seq(table1_key)))
   }
 
   it should "be filtered by WHEN using COLUMN" in {
@@ -331,12 +332,11 @@ class AssembleStepSpec extends FlatSpec with Matchers with MockFactory with Befo
     val step = new AssembleStep(final_table_name, Seq(cols))
 
     (_ctx.sections _).expects().anyNumberOfTimes.returning(_secs)
-    (_secs.tables _).expects().anyNumberOfTimes.returning(_tables)
 
-    (_tables.lookup _).expects(table_name).returning(Some(table))
-    (_tables.retain _).expects(final_table_name, *) onCall verify_table_named_columns(table_expected, Map(sk -> tk))
+    _tables.retain(table_name, table)
 
     step.execute(_ctx)
+    verify_table_named_columns(final_table_name, table_expected, Map(sk -> tk))
   }
 
   it should "combine COLUMNS with additional COLUMN using a merge" in {
@@ -370,27 +370,29 @@ class AssembleStepSpec extends FlatSpec with Matchers with MockFactory with Befo
     val step = new AssembleStep(final_table_name, Seq(table0_col, table1_col))
 
     (_ctx.sections _).expects().anyNumberOfTimes.returning(_secs)
-    (_secs.tables _).expects().anyNumberOfTimes.returning(_tables)
-    (_tables.lookup _).expects(table0_name).returning(Some(table0))
-    (_tables.lookup _).expects(table1_name).returning(Some(table1))
+    _tables.retain(table0_name, table0)
+    _tables.retain(table1_name, table1)
 
-    (_tables.retain _).expects(final_table_name, *) onCall { (name, tbl) =>
-      tbl.size shouldEqual(table0.size * table1.size)
-      table0.indices.foreach { i0 =>
-        table1.indices.foreach { i1 =>
-          val rac = tbl(2 * i0 + i1)
-          Seq(t1k0, t1k1).foreach { k =>
-            rac(k) shouldBe a [StringValue]
-            rac(k).asInstanceOf[StringValue].value shouldEqual(table1(i1)(k).asInstanceOf[StringValue].value)
-          }
-          table0(i0).foreach { case (k0, v0) =>
-            rac(k0) shouldBe a [StringValue]
-            rac(k0).asInstanceOf[StringValue].value shouldEqual(v0.asInstanceOf[StringValue].value)
+    step.execute(_ctx)
+    _tables.lookup(final_table_name) match {
+      case Some(tbl) => {
+        tbl.size shouldEqual(table0.size * table1.size)
+        table0.indices.foreach { i0 =>
+          table1.indices.foreach { i1 =>
+            val rac = tbl(2 * i0 + i1)
+            Seq(t1k0, t1k1).foreach { k =>
+              rac(k) shouldBe a [StringValue]
+              rac(k).asInstanceOf[StringValue].value shouldEqual(table1(i1)(k).asInstanceOf[StringValue].value)
+            }
+            table0(i0).foreach { case (k0, v0) =>
+              rac(k0) shouldBe a [StringValue]
+              rac(k0).asInstanceOf[StringValue].value shouldEqual(v0.asInstanceOf[StringValue].value)
+            }
           }
         }
       }
-    }
 
-    step.execute(_ctx)
+      case None => true shouldEqual(false)
+    }
   }
 }

@@ -246,14 +246,24 @@ class ValuesSpec extends FlatSpec with Matchers with MockFactory with AppendedCl
     m.map { case (k, v) => (k, new StringValue(v)) }
   }
 
+  // W/o a specific invocation, the mock below will explicitly pass null for the
+  // argument
+  class MockableValuesSection() extends ValuesSection(None) {
+  }
+
   "DocumentReferenceValue" should "load map keys from the Context" in {
     val maps = Map(
       "map0" -> Map("a" -> "00", "b" -> "01"),
       "map1" -> Map("a" -> "xx", "b" -> "yy"))
     val ctx = mock[Context]
+    val secs = new Sections()
+
+    (ctx.sections _).expects().anyNumberOfTimes.returning(secs)
 
     maps.foreach { case (name, ex) =>
       val expected = map_to_expected(ex)
+
+      secs.retain_values(name, ex.mapValues(new StringValue(_)))
       ex.keySet.foreach { k =>
         val ref = new DocumentReferenceValue(name, k)
         val check_fn = { ov: Option[IntrinsicValue] =>
@@ -266,7 +276,7 @@ class ValuesSpec extends FlatSpec with Matchers with MockFactory with AppendedCl
           }
         }
 
-        (ctx.lookup_in_map _).expects(name, k).returning(Some(new StringValue(ex(k)))).twice
+        val values = mock[MockableValuesSection]
 
         check_fn(ref.resolve(ctx))
         check_fn(ResolveValue(ref, ctx))

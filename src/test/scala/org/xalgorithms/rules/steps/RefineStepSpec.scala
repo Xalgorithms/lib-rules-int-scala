@@ -42,11 +42,9 @@ class RefineStepSpec extends FlatSpec with Matchers with MockFactory {
 
   "RefineStep" should "first filter then process tables and finally take" in {
     val ctx = mock[Context]
-    val secs = mock[Sections]
-    val tables = mock[TableSection]
+    val secs = new Sections()
 
     (ctx.sections _).expects.anyNumberOfTimes.returning(secs)
-    (secs.tables _).expects.anyNumberOfTimes.returning(tables)
 
     val section = "table"
     val table_name = "table0"
@@ -107,16 +105,9 @@ class RefineStepSpec extends FlatSpec with Matchers with MockFactory {
     (tr.refine _).expects(*, *) onCall verify_no_row(mapped_table(1))
     (tr.refine _).expects(*, *) onCall verify_a_new_row(mapped_table(2), final_table(1))
 
-    (tables.lookup _).expects(table_name).returning(Some(_table))
-    (tables.retain _).expects(refined_table_name, *) onCall { (name, tbl) =>
-      tbl.size shouldEqual(final_table.size)
-      (tbl, final_table).zipped.foreach { case (rac, rex) =>
-        rex.foreach { case (k, v) =>
-          rac(k) shouldBe a [StringValue]
-          rac(k).asInstanceOf[StringValue].value shouldEqual(v.asInstanceOf[StringValue].value)
-        }
-      }
-    }
+    val tables = secs.tables()
+
+    tables.retain(table_name, _table)
 
     val step = new RefineStep(
       new TableReference(table_name),
@@ -124,5 +115,19 @@ class RefineStepSpec extends FlatSpec with Matchers with MockFactory {
       Seq(fr0, mr, fr1, tr))
 
     step.execute(ctx)
+
+    tables.lookup(refined_table_name) match {
+      case Some(tbl) => {
+        tbl.size shouldEqual(final_table.size)
+        (tbl, final_table).zipped.foreach { case (rac, rex) =>
+          rex.foreach { case (k, v) =>
+            rac(k) shouldBe a [StringValue]
+            rac(k).asInstanceOf[StringValue].value shouldEqual(v.asInstanceOf[StringValue].value)
+          }
+        }
+      }
+
+      case None => true shouldBe false
+    }
   }
 }

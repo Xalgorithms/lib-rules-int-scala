@@ -46,20 +46,22 @@ class ArrangeStepSpec extends FlatSpec with Matchers with MockFactory with Befor
       Map("a" -> new NumberValue(3.0), "b" -> new StringValue("D"))
     )
     _ctx = mock[Context]
-    _secs = mock[Sections]
-    _tables = mock[TableSection]
+    _secs = new Sections()
+    _tables = _secs.tables()
   }
 
   val _table_name = "table0"
 
-  def verify_table(ex: Seq[Map[String, IntrinsicValue]]) = {
-    (name: String, tbl: Seq[Map[String, IntrinsicValue]]) => {
+  def verify_table(name: String, ex: Seq[Map[String, IntrinsicValue]]) = _tables.lookup(name) match {
+    case Some(tbl) => {
       tbl.size shouldEqual(ex.size)
       (tbl, ex).zipped.foreach { case (rac, rex) =>
         rac("a").asInstanceOf[NumberValue].value shouldEqual(rex("a").asInstanceOf[NumberValue].value)
         rac("b").asInstanceOf[StringValue].value shouldEqual(rex("b").asInstanceOf[StringValue].value)
       }
     }
+
+    case None => true shouldEqual(false)
   }
 
   def verify_step(
@@ -67,10 +69,7 @@ class ArrangeStepSpec extends FlatSpec with Matchers with MockFactory with Befor
     ex_table: Seq[Map[String, IntrinsicValue]],
     func: ArrangeFunction
   ) = {
-    (_ctx.sections _).expects().returning(_secs)
-    (_secs.tables _).expects().returning(_tables)
-    (_tables.lookup _).expects(_table_name).returning(Some(_table))
-    (_tables.retain _).expects(ex_table_name, *) onCall verify_table(ex_table)
+    _tables.retain(_table_name, _table)
 
     val step = new ArrangeStep(
       new TableReference(_table_name),
@@ -79,6 +78,7 @@ class ArrangeStepSpec extends FlatSpec with Matchers with MockFactory with Befor
     )
 
     step.execute(_ctx)
+    verify_table(ex_table_name, ex_table)
   }
 
   def verify_sort_step(
@@ -87,10 +87,7 @@ class ArrangeStepSpec extends FlatSpec with Matchers with MockFactory with Befor
     col: String = null,
     args: Seq[String] = Seq()
   ) = {
-    (_ctx.sections _).expects().returning(_secs)
-    (_secs.tables _).expects().returning(_tables)
-    (_tables.lookup _).expects(_table_name).returning(Some(_table))
-    (_tables.retain _).expects(ex_table_name, *) onCall verify_table(ex_table)
+    _tables.retain(_table_name, _table)
 
     val vargs = if (col != null) {
       Seq(new DocumentReferenceValue("_local", col)) ++ args.map(new StringValue(_))
@@ -105,6 +102,7 @@ class ArrangeStepSpec extends FlatSpec with Matchers with MockFactory with Befor
     )
 
     step.execute(_ctx)
+    verify_table(ex_table_name, ex_table)
   }
 
   "ArrangeStep" should "shift rows in the table" in {
@@ -123,8 +121,7 @@ class ArrangeStepSpec extends FlatSpec with Matchers with MockFactory with Befor
       _table(3),
     )
 
-    (_ctx.sections _).expects().repeated(5).times.returning(_secs)
-    (_secs.tables _).expects().repeated(5).times.returning(_tables)
+    (_ctx.sections _).expects().anyNumberOfTimes.returning(_secs)
 
     verify_step("table_ex0", ex_table0, new ArrangeFunction("shift", Seq(new NumberValue(-2.0))))
     verify_step("table_ex1", ex_table1, new ArrangeFunction("shift", Seq(new NumberValue(1.0))))
@@ -144,8 +141,7 @@ class ArrangeStepSpec extends FlatSpec with Matchers with MockFactory with Befor
       _table(0),
     )
 
-    (_ctx.sections _).expects().returning(_secs)
-    (_secs.tables _).expects().returning(_tables)
+    (_ctx.sections _).expects().anyNumberOfTimes.returning(_secs)
 
     verify_step("table_ex0", ex_table, new ArrangeFunction("invert", Seq()))
   }
@@ -173,8 +169,7 @@ class ArrangeStepSpec extends FlatSpec with Matchers with MockFactory with Befor
     // alpha, ascending
     val ex_table3 = ex_table2.reverse
 
-    (_ctx.sections _).expects().repeated(10).times.returning(_secs)
-    (_secs.tables _).expects().repeated(10).times.returning(_tables)
+    (_ctx.sections _).expects().anyNumberOfTimes.returning(_secs)
 
     verify_sort_step("table_ex0", ex_table0, "a", Seq("numeric", "descending"))
     verify_sort_step("table_ex1", ex_table1, "a", Seq("numeric", "ascending"))

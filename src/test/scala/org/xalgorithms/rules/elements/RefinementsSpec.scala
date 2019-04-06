@@ -32,14 +32,17 @@ import org.xalgorithms.rules.elements._
 
 class RefinementsSpec extends FlatSpec with Matchers with MockFactory with BeforeAndAfter {
   var _ctx: Context = null
+  var _secs: Sections = null
   val _faker = new Faker
 
   before {
     _ctx = mock[Context]
+    _secs = new Sections()
   }
 
   "FilterRefinement" should "exclude rows when the condition is empty" in {
     val r = new FilterRefinement(None)
+    (_ctx.sections _).expects().anyNumberOfTimes.returning(_secs)
     r.refine(_ctx, Map[String, IntrinsicValue]()) shouldEqual(None)
   }
 
@@ -49,6 +52,8 @@ class RefinementsSpec extends FlatSpec with Matchers with MockFactory with Befor
 
     val row0 = Map("a" -> new StringValue("A"))
     val row1 = Map("b" -> new StringValue("B"))
+
+    (_ctx.sections _).expects().anyNumberOfTimes.returning(_secs)
 
     val rctx0 = new RowContext(_ctx, row0, null)
     val rctx1 = new RowContext(_ctx, row1, null)
@@ -66,6 +71,8 @@ class RefinementsSpec extends FlatSpec with Matchers with MockFactory with Befor
     val row0 = Map("a" -> new StringValue("A"))
     val row1 = Map("b" -> new StringValue("B"))
 
+    (_ctx.sections _).expects().anyNumberOfTimes.returning(_secs)
+
     r.refine(_ctx, row0) shouldEqual(Some(row0))
     r.refine(_ctx, row1) shouldEqual(Some(row1))
   }
@@ -76,6 +83,8 @@ class RefinementsSpec extends FlatSpec with Matchers with MockFactory with Befor
 
     val row0 = Map("a" -> new StringValue("A"))
     val row1 = Map("b" -> new StringValue("B"))
+
+    (_ctx.sections _).expects().anyNumberOfTimes.returning(_secs)
 
     val rctx0 = new RowContext(_ctx, row0, null)
     val rctx1 = new RowContext(_ctx, row1, null)
@@ -95,6 +104,8 @@ class RefinementsSpec extends FlatSpec with Matchers with MockFactory with Befor
 
   "ConditionalTakeRefinement" should "exclude rows when the condition is empty" in {
     val r = new ConditionalTakeRefinement(None)
+
+    (_ctx.sections _).expects().anyNumberOfTimes.returning(_secs)
     r.refine(_ctx, Map[String, IntrinsicValue]()) shouldEqual(None)
   }
 
@@ -104,6 +115,8 @@ class RefinementsSpec extends FlatSpec with Matchers with MockFactory with Befor
 
     val row0 = Map("a" -> new StringValue("A"))
     val row1 = Map("b" -> new StringValue("B"))
+
+    (_ctx.sections _).expects().anyNumberOfTimes.returning(_secs)
 
     val rctx0 = new RowContext(_ctx, row0, null)
     val rctx1 = new RowContext(_ctx, row1, null)
@@ -117,10 +130,14 @@ class RefinementsSpec extends FlatSpec with Matchers with MockFactory with Befor
 
   "FunctionalTakeRefinement" should "exclude rows when the condition is empty" in {
     val r = new FunctionalTakeRefinement(None)
+
+    (_ctx.sections _).expects().anyNumberOfTimes.returning(_secs)
     r.refine(_ctx, Map[String, IntrinsicValue]()) shouldEqual(None)
   }
 
   it should "exclude rows when an unknown function is used" in {
+    (_ctx.sections _).expects().anyNumberOfTimes.returning(_secs)
+
     (0 to _faker.number().numberBetween(2, 10)).foreach { _ =>
       val r = new FunctionalTakeRefinement(Some(new TakeFunction(_faker.lorem().word())))
       val row = Map("a" -> new StringValue("A"))
@@ -146,6 +163,8 @@ class RefinementsSpec extends FlatSpec with Matchers with MockFactory with Befor
     )
     val r = new FunctionalTakeRefinement(Some(fn))
 
+    (_ctx.sections _).expects().anyNumberOfTimes.returning(_secs)
+
     _table.zipWithIndex.foreach { case (row, i) =>
       val rctx = new RowContext(_ctx, row, null)
       val ex = if (ex_range.contains(i)) {
@@ -164,6 +183,8 @@ class RefinementsSpec extends FlatSpec with Matchers with MockFactory with Befor
       Seq(): Seq[Value]
     )
 
+    (_ctx.sections _).expects().anyNumberOfTimes.returning(_secs)
+
     cases.foreach { c =>
       val fn = new TakeFunction("first", c)
       val r = new FunctionalTakeRefinement(Some(fn))
@@ -177,6 +198,8 @@ class RefinementsSpec extends FlatSpec with Matchers with MockFactory with Befor
     val index = _faker.number().numberBetween(0, _table.length - 1)
     val count = _faker.number().numberBetween(1, _table.length)
     val ex_range = (index to index + count - 1)
+
+    (_ctx.sections _).expects().anyNumberOfTimes.returning(_secs)
 
     val fn = new TakeFunction(
       "nth",
@@ -206,6 +229,8 @@ class RefinementsSpec extends FlatSpec with Matchers with MockFactory with Befor
       Seq(new NumberValue(1)),
       Seq(): Seq[Value]
     )
+
+    (_ctx.sections _).expects().anyNumberOfTimes.returning(_secs)
 
     cases.foreach { c =>
       val fn = new TakeFunction("nth", c)

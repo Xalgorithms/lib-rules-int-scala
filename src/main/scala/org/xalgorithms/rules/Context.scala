@@ -28,7 +28,6 @@ import play.api.libs.json._
 import scala.collection.mutable
 
 abstract class Context {
-  def lookup_in_map(section: String, key: String): Option[IntrinsicValue]
   def revisions(): Map[TableReference, Seq[Revision]]
   def revise_table(ref: TableReference, rev: Revision)
   def serialize: JsValue
@@ -46,12 +45,12 @@ class GlobalContext(load: LoadTableSource) extends Context {
     fn: (String, String, Seq[Map[String, IntrinsicValue]]) => Unit
   ) = _sections.enumerate_tables(fn)
 
-  def lookup_in_map(section: String, key: String): Option[IntrinsicValue] = {
-    _sections.values(section) match {
-      case Some(vals) => vals.lookup(key)
-      case None => None
-    }
-  }
+  // def lookup_in_map(section: String, key: String): Option[IntrinsicValue] = {
+  //   _sections.values(section) match {
+  //     case Some(vals) => vals.lookup(key)
+  //     case None => None
+  //   }
+  // }
 
   def revisions(): Map[TableReference, Seq[Revision]] = {
     return _revisions.toMap
@@ -89,19 +88,15 @@ class RowContext(
   val local_row: Map[String, IntrinsicValue],
   val context_row: Map[String, IntrinsicValue]
 ) extends Context {
-  val _local = mutable.Map[String, IntrinsicValue]() ++ local_row
+  if (local_row != null) {
+    ctx.sections.retain_values("_local", local_row)
+  }
+
+  if (context_row != null) {
+    ctx.sections.retain_values("_context", context_row)
+  }
 
   def sections = ctx.sections
-
-  def update_local(ch: Map[String, IntrinsicValue]): Unit = {
-    _local ++= ch
-  }
-
-  def lookup_in_map(section: String, key: String): Option[IntrinsicValue] = section match {
-    case "_local" => _local.get(key)
-    case "_context" => context_row.get(key)
-    case _ => ctx.lookup_in_map(section, key)
-  }
 
   def revisions(): Map[TableReference, Seq[Revision]] = ctx.revisions()
 
