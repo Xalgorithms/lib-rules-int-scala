@@ -246,66 +246,123 @@ class ValuesSpec extends FlatSpec with Matchers with MockFactory with AppendedCl
     m.map { case (k, v) => (k, new StringValue(v)) }
   }
 
-  // W/o a specific invocation, the mock below will explicitly pass null for the
-  // argument
-  class MockableValuesSection() extends ValuesSection(None) {
-  }
+  // ValuesSection will be passed a null on mocking, not a None, so let's for it
+  class MockableValuesSection extends ValuesSection(None) {}
 
-  "DocumentReferenceValue" should "load map keys from the Context" in {
-    val maps = Map(
-      "map0" -> Map("a" -> "00", "b" -> "01"),
-      "map1" -> Map("a" -> "xx", "b" -> "yy"))
+  "SectionReferenceValue" should "lookup values" in {
     val ctx = mock[Context]
-    val secs = new Sections()
+    val secs = mock[Sections]
+    val sections = Map(
+      "section0" -> Map("a0" -> "A", "b0" -> "B"),
+      "section1" -> Map("a1" -> "AAA", "b1" -> "BBB"),
+    )
 
     (ctx.sections _).expects().anyNumberOfTimes.returning(secs)
 
-    maps.foreach { case (name, ex) =>
-      val expected = map_to_expected(ex)
+    sections.foreach { case (k, vals) =>
+      val values = mock[MockableValuesSection]
 
-      secs.retain_values(name, ex.mapValues(new StringValue(_)))
-      ex.keySet.foreach { k =>
-        val ref = new DocumentReferenceValue(name, k)
-        val check_fn = { ov: Option[IntrinsicValue] =>
-          ov match {
-            case Some(v) => {
-              v shouldBe a [StringValue]
-              v.asInstanceOf[StringValue].value shouldEqual(ex(k))
-            }
-            case None => true shouldEqual false
+      (secs.values _).expects(k).repeated(vals.size).times.returning(Some(values))
+      vals.foreach { case (vk, v) =>
+        val srv = new SectionReferenceValue(k, vk)
+        (values.lookup _).expects(vk).returning(Some(new StringValue(v)))
+
+        srv.resolve(ctx) match {
+          case Some(iv) => {
+            iv shouldBe a [StringValue]
+            iv.asInstanceOf[StringValue].value shouldEqual(v)
           }
+          case None => true shouldBe(false)
         }
-
-        val values = mock[MockableValuesSection]
-
-        check_fn(ref.resolve(ctx))
-        check_fn(ResolveValue(ref, ctx))
       }
     }
   }
 
+  it should "yield None for non-existent sections, keys" in {
+    val ctx = mock[Context]
+    val secs = mock[Sections]
+    val empty_values = mock[MockableValuesSection]
+
+    (ctx.sections _).expects().anyNumberOfTimes.returning(secs)
+    (secs.values _).expects("empty").repeated(2).times.returning(Some(empty_values))
+    (empty_values.lookup _).expects("a").returning(None)
+    (empty_values.lookup _).expects("b").returning(None)
+    (secs.values _).expects("missing").repeated(2).times.returning(None)
+
+    Seq(
+      new SectionReferenceValue("empty", "a"),
+      new SectionReferenceValue("empty", "b"),
+      new SectionReferenceValue("missing", "a"),
+      new SectionReferenceValue("missing", "b"),
+    ).foreach { srv => srv.resolve(ctx) shouldEqual(None) }
+  }
+
+  it should "keep values" in {
+    val ctx = mock[Context]
+    val secs = mock[Sections]
+    val sections = Map(
+      "section0" -> Map("a0" -> "A", "b0" -> "B"),
+      "section1" -> Map("a1" -> "AAA", "b1" -> "BBB"),
+    )
+
+    (ctx.sections _).expects().anyNumberOfTimes.returning(secs)
+
+    sections.foreach { case (k, vals) =>
+      val values = mock[MockableValuesSection]
+
+      (secs.values _).expects(k).repeated(vals.size).times.returning(Some(values))
+      vals.foreach { case (vk, v) =>
+        val srv = new SectionReferenceValue(k, vk)
+
+        (values.retain _).expects(vk, *) onCall { (_: String, iv: IntrinsicValue) =>
+          iv shouldBe a [StringValue]
+          iv.asInstanceOf[StringValue].value shouldEqual(v)
+          None
+        }
+
+        srv.update(ctx, new StringValue(v))
+      }
+    }
+  }
+
+  it should "not automatically create ValuesSections" in {
+    val ctx = mock[Context]
+    val secs = mock[Sections]
+
+    (ctx.sections _).expects().anyNumberOfTimes.returning(secs)
+    (secs.values _).expects("missing").repeated(4).times.returning(None)
+
+    Seq(
+      new SectionReferenceValue("missing", "a"),
+      new SectionReferenceValue("missing", "b"),
+    ).foreach { srv =>
+      srv.update(ctx, new StringValue(s"${srv.key}_value"))
+      srv.resolve(ctx) shouldEqual(None)
+    }
+  }
+
   it should "match equivalent references" in {
-    val ref0 = new DocumentReferenceValue("a", "x")
+    val ref0 = new SectionReferenceValue("a", "x")
 
-    ref0.matches(new DocumentReferenceValue("a", "x"), "eq") shouldEqual(true)
-    ref0.matches(new DocumentReferenceValue("a", "y"), "eq") shouldEqual(false)
-    ref0.matches(new DocumentReferenceValue("b", "x"), "eq") shouldEqual(false)
+    ref0.matches(new SectionReferenceValue("a", "x"), "eq") shouldEqual(true)
+    ref0.matches(new SectionReferenceValue("a", "y"), "eq") shouldEqual(false)
+    ref0.matches(new SectionReferenceValue("b", "x"), "eq") shouldEqual(false)
 
-    ref0.matches(new DocumentReferenceValue("a", "x"), "lt") shouldEqual(false)
-    ref0.matches(new DocumentReferenceValue("a", "y"), "lt") shouldEqual(false)
-    ref0.matches(new DocumentReferenceValue("b", "x"), "lt") shouldEqual(false)
+    ref0.matches(new SectionReferenceValue("a", "x"), "lt") shouldEqual(false)
+    ref0.matches(new SectionReferenceValue("a", "y"), "lt") shouldEqual(false)
+    ref0.matches(new SectionReferenceValue("b", "x"), "lt") shouldEqual(false)
 
-    ref0.matches(new DocumentReferenceValue("a", "x"), "lte") shouldEqual(false)
-    ref0.matches(new DocumentReferenceValue("a", "y"), "lte") shouldEqual(false)
-    ref0.matches(new DocumentReferenceValue("b", "x"), "lte") shouldEqual(false)
+    ref0.matches(new SectionReferenceValue("a", "x"), "lte") shouldEqual(false)
+    ref0.matches(new SectionReferenceValue("a", "y"), "lte") shouldEqual(false)
+    ref0.matches(new SectionReferenceValue("b", "x"), "lte") shouldEqual(false)
 
-    ref0.matches(new DocumentReferenceValue("a", "x"), "gt") shouldEqual(false)
-    ref0.matches(new DocumentReferenceValue("a", "y"), "gt") shouldEqual(false)
-    ref0.matches(new DocumentReferenceValue("b", "x"), "gt") shouldEqual(false)
+    ref0.matches(new SectionReferenceValue("a", "x"), "gt") shouldEqual(false)
+    ref0.matches(new SectionReferenceValue("a", "y"), "gt") shouldEqual(false)
+    ref0.matches(new SectionReferenceValue("b", "x"), "gt") shouldEqual(false)
 
-    ref0.matches(new DocumentReferenceValue("a", "x"), "gte") shouldEqual(false)
-    ref0.matches(new DocumentReferenceValue("a", "y"), "gte") shouldEqual(false)
-    ref0.matches(new DocumentReferenceValue("b", "x"), "gte") shouldEqual(false)
+    ref0.matches(new SectionReferenceValue("a", "x"), "gte") shouldEqual(false)
+    ref0.matches(new SectionReferenceValue("a", "y"), "gte") shouldEqual(false)
+    ref0.matches(new SectionReferenceValue("b", "x"), "gte") shouldEqual(false)
   }
 
   "ResolveValue" should "resolve computed values" in {

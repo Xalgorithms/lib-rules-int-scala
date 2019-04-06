@@ -161,8 +161,8 @@ class AssembleStepSpec extends FlatSpec with Matchers with MockFactory with Befo
     )
 
     val whens = Seq(
-      new When(new StringValue("11"), new DocumentReferenceValue("_context", "b"), "eq"),
-      new When(new StringValue("00"), new DocumentReferenceValue("_context", "a"), "eq"))
+      new When(new StringValue("11"), new SectionReferenceValue("_context", "b"), "eq"),
+      new When(new StringValue("00"), new SectionReferenceValue("_context", "a"), "eq"))
     val cols = new Column(
       new TableReference(table_name),
       Seq(new ColumnsTableSource(Seq(), whens)))
@@ -323,8 +323,8 @@ class AssembleStepSpec extends FlatSpec with Matchers with MockFactory with Befo
     val tk = "bbb"
 
     val whens = Seq(
-      new When(new StringValue("11"), new DocumentReferenceValue("_context", "b"), "eq"),
-      new When(new StringValue("00"), new DocumentReferenceValue("_context", "a"), "eq"))
+      new When(new StringValue("11"), new SectionReferenceValue("_context", "b"), "eq"),
+      new When(new StringValue("00"), new SectionReferenceValue("_context", "a"), "eq"))
     val cols = new Column(
       new TableReference(table_name),
       Seq(new ColumnTableSource(tk, sk, whens)))

@@ -146,7 +146,7 @@ object StepProduce {
   def produce_value(vt: String, content: JsObject): Value = vt match {
     case "string"    => new StringValue(stringOrNull(content, "value"))
     case "number"    => new NumberValue(doubleOrNull(content, "value"))
-    case "reference" => new DocumentReferenceValue(
+    case "reference" => new SectionReferenceValue(
       stringOrNull(content, "section"),
       stringOrNull(content, "key")
     )

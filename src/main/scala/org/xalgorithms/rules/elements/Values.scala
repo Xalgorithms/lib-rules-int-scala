@@ -240,12 +240,15 @@ abstract class ReferenceValue(val section: String, val key: String) extends Comp
   }
 }
 
-class DocumentReferenceValue(section: String, key: String) extends ReferenceValue(section, key) {
-  def resolve(ctx: Context): Option[IntrinsicValue] = {
-    ctx.sections.values(section) match {
-      case Some(sec) => sec.lookup(key)
-      case None => None
-    }
+class SectionReferenceValue(section: String, key: String) extends ReferenceValue(section, key) {
+  def resolve(ctx: Context): Option[IntrinsicValue] = ctx.sections.values(section) match {
+    case Some(sec) => sec.lookup(key)
+    case None => None
+  }
+
+  def update(ctx: Context, v: IntrinsicValue) = ctx.sections.values(section) match {
+    case Some(sec) => sec.retain(key, v)
+    case None => {}
   }
 }
 

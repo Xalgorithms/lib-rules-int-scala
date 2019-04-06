@@ -90,7 +90,7 @@ class ArrangeStepSpec extends FlatSpec with Matchers with MockFactory with Befor
     _tables.retain(_table_name, _table)
 
     val vargs = if (col != null) {
-      Seq(new DocumentReferenceValue("_local", col)) ++ args.map(new StringValue(_))
+      Seq(new SectionReferenceValue("_local", col)) ++ args.map(new StringValue(_))
     } else {
       Seq()
     }
