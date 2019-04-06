@@ -45,13 +45,6 @@ class GlobalContext(load: LoadTableSource) extends Context {
     fn: (String, String, Seq[Map[String, IntrinsicValue]]) => Unit
   ) = _sections.enumerate_tables(fn)
 
-  // def lookup_in_map(section: String, key: String): Option[IntrinsicValue] = {
-  //   _sections.values(section) match {
-  //     case Some(vals) => vals.lookup(key)
-  //     case None => None
-  //   }
-  // }
-
   def revisions(): Map[TableReference, Seq[Revision]] = {
     return _revisions.toMap
   }
@@ -70,16 +63,6 @@ class GlobalContext(load: LoadTableSource) extends Context {
         JsString("")
       }
     }
-  }
-
-  private def serialize_maps: JsValue = {
-    JsString("")
-    //Json.toJson(_maps)
-  }
-
-  private def serialize_tables: JsValue = {
-    JsString("")
-    // Json.toJson(_tables)
   }
 }
 
