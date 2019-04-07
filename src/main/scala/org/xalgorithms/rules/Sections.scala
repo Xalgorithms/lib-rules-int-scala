@@ -88,8 +88,11 @@ class Sections(opt_src: Option[LoadTableSource] = None) {
 
   def tables(): TableSection = _tables
   def values(k: String): Option[ValuesSection] = _values.get(k)
-  def retain_values(k: String, vals: Map[String, IntrinsicValue]) = {
+  def retain_values(k: String, vals: Map[String, IntrinsicValue]): Unit = {
     _values.put(k, new ValuesSection(Some(vals)))
+  }
+  def unload_values(k: String): Unit = {
+    _values.remove(k)
   }
 
   def serialize = {

@@ -184,4 +184,16 @@ class SectionsSpec extends FlatSpec with Matchers with MockFactory {
 
     secs.serialize shouldEqual(expected)
   }
+
+  it should "retain values" in {
+    val values = Map(
+      "a" -> new StringValue("A"),
+      "b" -> new StringValue("B"),
+    )
+
+    val secs = new Sections()
+    secs.retain_values("values", values)
+    secs.unload_values("values")
+    secs.values("values") shouldEqual(None)
+  }
 }
