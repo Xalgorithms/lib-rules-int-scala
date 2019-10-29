@@ -87,3 +87,18 @@ class RowContext(
 
   def serialize = ctx.serialize
 }
+
+// class ScopeSection(name: String, sec: Section) extends Section {
+
+//   def values(k: String) = k match {
+//     case k => _values.get(k)
+//     case _ => sec.values(k)
+//   }
+// }
+
+// class ScopeContext(val ctx: Context) extends Context {
+//   def sections = ctx.sections
+//   def revisions(): Map[TableReference, Seq[Revision]] = ctx.revisions()
+//   def revise_table(ref: TableReference, rev: Revision) = ctx.revise_table(ref, rev)
+//   def serialize = ctx.serialize
+// }

@@ -240,6 +240,21 @@ abstract class ReferenceValue(val section: String, val key: String) extends Comp
   }
 }
 
+// Remove in favour of:
+// scope: RowScope - resolves keys to columns in the row
+//        StepScope: - resolves keys to a retained value in a map
+//        GlobalScope: - resolves keys to a value in a map provided to the Context
+//
+// - where is scope retained? passing it as a argument means that it'll be the
+// narrowest, therefore we can't lookup global, local
+// - passing in the c'tor means it's just a context shift and the real values
+// are somewhere else (like we did with sections)
+class ScopedReferenceVaue(key: String) extends ComputedValue {
+  def resolve(ctx: Context, scope: Scope): Option[IntrinsicValue] = {
+    scope.get(key)
+  }
+}
+
 class SectionReferenceValue(section: String, key: String) extends ReferenceValue(section, key) {
   def resolve(ctx: Context): Option[IntrinsicValue] = ctx.sections.values(section) match {
     case Some(sec) => sec.lookup(key)
