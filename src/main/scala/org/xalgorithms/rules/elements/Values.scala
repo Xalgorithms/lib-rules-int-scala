@@ -30,7 +30,7 @@ abstract class Value {
 }
 
 abstract class IntrinsicValue extends Value {
-  def apply_func(args: Seq[Value], func: String): Option[IntrinsicValue]
+  def apply_func(args: Seq[Option[IntrinsicValue]], func: String): Option[IntrinsicValue]
   def exactly_equals(v: IntrinsicValue): Boolean
 }
 
@@ -52,13 +52,13 @@ class NumberValue(val value: BigDecimal) extends IntrinsicValue {
     case _ => false
   }
 
-  def apply_func(args: Seq[Value], func: String): Option[IntrinsicValue] = func match {
-    case "add" => Some(sum(args))
-    case "subtract" => Some(difference(args))
-    case "multiply" => Some(product(args))
-    case "divide" => Some(quotient(args))
-    case "min" => Some(minimum(args))
-    case "max" => Some(maximum(args))
+  def apply_func(args: Seq[Option[IntrinsicValue]], func: String): Option[IntrinsicValue] = func match {
+    case "add" => folded_apply(args, (a, b) => a + b)
+    case "subtract" => folded_apply(args, (a, b) => a - b)
+    case "multiply" => folded_apply(args, (a, b) => a * b)
+    case "divide" => folded_apply(args, (a, b) => a / b)
+    case "min" => folded_apply(args, (a, b) => (if ( a < b ) a else b))
+    case "max" => folded_apply(args, (a, b) => (if ( a > b ) a else b))
     case _ => None
   }
 
@@ -67,21 +67,28 @@ class NumberValue(val value: BigDecimal) extends IntrinsicValue {
     case _ => false
   }
 
-  def sum(args: Seq[Value]): IntrinsicValue = {
-    new NumberValue(args.foldLeft(value) { (sum, v) =>
-      v match {
-        case (nv: NumberValue) => sum + nv.value
-        case (sv: StringValue) => {
-          try {
-            sum + BigDecimal(sv.value)
+  def folded_apply(
+    args: Seq[Option[IntrinsicValue]],
+    fn: (BigDecimal, BigDecimal) => BigDecimal
+  ): Option[IntrinsicValue] = {
+    val applied = args.foldLeft(value) { (acc, opt_iv) =>
+      opt_iv match {
+        case Some(iv) => iv match {
+          case (nv: NumberValue) => fn(acc, nv.value)
+          case (sv: StringValue) => {
+            try {
+              fn(acc, BigDecimal(sv.value))
           } catch {
-            case _: Throwable => sum
+            case _: Throwable => acc
+          }
           }
         }
-        case _ => sum
+        case None => acc
       }
-    })
+    }
+    Some(new NumberValue(applied))
   }
+/*
 
   def product(args: Seq[Value]): IntrinsicValue = {
     new NumberValue(args.foldLeft(value) { (product, v) =>
@@ -166,6 +173,7 @@ class NumberValue(val value: BigDecimal) extends IntrinsicValue {
       }
     })
   }
+ */
 }
 
 class StringValue(val value: String) extends IntrinsicValue {
@@ -177,8 +185,8 @@ class StringValue(val value: String) extends IntrinsicValue {
     case _ => false
   }
 
-  def apply_func(args: Seq[Value], func: String): Option[IntrinsicValue] = func match {
-    case "add" => Some(concat(args))
+  def apply_func(args: Seq[Option[IntrinsicValue]], func: String): Option[IntrinsicValue] = func match {
+//    case "add" => Some(concat(args))
     case _ => None
   }
 
@@ -215,18 +223,21 @@ class FunctionValue(val name: String, val args: Seq[Value]) extends ComputedValu
   def matches(v: Value, op: String): Boolean = false
 
   def resolve(ctx: Context): Option[IntrinsicValue] = {
-    val largs = args.foldLeft(Seq[IntrinsicValue]()) { (a, v) =>
-      ResolveValue(v, ctx) match {
-        case Some(iv) => a :+ iv
-        case None => a
-      }
-    }
+    val largs = args.map { v => ResolveValue(v, ctx) }
 
     largs.length match {
       case 0 => None
-      case 1 => Some(largs.head)
-      case _ => largs.head.apply_func(largs.tail, name)
+      case 1 => largs.head
+      case _ => apply(largs, name)
     }
+  }
+
+  // Hack that requires more thinking: If the first value is missing, then the
+  // result is None too. This is because the "type" of the first arg determines which Value
+  // functions we use
+  def apply(args: Seq[Option[IntrinsicValue]], func: String): Option[IntrinsicValue] = args.head match {
+    case None => None
+    case Some(value) => value.apply_func(args.tail, func)
   }
 }
 
@@ -241,7 +252,9 @@ abstract class ReferenceValue(val section: String, val key: String) extends Comp
 
 class DocumentReferenceValue(section: String, key: String) extends ReferenceValue(section, key) {
   def resolve(ctx: Context): Option[IntrinsicValue] = {
-    ctx.lookup_in_map(section, key)
+    val v = ctx.lookup_in_map(section, key)
+    println(s"DRV(${section}, ${key}): ${v}")
+    v
   }
 }
 
@@ -252,4 +265,3 @@ object ResolveValue {
     case _ => None
   }
 }
-
