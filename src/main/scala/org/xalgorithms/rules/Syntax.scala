@@ -224,27 +224,6 @@ object StepProduce {
     )
   }
 
-  def produce_take_refinement(
-    condition_opt: Option[JsObject],
-    function_opt: Option[JsObject]
-  ): TakeRefinement = {
-    condition_opt match {
-      case Some(cond) => new ConditionalTakeRefinement(
-        Option(cond.validate[When].getOrElse(null))
-      )
-      case None => function_opt match {
-        case Some(func_content) => {
-          val fv = new TakeFunction(
-            stringOrNull(func_content, "name"),
-            (func_content \ "args").validate[Seq[Value]].getOrElse(Seq())
-          )
-          new FunctionalTakeRefinement(Some(fv))
-        }
-        case None => null
-      }
-    }
-  }
-
   def produce_refinement(
     name: String,
     condition_opt: Option[JsObject],
@@ -257,7 +236,21 @@ object StepProduce {
     case "map"    => new MapRefinement(
       assignment_opt.map { ass => ass.validate[Assignment].getOrElse(null) }
     )
-    case "take"   => produce_take_refinement(condition_opt, function_opt)
+    case "take"   => {
+      if (condition_opt.isDefined) {
+        new ConditionalTakeRefinement(
+          condition_opt.map { cond => cond.validate[When].getOrElse(null) }
+        )
+      } else if (function_opt.isDefined) {
+        new FunctionalTakeRefinement(
+          function_opt.map { func => new TakeFunction(
+            stringOrNull(func, "name"),
+            (func \ "args").validate[Seq[Value]].getOrElse(Seq()))
+          })
+      } else {
+        null
+      }
+    }
     case _        => null
   }
 
