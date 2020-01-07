@@ -42,7 +42,7 @@
           "type" : "function",
           "name" : "sort",
           "args" : [
-            { "type" : "reference", "section" : "_local", "key" : "a" },
+            { "type" : "reference", "scope" : "_local", "key" : "a" },
             { "type" : "string", "value" : "alpha" },
             { "type" : "string", "value" : "descending" }
           ]

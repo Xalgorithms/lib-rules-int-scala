@@ -10,7 +10,7 @@
               "columns": ["c0", "c1", "c2"],
               "whens": [
                 {
-                  "left": {"section": "_context", "key": "a", "type": "reference"},
+                  "left": {"scope": "_context", "key": "a", "type": "reference"},
                   "right": {"type": "string", "value": "a distant ship"},
                   "op": "eq"
                 }
@@ -26,7 +26,7 @@
               "source": "x",
               "whens": [
                 {
-                  "left": {"section": "_local", "key": "x", "type": "reference"},
+                  "left": {"scope": "_local", "key": "x", "type": "reference"},
                   "right": {"type": "number", "value": "1"},
                   "op": "eq"
                 }

@@ -148,7 +148,7 @@ object StepProduce {
     case "string"    => new StringValue(stringOrNull(content, "value"))
     case "number"    => new NumberValue(doubleOrNull(content, "value"))
     case "reference" => new SectionReferenceValue(
-      stringOrNull(content, "section"),
+      stringOrNull(content, "scope"),
       stringOrNull(content, "key")
     )
     case "function"  => new FunctionValue(
