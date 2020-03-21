@@ -22,7 +22,7 @@
 # <http://www.gnu.org/licenses/>.
 source 'https://rubygems.org'
 
-ruby '2.4.2'
+ruby '2.7.0'
 
 gem 'multi_json'
 gem 'xa-rules', git: 'https://github.com/Xalgorithms/xa-rules.git'
