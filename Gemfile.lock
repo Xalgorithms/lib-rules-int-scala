@@ -1,6 +1,6 @@
 GIT
   remote: https://github.com/Xalgorithms/xa-rules.git
-  revision: 91ffaaebd00f60b19889777bc180f9515948a886
+  revision: b1721c39296836dd70602b8f963482a1b6dc3e9b
   specs:
     xa-rules (0.4.0)
       parslet
@@ -8,8 +8,8 @@ GIT
 GEM
   remote: https://rubygems.org/
   specs:
-    multi_json (1.13.1)
-    parslet (1.8.2)
+    multi_json (1.14.1)
+    parslet (2.0.0)
 
 PLATFORMS
   ruby
