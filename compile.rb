@@ -29,11 +29,15 @@ include XA::Rules::Parse::Content
 Dir.glob("#{ARGV[0]}/*.rule") do |ifn|
   ofn = "#{ifn}.json"
   puts "> compiling #{ifn} to #{ofn}"
-  IO.write(ofn, MultiJson.dump(parse_rule(IO.read(ifn)), pretty: true))
+  tree = parse_rule(IO.read(ifn))
+  exit(-1) if !tree || tree.empty?
+  IO.write(ofn, MultiJson.dump(tree, pretty: true))
 end
 
 Dir.glob("#{ARGV[0]}/*.table") do |ifn|
   ofn = "#{ifn}.json"
   puts "> compiling #{ifn} to #{ofn}"
-  IO.write(ofn, MultiJson.dump(parse_table(IO.read(ifn)), pretty: true))
+  tree = parse_table(IO.read(ifn))
+  exit(-1) if !tree || tree.empty?
+  IO.write(ofn, MultiJson.dump(tree, pretty: true))
 end
