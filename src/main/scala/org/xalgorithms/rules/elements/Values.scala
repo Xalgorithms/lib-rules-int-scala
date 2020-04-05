@@ -23,7 +23,7 @@
 // <http://www.gnu.org/licenses/>.
 package org.xalgorithms.rules.elements
 
-import org.xalgorithms.rules.{ Context }
+import org.xalgorithms.rules.{ Context, Scope }
 import play.api.libs.json._
 
 abstract class Value {
@@ -249,11 +249,11 @@ abstract class ReferenceValue(val section: String, val key: String) extends Comp
 // narrowest, therefore we can't lookup global, local
 // - passing in the c'tor means it's just a context shift and the real values
 // are somewhere else (like we did with sections)
-class ScopedReferenceVaue(key: String) extends ComputedValue {
-  def resolve(ctx: Context, scope: Scope): Option[IntrinsicValue] = {
-    scope.get(key)
-  }
-}
+// class ScopedReferenceVaue(key: String) extends ComputedValue {
+//   def resolve(ctx: Context, scope: Scope): Option[IntrinsicValue] = {
+//     scope.get(key)
+//   }
+// }
 
 class SectionReferenceValue(section: String, key: String) extends ReferenceValue(section, key) {
   def resolve(ctx: Context): Option[IntrinsicValue] = ctx.sections.values(section) match {
