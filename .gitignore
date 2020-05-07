@@ -6,3 +6,6 @@ target
 
 #vim
 *.swp
+
+.idea/
+test-runs/
