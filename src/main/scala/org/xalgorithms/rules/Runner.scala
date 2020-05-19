@@ -95,10 +95,13 @@ class Times {
 }
 
 object Runner {
-  case class TestRun(dir_name: String, run_name: String, tables_index: Map[String, Option[String]]) {
+  case class TestRun(dir_name: String, rule_name: String, tables_index: Map[String, Option[String]]) {
     private val _times = new Times
     private val _dir = File(dir_name)
-    private val _context_fn = s"${run_name}.context.json"
+    private val _context_fn = s"${rule_name}.context.json"
+    private val _rule_fn = s"${rule_name}.rule"
+    private val _compiled_fn = s"${rule_name}.rule.json"
+    private val _expect_fn = s"${rule_name}.expected.json"
 
     private def warn(s: String) = Console.YELLOW + s + Console.RESET
     private def error(s: String) = Console.RED + s + Console.RESET
@@ -106,30 +109,28 @@ object Runner {
     private def title(s: String) = Console.BOLD + s.toUpperCase + Console.RESET
     private def subtitle(s: String) = Console.UNDERLINED + s + Console.RESET
 
-    private def load_steps = {
-      _dir.glob("*.rule").foldLeft(Map[String, Seq[Step]]()) { (m, f) =>
-        println(s"> loading ${f.name}")
-        val rule_name = f.name.stripSuffix(".rule")
-        val compiled_fn = s"${rule_name}.rule.json"
-        _times.start(s"load/${rule_name}")
-        try {
-          m + (rule_name -> SyntaxFromRaw((_dir / compiled_fn).contentAsString))
-        } catch {
-          case (th: Throwable) => {
-            println(s"! compiled rule does not exist (fn=${compiled_fn})")
-            m
-          }
-        } finally {
-          _times.stop()
+    private def load = {
+      val p = (_dir / _compiled_fn)
+      println(s"> loading (${_compiled_fn})")
+      _times.start(s"load/rule/${rule_name}")
+      try {
+        SyntaxFromRaw(p.contentAsString)
+      } catch {
+        case (th: Throwable) => {
+          println(s"! compiled rule does not exist (fn=${p})")
+          Seq()
         }
+      } finally {
+        _times.stop()
       }
     }
 
     private def load_expected(rule_name: String) = {
-      val expect_fn = s"${rule_name}.expected.json"
-      _times.start(s"load/expected/${expect_fn}")
+      val p = (_dir / _expect_fn)
+      println(s"> loading expectations (${_expect_fn})")
+      _times.start(s"load/expected/${_expect_fn}")
       try {
-        Some(Json.parse((_dir / expect_fn).contentAsString()))
+        Some(Json.parse(p.contentAsString))
       } catch {
         case (th: Throwable) => {
           println(th)
@@ -209,20 +210,17 @@ object Runner {
     }
 
     def execute() {
-      println(title(s"execute: ${run_name}"))
-      _times.start("load")
-      val steps = load_steps
+      println(title(s"execute: ${rule_name}"))
+      val steps = load
+
+      println(subtitle(s"> evaluate: ${rule_name} (${steps.length} steps)"))
+      val ctx = populate_context
+
+      _times.start(s"execute/${rule_name}")
+      execute_all_steps(ctx, steps)
       _times.stop
 
-      steps.foreach { case (rule_name, steps) =>
-        println(subtitle(s"> evaluate: ${rule_name} (${steps.length} steps)"))
-        val ctx = populate_context
-        _times.start(s"execute/${rule_name}")
-        execute_all_steps(ctx, steps)
-        _times.stop
-
-        show(ctx, rule_name)
-      }
+      show(ctx, rule_name)
     }
 
     private def show_table(tbl: Seq[Map[String, IntrinsicValue]]): Unit = {
@@ -263,6 +261,7 @@ object Runner {
       ex_tbl: Seq[Map[String, IntrinsicValue]],
       ac_tbl: Seq[Map[String, IntrinsicValue]]
     ) {
+      println(s"> comparing ${section}:${name}")
       if (ex_tbl.size == ac_tbl.size) {
         val diffs = ex_tbl.zip(ac_tbl).zipWithIndex.foldLeft(Seq[(Int, Seq[String])]()) { (seq, tup) =>
           val mismatches = find_mismatches(tup._1._1, tup._1._2)
@@ -294,11 +293,14 @@ object Runner {
           case (o: JsObject) => {
             println(subtitle("expectations"))
             ctx.enumerate_tables((section: String, name: String, tbl: Seq[Map[String, IntrinsicValue]]) => {
-              (o \ "tables" \ section \ name).asOpt[JsArray].map(internalize_array(_)) match {
+//              println(s"> ${section} / ${name}")
+              (o \ section \ name).asOpt[JsArray].map(internalize_array(_)) match {
                 case Some(ex_tbl) => {
                   compare_and_show(section, name, ex_tbl, tbl)
                 }
-                case None => {}
+                case None => {
+//                  println(warn("! no matching expectation"))
+                }
               }
             })
           }
@@ -316,10 +318,10 @@ object Runner {
         }
       }
 
-      println
-      println(subtitle("timing"))
-      _times.show("> ")
-      println
+      // println
+      // println(subtitle("timing"))
+      // _times.show("> ")
+      // println
     }
   }
 
@@ -344,7 +346,7 @@ object Runner {
       }
 
       File(args.head).glob("*.rule").foreach { f =>
-        runs += TestRun(args.head, f.nameWithoutExtension, tables)
+        runs += TestRun(args.head, f.nameWithoutExtension(false), tables)
       }
       println(s"# discovered ${runs.size} test runs in ${args.head}, executing all...")
       runs.foreach { r => r.execute() }
